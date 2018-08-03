@@ -1,30 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 
 namespace DunGen.TerrainGen
 {
-  public class RecursiveBacktracker : ITerrainGenAlgorithm
+  public class RecursiveBacktracker : TerrainGenAlgorithmBase
   {
-    #region Private Members
-    private int PROPERTY_borderPadding;
-    #endregion
+    [BooleanAlgorithmParameterInfo(
+      "Whether this algorithm should mask out (avoid) already-opened tiles",
+      true)]
+    public bool MaskOpenTiles { get; set; }
 
-    public bool MaskOpenTiles { get; set; } = true;
-    public bool TilesAsWalls { get; set; } = true;
-    public int BorderPadding
-    {
-      get
-      {
-        return PROPERTY_borderPadding;
-      }
-      set
-      {
-        // Retain int ness for simplicity, but ensure it's positive
-        PROPERTY_borderPadding = Math.Clamp(value, 0, Int32.MaxValue);
-      }
-    }
+    [BooleanAlgorithmParameterInfo(
+      "Whether this algorithm should use entire tiles as walls (true) or just tile borders (false)",
+      true)]
+    public bool TilesAsWalls { get; set; }
+
+    [IntegerAlgorithmParamInfo(
+      "If using tiles as walls, how many tiles to pad the outside of the algorithm's mask",
+      1,
+      0,
+      int.MaxValue)]
+    public int BorderPadding { get; set; }
+
+    // TODO make this thing work
+    [DecimalAlgorithmParamInfo(
+      "A 0.0 to 1.0 percentage factor of how likely the algorithm is to maintain its current direction",
+      0.33,
+      0.01,
+      0.95,
+      2)]
+    public double Momentum { get; set; }
 
     public string Name
     {
@@ -34,20 +42,23 @@ namespace DunGen.TerrainGen
       }
     }
 
-    public TerrainModification Behavior
+    public override TerrainModBehavior Behavior
     {
       get
       {
-        return TerrainModification.Carve;
+        return TerrainModBehavior.Carve;
       }
     }
 
-    public RecursiveBacktracker()
+    public override TerrainGenStyle Style
     {
-      this.BorderPadding = 1;
+      get
+      {
+        return TerrainGenStyle.Bldg_Halls;
+      }
     }
 
-    public void Run(DungeonTiles d, bool[,] mask, Random r)
+    public override void Run(DungeonTiles d, bool[,] mask, Random r)
     {
       List<bool[,]> masks = mask.SplitByAdjacency();
       foreach (var m in masks)
@@ -68,17 +79,17 @@ namespace DunGen.TerrainGen
 
       if (null == r) r = new Random();
 
-      bool[,] exploredMap = new bool[d.Height, d.Width];
+      bool[,] isExplored = new bool[d.Height, d.Width];
       List<Point> unmaskedPoints = new List<Point>();
-      for (int y = 0; y < exploredMap.GetLength(0); ++y)
+      for (int y = 0; y < isExplored.GetLength(0); ++y)
       {
-        for (int x = 0; x < exploredMap.GetLength(1); ++x)
+        for (int x = 0; x < isExplored.GetLength(1); ++x)
         {
-          exploredMap[y, x] = false;
+          isExplored[y, x] = false;
           if (this.MaskOpenTiles &&
               d[y, x].Physics != Tile.MoveType.Wall)
           {
-            exploredMap[y, x] = true;
+            isExplored[y, x] = true;
           }
           // If it's not masked out, add it to the pool of potential
           // starting points
@@ -88,7 +99,7 @@ namespace DunGen.TerrainGen
 
       // Only odd coordinates are valid starts due to limitations of algorithm below
       Predicate<Point> oddPoints = p => p.X % 2 != 0 && p.Y % 2 != 0;
-      Predicate<Point> paddedWithinBorder = p => p.X > BorderPadding && p.Y > BorderPadding && p.X < exploredMap.GetLength(1) - BorderPadding && p.Y < exploredMap.GetLength(0) - BorderPadding;
+      Predicate<Point> paddedWithinBorder = p => p.X > BorderPadding && p.Y > BorderPadding && p.X < isExplored.GetLength(1) - BorderPadding && p.Y < isExplored.GetLength(0) - BorderPadding;
       List<Point> originPool = unmaskedPoints.FindAll(oddPoints).FindAll(paddedWithinBorder);
 
       if (originPool.Count == 0) return; // no op -- we can't run algorithm at all
@@ -99,7 +110,7 @@ namespace DunGen.TerrainGen
       // Launch into recursive algorithm
       if (this.TilesAsWalls)
       {
-        this.RecursiveBacktrack_TilesAsWalls(d, origin.X, origin.Y, exploredMap, mask, r);
+        this.RecursiveBacktrack_TilesAsWalls(d, origin.X, origin.Y, isExplored, mask, r);
       }
       else
       {
@@ -107,7 +118,15 @@ namespace DunGen.TerrainGen
       }
     }
 
-    private void RecursiveBacktrack_TilesAsWalls(DungeonTiles d, int currentX, int currentY, bool[,] explored, bool[,] overallMask, Random r)
+    private enum Direction
+    {
+      N = 0,
+      E,
+      S,
+      W
+    }
+
+    private void RecursiveBacktrack_TilesAsWalls(DungeonTiles d, int currentX, int currentY, bool[,] explored, bool[,] overallMask, Random r, Direction lastDirection = Direction.N)
     {
       if (null == explored || null == overallMask) return;
       if (currentX >= explored.GetLength(1) || currentY >= explored.GetLength(0) || currentX < 0 || currentY < 0) return;
@@ -120,13 +139,40 @@ namespace DunGen.TerrainGen
       d[currentY, currentX].Physics = d[currentY, currentX].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
 
       // ...then proceed to explore its adjacent tiles
-      bool[] untriedDir = { true, true, true, true };
+      List<Direction> untried = new List<Direction>()
+      {
+        Direction.N,
+        Direction.E,
+        Direction.S,
+        Direction.W
+      };
+
       do
       {
         // Pick a random direction to explore
-        int dir = 0;
-        do { dir = r.Next() % 4; } while (!untriedDir[dir]);
-        untriedDir[dir] = false; // We're trying it now
+        Direction dir = lastDirection;
+        // Can use momentum
+        if (untried.Contains(lastDirection))
+        {
+          List<Direction> candidates = new List<Direction>();
+          for (int i = 0; i < (int)(Momentum * 100); ++i)
+          {
+            candidates.Add(lastDirection);
+          }
+          foreach(Direction nextDir in untried.Where(aDir => aDir != lastDirection))
+          {
+            for (int i = 0; i < (int)((1.0 - Momentum) * 33.3); ++i)
+            {
+              candidates.Add(nextDir);
+            }
+          }
+          dir = candidates[r.Next(candidates.Count)];
+        }
+        else // Last direction already explored; pick randomly
+        {
+          dir = untried[r.Next(untried.Count)];
+        }
+        untried.Remove(dir);
 
         // We calculate adjacent and proceeding coordinate so that
         // turns only occur on every other tile, so that entire tiles
@@ -134,25 +180,25 @@ namespace DunGen.TerrainGen
         int x2, y2, x3, y3; // Adjacent and next coordinate
         switch (dir)
         {
-          case 0: // up
+          case Direction.N: // up
             x2 = currentX;
             y2 = currentY - 1;
             x3 = currentX;
             y3 = currentY - 2;
             break;
-          case 1: // right
+          case Direction.E: // right
             x2 = currentX + 1;
             y2 = currentY;
             x3 = currentX + 2;
             y3 = currentY;
             break;
-          case 2: // down
+          case Direction.S: // down
             x2 = currentX;
             y2 = currentY + 1;
             x3 = currentX;
             y3 = currentY + 2;
             break;
-          case 3: // left
+          case Direction.W: // left
             x2 = currentX - 1;
             y2 = currentY;
             x3 = currentX - 2;
@@ -178,9 +224,9 @@ namespace DunGen.TerrainGen
         d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
 
         // R E C U R S E !
-        this.RecursiveBacktrack_TilesAsWalls(d, x3, y3, explored, overallMask, r);
+        this.RecursiveBacktrack_TilesAsWalls(d, x3, y3, explored, overallMask, r, dir);
 
-      } while (untriedDir[0] || untriedDir[1] || untriedDir[2] || untriedDir[3]);
+      } while (untried.Count > 0);
 
       // Case 3: We have explored this tile and all tried recursing
       // into al of its adjacent tiles. Time to pop back up in the

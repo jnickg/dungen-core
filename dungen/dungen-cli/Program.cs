@@ -13,14 +13,8 @@ namespace dungen_cli
     static void Main(string[] args)
     {
       // Generate Dungeon
-      int width  = 151,
-          height = 151;
-
-      // Whatever algorithm needs to be tested
-      ITerrainGenAlgorithm alg = new RecursiveBacktracker()
-      {
-        BorderPadding = 1,
-      };
+      int width  = 75,
+          height = 75;
 
       // Generate a mask. But not a very good one.
       bool[,] algMask = new bool[height, width];
@@ -37,11 +31,43 @@ namespace dungen_cli
       DungeonGenerator generator = new DungeonGenerator();
       generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
       {
-        TerrainGenAlgs = new Dictionary<ITerrainGenAlgorithm, bool[,]>() { { alg, algMask } },
         DoReset = false,
         EgressConnections = null,
         Width = width,
-        Height = height
+        Height = height,
+        TerrainGenAlgs = new Dictionary<ITerrainGenAlgorithm, bool[,]>()
+        {
+          {
+            new MonteCarloRoomCarver()
+            {
+              RoomWidthMin = 3,
+              RoomWidthMax = 10,
+              RoomHeightMin = 3,
+              RoomHeightMax = 10,
+              Attempts = 1000,
+              TargetRoomCount = 15
+            },
+            algMask
+          },
+          {
+            new RecursiveBacktracker()
+            {
+              MaskOpenTiles = true,
+              TilesAsWalls = true,
+              BorderPadding = 0,
+              Momentum = 0.50
+            },
+            algMask
+          },
+          {
+            new DeadEndFiller()
+            {
+              CleanupFactor = .75,
+              Strategy = DeadEndFiller.CleanupStrategy.Random
+            },
+            algMask
+          }
+        }
       };
 
       Dungeon dungeon = generator.Generate();
@@ -49,6 +75,16 @@ namespace dungen_cli
       DungeonTileRenderer renderer = new DungeonTileRenderer();
       Image renderedDungeon = renderer.Render(dungeon);
       renderedDungeon.Save("dungeon.bmp", ImageFormat.Bmp);
+
+      foreach(var alg in dungeon.Algorithms.Keys)
+      {
+        Console.WriteLine("Algorithm {0}", alg.Name);
+        foreach(var param in alg.Parameters.Parameters)
+        {
+          Console.WriteLine("   {0,-10} used for {1,-10} param \'{2,-15}\'  ({3})", param.Value, param.Category, param.Name, param.Description);
+        }
+      }
+      Console.ReadKey();
     }
   }
 }

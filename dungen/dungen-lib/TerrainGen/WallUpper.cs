@@ -5,25 +5,18 @@ using System.Text;
 
 namespace DunGen.TerrainGen
 {
-  public class WallUpper : ITerrainGenAlgorithm
+  public class WallUpper : TerrainGenAlgorithmBase
   {
-    public string Name
+    public override TerrainModBehavior Behavior { get => TerrainModBehavior.Build; }
+
+    public override TerrainGenStyle Style { get => TerrainGenStyle.Uncategorized; }
+
+    public WallUpper()
     {
-      get
-      {
-        return "Wall Upper";
-      }
+      // no op
     }
 
-    public TerrainModification Behavior
-    {
-      get
-      {
-        return TerrainModification.Build;
-      }
-    }
-
-    public void Run(DungeonTiles d, bool[,] mask, Random r)
+    public override void Run(DungeonTiles d, bool[,] mask, Random r)
     {
       d.SetAllToo(Tile.MoveType.Wall, mask);
     }

@@ -5,30 +5,18 @@ using System.Text;
 
 namespace DunGen.TerrainGen
 {
-  public class OpenUpper : ITerrainGenAlgorithm
+  public class OpenUpper : TerrainGenAlgorithmBase
   {
-    public string Name
-    {
-      get
-      {
-        return "Open Upper";
-      }
-    }
+    public override TerrainModBehavior Behavior { get => TerrainModBehavior.Carve; }
 
-    public TerrainModification Behavior
-    {
-      get
-      {
-        return TerrainModification.Carve;
-      }
-    }
+    public override TerrainGenStyle Style { get => TerrainGenStyle.Uncategorized; }
 
     public OpenUpper()
     {
       // no op
     }
 
-    public void Run(DungeonTiles d, bool[,] mask, Random r)
+    public override void Run(DungeonTiles d, bool[,] mask, Random r)
     {
       d.SetAllToo(Tile.MoveType.Open_HORIZ, mask);
     }

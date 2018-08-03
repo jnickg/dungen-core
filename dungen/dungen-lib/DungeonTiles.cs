@@ -20,9 +20,9 @@ namespace DunGen
     public enum Category
     {
       Normal,     // Only the Tile's data is important
-      Threshold,  // Marks a threshold between areas, groups, or otherwise
-      DeadEnd,    // The end of a hall of some type
-      Niche,      // A small offshoot from a normal hallway
+      Threshold,  // Marks a threshold between connected areas, groups, or otherwise
+      Niche,      // A small offshoot from a normal hallway that shouldn't be culled
+      Dependant   // Shouldn't be orphaned. A tile (or group of tiles) that should be connected to the rest of the dungeon
       // TODO more categories?
     }
     #endregion
@@ -33,6 +33,7 @@ namespace DunGen
 
     #region Private Members
     private Tile[,] Tiles { get; set; }
+    private IDictionary<Category, IList<ISet<Tile>>> CategoryGroups { get; set; }
     #endregion
 
     #region Properties
@@ -104,6 +105,39 @@ namespace DunGen
         }
       }
       this.IsHex = false; // TODO
+      this.CategoryGroups = new Dictionary<Category, IList<ISet<Tile>>>();
+      foreach(Category c in (Category[])Enum.GetValues(typeof(Category)))
+      {
+        this.CategoryGroups.Add(c, new List<ISet<Tile>>());
+      }
+    }
+
+    public void Categorize(ISet<Tile> tiles = null, Category cat = Category.Normal)
+    {
+      if (null == tiles) return;
+      this.CategoryGroups[cat].Add(new HashSet<Tile>(tiles));
+    }
+
+    public void Categorize(bool[,]mask, Category cat = Category.Normal)
+    {
+      if (null == mask) return;
+      if (mask.GetLength(0) != this.Tiles.GetLength(0)
+       || mask.GetLength(1) != this.Tiles.GetLength(1))
+      {
+        throw new ArgumentException("Invalid mask");
+      }
+
+      ISet<Tile> newSet = new HashSet<Tile>();
+
+      for (int y = 0; y < this.Height; ++y)
+      {
+        for (int x = 0; x < this.Width; ++x)
+        {
+          if (mask[y, x]) newSet.Add(this[y, x]);
+        }
+      }
+
+      this.Categorize(newSet, cat);
     }
 
     /// <summary>
@@ -112,6 +146,7 @@ namespace DunGen
     /// </summary>
     public int CreateGroup(ISet<Tile> tiles = null)
     {
+      if (null == tiles) return -1;
       ISet<Tile> newSet = new HashSet<Tile>(tiles);
       this.Groups.Add(newSet);
       return this.Groups.IndexOf(newSet);
@@ -157,6 +192,34 @@ namespace DunGen
     {
       if (x < 0 || y < 0 || x >= this.Width || y >= this.Height) return false;
       else return true;
+    }
+
+    public int GetAdjacentOpensFor(int x, int y)
+    {
+      if (!TileIsValid(x, y)) return 0;
+      int adjacentEmpties = 0;
+
+      if (TileIsValid(x + 1, y) &&
+        0 != (this[y, x + 1].Physics & Tile.MoveType.Open_WEST))
+      {
+        ++adjacentEmpties;
+      }
+      if (TileIsValid(x, y + 1) &&
+        0 != (this[y + 1, x].Physics & Tile.MoveType.Open_NORTH))
+      {
+        ++adjacentEmpties;
+      }
+      if (TileIsValid(x - 1, y) &&
+        0 != (this[y, x - 1].Physics & Tile.MoveType.Open_EAST))
+      {
+        ++adjacentEmpties;
+      }
+      if (TileIsValid(x, y - 1) &&
+        0 != (this[y - 1, x].Physics & Tile.MoveType.Open_SOUTH))
+      {
+        ++adjacentEmpties;
+      }
+      return adjacentEmpties;
     }
     #endregion
   }

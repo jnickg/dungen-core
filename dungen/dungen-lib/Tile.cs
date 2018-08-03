@@ -36,6 +36,7 @@ namespace DunGen
       Open_HEX_NE     = 0x00000080,
       Open_HEX_SE     = 0x00000100,
       Open_HEX_SW     = 0x00000200,
+      Open_HEX        = Open_HEX_NE | Open_HEX_NW | Open_HEX_SE | Open_HEX_SW,
       Open_HEX_HORIZ  = Open_NORTH | Open_SOUTH | Open_HEX_NE | Open_HEX_NW | Open_HEX_SE | Open_HEX_SW,
     }
 
@@ -150,6 +151,20 @@ namespace DunGen
     public static Tile.MoveType OpenUp(this Tile.MoveType t, int direction)
     {
       return t.OpenUp((Tile.MoveType)direction);
+    }
+
+    public static int SidesOpened(this Tile.MoveType t)
+    {
+      if (0 != (t & Tile.MoveType.Open_HEX)) throw new NotImplementedException("don't support hex yet");
+      if (t == Tile.MoveType.Open_HORIZ) return 4;
+
+      int sidesOpened = 0;
+      if (0 != (t & Tile.MoveType.Open_NORTH)) ++sidesOpened;
+      if (0 != (t & Tile.MoveType.Open_EAST)) ++sidesOpened;
+      if (0 != (t & Tile.MoveType.Open_SOUTH)) ++sidesOpened;
+      if (0 != (t & Tile.MoveType.Open_WEST)) ++sidesOpened;
+      return sidesOpened;
+
     }
   }
 }
