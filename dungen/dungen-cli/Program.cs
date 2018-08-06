@@ -40,10 +40,10 @@ namespace dungen_cli
           {
             new MonteCarloRoomCarver()
             {
-              RoomWidthMin = 3,
-              RoomWidthMax = 10,
-              RoomHeightMin = 3,
-              RoomHeightMax = 10,
+              RoomWidthMin = 7,
+              RoomWidthMax = 13,
+              RoomHeightMin = 5,
+              RoomHeightMax = 9,
               Attempts = 1000,
               TargetRoomCount = 15
             },
@@ -52,18 +52,17 @@ namespace dungen_cli
           {
             new RecursiveBacktracker()
             {
-              MaskOpenTiles = true,
               TilesAsWalls = true,
               BorderPadding = 0,
-              Momentum = 0.50
+              Momentum = 0.45,
+              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
             },
             algMask
           },
           {
             new DeadEndFiller()
             {
-              CleanupFactor = .75,
-              Strategy = DeadEndFiller.CleanupStrategy.Random
+              FillPasses = 100
             },
             algMask
           }

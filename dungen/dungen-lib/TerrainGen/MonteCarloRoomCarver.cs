@@ -165,7 +165,8 @@ namespace DunGen.TerrainGen
           }
         }
         // Rooms should not be orphaned!
-        d.Categorize(newRoom, DungeonTiles.Category.Dependant);
+        d.Categorize(newRoom, DungeonTiles.Category.Room);
+        d.CreateGroup(newRoom);
 
         ++currentRooms;
       }

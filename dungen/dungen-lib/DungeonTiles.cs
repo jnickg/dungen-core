@@ -22,7 +22,8 @@ namespace DunGen
       Normal,     // Only the Tile's data is important
       Threshold,  // Marks a threshold between connected areas, groups, or otherwise
       Niche,      // A small offshoot from a normal hallway that shouldn't be culled
-      Dependant   // Shouldn't be orphaned. A tile (or group of tiles) that should be connected to the rest of the dungeon
+      Room,       // A room that should be connected to hallways
+      Hallway     // A hallway that should be connected to something else
       // TODO more categories?
     }
     #endregion
@@ -138,6 +139,60 @@ namespace DunGen
       }
 
       this.Categorize(newSet, cat);
+    }
+
+    public List<Category> GetCategoriesFor(int x, int y)
+    {
+      List<Category> cellCats = new List<Category>();
+      Point requestedPoint = new Point(x, y);
+      foreach (Category c in this.CategoryGroups.Keys)
+      {
+        bool found = false;
+        foreach (var g in this.CategoryGroups[c])
+        {
+          foreach (Tile t in g)
+          {
+            if (t.Location == requestedPoint)
+            {
+              cellCats.Add(c);
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+      }
+      return cellCats;
+    }
+
+    /// <summary>
+    /// Finds EVERY group in specified category containing the provided tile location,
+    /// and removes it from that category
+    /// </summary>
+    public void DeCategorizeAll(int x, int y, Category cat)
+    {
+      List<ISet<Tile>> matchingGroupos = new List<ISet<Tile>>();
+      Point requestedPoint = new Point(x, y);
+      foreach (ISet<Tile> g in this.CategoryGroups[cat])
+      {
+        bool found = false;
+        foreach (Tile t in g)
+        {
+          if (t.Location == requestedPoint)
+          {
+            found = true;
+            break;
+          }
+        }
+        if (found)
+        {
+          matchingGroupos.Add(g);
+        }
+      }
+      foreach (ISet<Tile> g in matchingGroupos)
+      {
+        this.CategoryGroups[cat].Remove(g);
+      }
     }
 
     /// <summary>

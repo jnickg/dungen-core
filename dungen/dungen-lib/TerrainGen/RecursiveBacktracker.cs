@@ -8,10 +8,18 @@ namespace DunGen.TerrainGen
 {
   public class RecursiveBacktracker : TerrainGenAlgorithmBase
   {
-    [BooleanAlgorithmParameterInfo(
-      "Whether this algorithm should mask out (avoid) already-opened tiles",
-      true)]
-    public bool MaskOpenTiles { get; set; }
+    public enum OpenTilesStrategy
+    {
+      Avoid,
+      ConnectToRooms,
+      Ignore
+    }
+
+    [SelectionAlgorithmParameterInfo(
+      "How this algorithm should interact with existing open tiles, if there are any in its mask",
+      typeof(OpenTilesStrategy),
+      OpenTilesStrategy.Avoid)]
+    public OpenTilesStrategy ExistingDataStrategy { get; set; }
 
     [BooleanAlgorithmParameterInfo(
       "Whether this algorithm should use entire tiles as walls (true) or just tile borders (false)",
@@ -33,14 +41,6 @@ namespace DunGen.TerrainGen
       0.95,
       2)]
     public double Momentum { get; set; }
-
-    public string Name
-    {
-      get
-      {
-        return "RecursiveBacktracker";
-      }
-    }
 
     public override TerrainModBehavior Behavior
     {
@@ -86,7 +86,7 @@ namespace DunGen.TerrainGen
         for (int x = 0; x < isExplored.GetLength(1); ++x)
         {
           isExplored[y, x] = false;
-          if (this.MaskOpenTiles &&
+          if (this.ExistingDataStrategy == OpenTilesStrategy.Avoid &&
               d[y, x].Physics != Tile.MoveType.Wall)
           {
             isExplored[y, x] = true;
@@ -215,6 +215,22 @@ namespace DunGen.TerrainGen
           || !overallMask[y2, x2] || !overallMask[y3, x3]   // Not in mask
           || explored[y2, x2] || explored[y3, x3])      // Already visited
         {
+          continue;
+        }
+
+        // Special case: we want to connect to the area due to our strategy, but do NOT want to recurse
+        if (d[y3, x3].Physics != Tile.MoveType.Wall &&
+          this.ExistingDataStrategy == OpenTilesStrategy.ConnectToRooms)
+        {
+          if (d.GetCategoriesFor(x3, y3).Contains(DungeonTiles.Category.Room))
+          {
+            explored[y2, x2] = true;
+            d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
+            explored[y3, x3] = true;
+            d[y3, x3].Physics = d[y3, x3].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
+            // That tile's group has been connected, so remove it from dependant
+            d.DeCategorizeAll(x3, y3, DungeonTiles.Category.Room);
+          }
           continue;
         }
 
