@@ -21,8 +21,9 @@ namespace DunGen
       /// DoReset is false.
       /// </summary>
       public int Height { get; set; }
-      public IList<Point> EgressConnections { get; set; }
-      public IDictionary<ITerrainGenAlgorithm, bool[,]> TerrainGenAlgs { get; set; }
+      public IList<Point> EgressConnections { get; set; } = new List<Point>();
+      public IDictionary<ITerrainGenAlgorithm, bool[,]> TerrainGenAlgs { get; set; } = new Dictionary<ITerrainGenAlgorithm, bool[,]>();
+      public IList<Action<DungeonTiles>> TerrainGenCallbacks { get; set; } = new List<Action<DungeonTiles>>();
     }
     #endregion
 
@@ -85,6 +86,13 @@ namespace DunGen
             {
               algTiles.Add(tiles[y, x]);
             }
+          }
+        }
+        if (null != options.TerrainGenCallbacks && options.TerrainGenCallbacks.Count > 0)
+        {
+          foreach (var cb in options.TerrainGenCallbacks)
+          {
+            terrainAlgs[i].AttachCallback(cb);
           }
         }
         terrainAlgs[i].Run(tiles, algMasks[i], r);

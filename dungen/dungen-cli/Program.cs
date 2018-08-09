@@ -10,11 +10,20 @@ namespace dungen_cli
 {
   class Program
   {
+    static int imgcounter = 0;
+    static void RenderToImage(DungeonTiles d)
+    {
+      System.Threading.Interlocked.Increment(ref imgcounter);
+      DungeonTileRenderer renderer = new DungeonTileRenderer();
+      Image renderedDungeon = renderer.Render(d);
+      renderedDungeon.Save(String.Format("dungeon_{0}.bmp", imgcounter), ImageFormat.Bmp);
+    }
+
     static void Main(string[] args)
     {
       // Generate Dungeon
-      int width  = 75,
-          height = 75;
+      int width = 25,
+          height = 25;
 
       // Generate a mask. But not a very good one.
       bool[,] algMask = new bool[height, width];
@@ -28,6 +37,11 @@ namespace dungen_cli
         }
       }
 
+      bool debugSettings = false;
+#if DEBUG
+      debugSettings = true;
+#endif
+
       DungeonGenerator generator = new DungeonGenerator();
       generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
       {
@@ -35,45 +49,58 @@ namespace dungen_cli
         EgressConnections = null,
         Width = width,
         Height = height,
+        TerrainGenCallbacks = debugSettings ? new List<Action<DungeonTiles>>() { d => RenderToImage(d) } : null,
         TerrainGenAlgs = new Dictionary<ITerrainGenAlgorithm, bool[,]>()
         {
           {
             new MonteCarloRoomCarver()
             {
-              RoomWidthMin = 7,
-              RoomWidthMax = 13,
-              RoomHeightMin = 5,
-              RoomHeightMax = 9,
-              Attempts = 1000,
-              TargetRoomCount = 15
+              GroupForDebug = debugSettings,
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+              RoomWidthMin = 3,
+              RoomWidthMax = 5,
+              RoomHeightMin = 3,
+              RoomHeightMax = 5,
+              Attempts = 500,
+              TargetRoomCount = 2
             },
             algMask
           },
           {
-            new RecursiveBacktracker()
+            new LinearRecursiveDivision()
             {
-              TilesAsWalls = true,
-              BorderPadding = 0,
-              Momentum = 0.45,
-              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
+              GroupForDebug = debugSettings, 
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+              BuildStrategy = LinearRecursiveDivision.ExistingDataHandling.Avoid,
+              RoomSize = 1,
+              Variability = 0.5
             },
             algMask
           },
-          {
-            new DeadEndFiller()
-            {
-              FillPasses = 100
-            },
-            algMask
-          }
-        }
+
+          //{
+          //  new RecursiveBacktracker()
+          //  {
+          //    TilesAsWalls = true,
+          //    BorderPadding = 0,
+          //    Momentum = 0.45,
+          //    ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
+          //  },
+          //  algMask
+          //},
+          //{
+          //  new DeadEndFiller()
+          //  {
+          //    FillPasses = 1
+          //  },
+          //  algMask
+          //}
+        },
       };
 
       Dungeon dungeon = generator.Generate();
 
-      DungeonTileRenderer renderer = new DungeonTileRenderer();
-      Image renderedDungeon = renderer.Render(dungeon);
-      renderedDungeon.Save("dungeon.bmp", ImageFormat.Bmp);
+      RenderToImage(dungeon.Tiles);
 
       foreach(var alg in dungeon.Algorithms.Keys)
       {

@@ -15,6 +15,8 @@ namespace DunGen.Rendering
     public Pen OpenBorder_Pen { get; set; }
     public Brush WallTile_Brush { get; set; }
     public Brush OpenTile_Brush { get; set; }
+    public Brush WallBorder_Brush { get; set; }
+    public Brush OpenBorder_Brush { get; set; }
 
     public DungeonTileRenderer()
     {
@@ -23,7 +25,9 @@ namespace DunGen.Rendering
       this.TileSize_Pixels = 10;
       this.Background_Color = Color.Black;
       this.WallBorder_Pen = Pens.DarkSlateGray;
-      this.OpenBorder_Pen = Pens.LightGray;
+      this.WallBorder_Brush = Brushes.DarkSlateGray;
+      this.OpenBorder_Pen = Pens.GhostWhite;
+      this.OpenBorder_Brush = Brushes.GhostWhite;
       this.WallTile_Brush = Brushes.Black;
       this.OpenTile_Brush = Brushes.White;
     }
@@ -43,21 +47,16 @@ namespace DunGen.Rendering
       return new SolidBrush(this.Background_Color);
     }
 
-    /// <summary>
-    /// Renders the specified tiles onto the given Graphics.
-    /// </summary>
-    public void Render(Dungeon d, Graphics g)
+    public void Render(DungeonTiles tiles, Graphics g)
     {
-      DungeonTiles tiles = d.Tiles;
-
       if (tiles.IsHex)
       {
         throw new NotImplementedException("Hex tiles not supported yet.");
       }
 
-      int tileSz_px   = (int) (g.VisibleClipBounds.Height / tiles.Height);
-      int totalWidth  = (int) g.VisibleClipBounds.Width;
-      int totalHeight = (int) g.VisibleClipBounds.Height;
+      int tileSz_px = (int)(g.VisibleClipBounds.Height / tiles.Height);
+      int totalWidth = (int)g.VisibleClipBounds.Width;
+      int totalHeight = (int)g.VisibleClipBounds.Height;
 
       g.Clear(this.Background_Color);
 
@@ -86,14 +85,29 @@ namespace DunGen.Rendering
           DrawBorderFor(tiles, x, y, Tile.MoveType.Open_HORIZ, g, x1, y1, x2, y2);
         }
       }
-      // TODO draw points on corners between borders
+      for (int y = 0; y < tiles.Height; ++y)
+      {
+        for (int x = 0; x < tiles.Height; ++x)
+        {
+          int px1 = x * tileSz_px,
+              px2 = x * tileSz_px + tileSz_px,
+              py1 = y * tileSz_px,
+              py2 = y * tileSz_px + tileSz_px;
+
+          DrawTopLeftPointFor(tiles, x, y, px1, py1, g);
+          // This is just to get the bottom-right border. Easier way? Sure. But this works too.
+          DrawTopLeftPointFor(tiles, x + 1, y, px2, py1, g);
+          DrawTopLeftPointFor(tiles, x, y + 1, px1, py2, g);
+          DrawTopLeftPointFor(tiles, x + 1, y + 1, px2, py2, g);
+        }
+      }
       SkipBorders:
 
       if (!this.ShadeGroups) goto SkipGroupShading;
       Random r = new Random();
       for (int i = 0; i < tiles.Groups.Count; ++i)
       {
-        Brush groupBrush = new SolidBrush(Color.FromArgb(64, r.Next(255), r.Next(255), r.Next(255)));
+        Brush groupBrush = new SolidBrush(Color.FromArgb(32, r.Next(255), r.Next(255), r.Next(255)));
         foreach (var tile in tiles.Groups[i])
         {
           Point tileLoc = tiles.TilesById[tile.Id];
@@ -104,6 +118,30 @@ namespace DunGen.Rendering
       SkipGroupShading:
 
       return;
+    }
+
+    /// <summary>
+    /// Renders the specified tiles onto the given Graphics.
+    /// </summary>
+    public void Render(Dungeon d, Graphics g)
+    {
+      this.Render(d.Tiles, g);
+    }
+
+    /// <summary>
+    /// Checks what color the top-left corner of tile x,y should be,
+    /// and draws it at point px, py on the provided graphics object.
+    /// </summary>
+    private void DrawTopLeftPointFor(DungeonTiles tiles, int x, int y, int px, int py, Graphics g)
+    {
+      bool useWallColor = tiles.WallExists(x, y, Tile.MoveType.Open_NORTH) ||
+                          tiles.WallExists(x, y, Tile.MoveType.Open_WEST) ||
+                          tiles.WallExists(x - 1, y, Tile.MoveType.Open_NORTH) ||
+                          tiles.WallExists(x, y - 1, Tile.MoveType.Open_WEST);
+
+      Brush cornerBrush = useWallColor ? this.WallBorder_Brush : this.OpenBorder_Brush;
+
+      g.FillRectangle(cornerBrush, px, py, 1, 1);
     }
 
     /// <summary>
@@ -195,15 +233,19 @@ namespace DunGen.Rendering
 
     public Image Render(Dungeon d)
     {
-      DungeonTiles tiles = d.Tiles;
+      return this.Render(d.Tiles);
+    }
+
+    public Image Render(DungeonTiles tiles)
+    {
       int tileSz_px = this.TileSize_Pixels;
-      int totalWidth = tiles.Width * tileSz_px;
-      int totalHeight = tiles.Height * tileSz_px;
+      int totalWidth = tiles.Width * tileSz_px + 1;
+      int totalHeight = tiles.Height * tileSz_px + 1;
 
       Image img = new Bitmap(totalWidth, totalHeight);
       Graphics g = Graphics.FromImage(img);
 
-      this.Render(d, g);
+      this.Render(tiles, g);
 
       return img;
     }

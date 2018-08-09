@@ -164,9 +164,26 @@ namespace DunGen.TerrainGen
             newRoom.Add(d[nuY, nuX]);
           }
         }
+        // Close off boundaries if appropriate
+        if (this.WallStyle == WallFormationStyle.Boundaries)
+        {
+          for (int nuY = y; nuY < y + h; ++nuY)
+          {
+            for (int nuX = x; nuX < x + w; ++nuX)
+            {
+              if (nuY == y) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_NORTH);
+              if (nuX == x) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_WEST);
+              if (nuY == y+h-1) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_SOUTH);
+              if (nuX == x+w-1) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_EAST);
+            }
+          }
+        }
+
         // Rooms should not be orphaned!
         d.Categorize(newRoom, DungeonTiles.Category.Room);
-        d.CreateGroup(newRoom);
+        if (this.GroupForDebug) d.CreateGroup(newRoom);
+
+        this.RunCallbacks(d);
 
         ++currentRooms;
       }

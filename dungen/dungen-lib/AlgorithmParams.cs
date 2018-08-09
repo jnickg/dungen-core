@@ -25,6 +25,7 @@ namespace DunGen
         {
           if (pi.Name == param.Name)
           {
+            // TODO ck if requested value is VALID before applying
             pi.SetValue(algorithm, param.Value);
             continue;
           }

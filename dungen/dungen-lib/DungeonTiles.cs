@@ -141,6 +141,31 @@ namespace DunGen
       this.Categorize(newSet, cat);
     }
 
+    public void Categorize(Rectangle region, Category cat = Category.Normal)
+    {
+      if (null == region) return;
+      if (region.X + region.Width > this.Width ||
+          region.Y + region.Height > this.Height ||
+          region.X < 0 || region.Y < 0)
+      {
+        throw new ArgumentException("Invalid region");
+      }
+
+      ISet<Tile> newSet = new HashSet<Tile>();
+
+      int endY = region.Y + region.Height;
+      int endX = region.X + region.Width;
+      for (int y = region.Y; y < endY; ++y)
+      {
+        for (int x = region.X; x < endX; ++x)
+        {
+          newSet.Add(this[y, x]);
+        }
+      }
+
+      this.Categorize(newSet, cat);
+    }
+
     public List<Category> GetCategoriesFor(int x, int y)
     {
       List<Category> cellCats = new List<Category>();
@@ -229,6 +254,31 @@ namespace DunGen
       return this.CreateGroup(newSet);
     }
 
+    public int CreateGroup(Rectangle region)
+    {
+      if (null == region) return -1;
+      if (region.X + region.Width > this.Width ||
+          region.Y + region.Height > this.Height ||
+          region.X < 0 || region.Y < 0)
+      {
+        throw new ArgumentException("Invalid region");
+      }
+
+      ISet<Tile> newSet = new HashSet<Tile>();
+
+      int endY = region.Y + region.Height;
+      int endX = region.X + region.Width;
+      for (int y = region.Y; y < endY; ++y)
+      {
+        for (int x = region.X; x < endX; ++x)
+        {
+          newSet.Add(this[y, x]);
+        }
+      }
+
+      return this.CreateGroup(newSet);
+    }
+
     public void SetAllToo(Tile.MoveType physics, bool[,] mask = null)
     {
       for (int y = 0; y < this.Height; ++y)
@@ -275,6 +325,49 @@ namespace DunGen
         ++adjacentEmpties;
       }
       return adjacentEmpties;
+    }
+
+    /// <summary>
+    /// Checks if a wall exists anywhere that prevents movement from the specified tile
+    /// to the adjacent tile in the specified direction (including walls in that tile
+    /// which would prevent movement). If the movement direction is not possible due to
+    /// being at the edge of a map, returns true. If the specified tile is invalid,
+    /// returns true.
+    /// </summary>
+    public bool WallExists(int x, int y, Tile.MoveType direction)
+    {
+      if (!TileIsValid(x, y)) return true;
+      if (0 == (this[y, x].Physics & direction)) return true;
+      switch (direction)
+      {
+        case Tile.MoveType.Wall:
+          throw new ArgumentException();
+        case Tile.MoveType.Open_NORTH:
+          return (!TileIsValid(x, y - 1) || (0 == (this[y - 1, x].Physics & direction.GetOpposite())));
+        case Tile.MoveType.Open_EAST:
+          return (!TileIsValid(x + 1, y) || (0 == (this[y, x + 1].Physics & direction.GetOpposite())));
+        case Tile.MoveType.Open_SOUTH:
+          return (!TileIsValid(x, y + 1) || (0 == (this[y + 1, x].Physics & direction.GetOpposite())));
+        case Tile.MoveType.Open_WEST:
+          return (!TileIsValid(x - 1, y) || (0 == (this[y, x - 1].Physics & direction.GetOpposite())));
+        case Tile.MoveType.Open_HORIZ:
+          return WallExists(x, y, Tile.MoveType.Open_NORTH) &&
+                 WallExists(x, y, Tile.MoveType.Open_EAST) &&
+                 WallExists(x, y, Tile.MoveType.Open_SOUTH) &&
+                 WallExists(x, y, Tile.MoveType.Open_WEST);
+        case Tile.MoveType.Open_UP:
+        case Tile.MoveType.Open_DOWN:
+        case Tile.MoveType.Open_VERT:
+        case Tile.MoveType.Open_ALL:
+        case Tile.MoveType.Open_HEX_NW:
+        case Tile.MoveType.Open_HEX_NE:
+        case Tile.MoveType.Open_HEX_SE:
+        case Tile.MoveType.Open_HEX_SW:
+        case Tile.MoveType.Open_HEX:
+        case Tile.MoveType.Open_HEX_HORIZ:
+        default:
+          throw new NotImplementedException();
+      }
     }
     #endregion
   }

@@ -53,6 +53,12 @@ namespace DunGen
     TerrainGenStyle Style { get; }
 
     /// <summary>
+    /// Attaches a new callback to this ITerrainGenAlgorithm instance,
+    /// to be called at various points in a call to Run()
+    /// </summary>
+    void AttachCallback(Action<DungeonTiles> callback);
+
+    /// <summary>
     /// Run the algorithm with the current TerrainGenAlgorithmParams,
     /// and on the specified input parameters.
     /// </summary>
@@ -66,9 +72,59 @@ namespace DunGen
   /// </summary>
   public abstract class TerrainGenAlgorithmBase : AlgorithmBase, ITerrainGenAlgorithm
   {
+    #region Nested Types
+    /// <summary>
+    /// Style of wall formation used when introducing divisons
+    /// between open tiles. All algorithms must support
+    /// interacting with dungeons using any wall formation
+    /// style, even if they don't support forming walls
+    /// themselves
+    /// </summary>
+    public enum WallFormationStyle
+    {
+      Tiles,
+      Boundaries
+    }
+    #endregion
+
+    #region Non-Parameter Properties
     public abstract TerrainModBehavior Behavior { get; }
     public abstract TerrainGenStyle Style { get; }
+    #endregion
 
+    #region Parameter Properties
+    [BooleanAlgorithmParameterInfo(
+      "Whether to group generated tiles for debug purposes",
+      false)]
+    public bool GroupForDebug { get; set; }
+
+    [SelectionAlgorithmParameterInfo(
+      "How this algorithm should form walls when introducing divisions " +
+      "between open tiles. Algorithms may ignore this parameter if they" +
+      "can not support a particular wall formation style.",
+      typeof(WallFormationStyle),
+      WallFormationStyle.Tiles)]
+    public WallFormationStyle WallStyle { get; set; }
+    #endregion
+
+    #region Members
     public abstract void Run(DungeonTiles d, bool[,] mask, Random r);
+
+    public void AttachCallback(Action<DungeonTiles> callback)
+    {
+      if (null == callback) return;
+      this.algRunCallbacks.Add(callback);
+    }
+
+    protected List<Action<DungeonTiles>> algRunCallbacks = new List<Action<DungeonTiles>>();
+
+    protected void RunCallbacks(DungeonTiles d)
+    {
+      foreach (var action in algRunCallbacks)
+      {
+        action(d);
+      }
+    }
+    #endregion
   }
 }

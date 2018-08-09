@@ -22,7 +22,7 @@ namespace DunGen
     /// </summary>
     public enum MoveType
     {
-      Wall            = 0x00000000,
+      Wall            = 0x00000000, // Considered "no data" for the purpose of maze generation
       Open_NORTH      = 0x00000001,
       Open_EAST       = 0x00000002,
       Open_SOUTH      = 0x00000004,
