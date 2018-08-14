@@ -126,40 +126,66 @@ namespace DunGen.TerrainGen
       W
     }
 
-    private void RecursiveBacktrack_TilesAsWalls(DungeonTiles d, int currentX, int currentY, bool[,] explored, bool[,] overallMask, Random r, Direction lastDirection = Direction.N)
+    private struct PointTracking
+    {
+      public Point ThisPoint { get; set; }
+      public List<Direction> UntriedDirections { get; set; }
+
+      public PointTracking(Point whichPoint)
+      {
+        ThisPoint = whichPoint;
+        UntriedDirections = new List<Direction>()
+        {
+          Direction.N,
+          Direction.E,
+          Direction.S,
+          Direction.W
+        };
+      }
+
+      public PointTracking(Point whichPoint, List<Direction> untriedDirs)
+      {
+        ThisPoint = whichPoint;
+        UntriedDirections = untriedDirs;
+      }
+    }
+
+
+    private void RecursiveBacktrack_TilesAsWalls(DungeonTiles d, int startX, int startY, bool[,] explored, bool[,] overallMask, Random r)
     {
       if (null == explored || null == overallMask) return;
-      if (currentX >= explored.GetLength(1) || currentY >= explored.GetLength(0) || currentX < 0 || currentY < 0) return;
+      Stack<PointTracking> points = new Stack<PointTracking>();
+      Direction lastDirection = Direction.N;
 
-      // Case 1: We have explored this tile, or it's not witn the mask bounds.
-      if (!overallMask[currentY, currentX] || explored[currentY, currentX]) return;
-
-      // Case 2: We are at an unexplored tile. Mark the tile as explored and carve it up
-      explored[currentY, currentX] = true;
-      d[currentY, currentX].Physics = d[currentY, currentX].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
-
-      // ...then proceed to explore its adjacent tiles
-      List<Direction> untried = new List<Direction>()
+      points.Push(new PointTracking(new Point(startX, startY)));
+      while (points.Count > 0)
       {
-        Direction.N,
-        Direction.E,
-        Direction.S,
-        Direction.W
-      };
+        PointTracking currentPointTracker = points.Pop();
+        Point currentPoint = currentPointTracker.ThisPoint;
+        List<Direction> currentUntried = currentPointTracker.UntriedDirections;
 
-      do
-      {
+        if (currentUntried.Count == 0) continue;
+
+        if (currentPoint.X >= explored.GetLength(1) || currentPoint.Y >= explored.GetLength(0) || currentPoint.X < 0 || currentPoint.Y < 0) continue;
+
+        // Case 1: Current point is not within bounds
+        if (!overallMask[currentPoint.Y, currentPoint.X]) continue;
+
+        // Case 2: We are at an unexplored tile. Mark the tile as explored and carve it up
+        explored[currentPoint.Y, currentPoint.X] = true;
+        d[currentPoint.Y, currentPoint.X].Physics = d[currentPoint.Y, currentPoint.X].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
+
         // Pick a random direction to explore
         Direction dir = lastDirection;
         // Can use momentum
-        if (untried.Contains(lastDirection))
+        if (currentUntried.Contains(lastDirection))
         {
           List<Direction> candidates = new List<Direction>();
           for (int i = 0; i < (int)(Momentum * 100); ++i)
           {
             candidates.Add(lastDirection);
           }
-          foreach(Direction nextDir in untried.Where(aDir => aDir != lastDirection))
+          foreach (Direction nextDir in currentUntried.Where(aDir => aDir != lastDirection))
           {
             for (int i = 0; i < (int)((1.0 - Momentum) * 33.3); ++i)
             {
@@ -170,9 +196,9 @@ namespace DunGen.TerrainGen
         }
         else // Last direction already explored; pick randomly
         {
-          dir = untried[r.Next(untried.Count)];
+          dir = currentUntried[r.Next(currentUntried.Count)];
         }
-        untried.Remove(dir);
+        currentUntried.Remove(dir);
 
         // We calculate adjacent and proceeding coordinate so that
         // turns only occur on every other tile, so that entire tiles
@@ -181,32 +207,32 @@ namespace DunGen.TerrainGen
         switch (dir)
         {
           case Direction.N: // up
-            x2 = currentX;
-            y2 = currentY - 1;
-            x3 = currentX;
-            y3 = currentY - 2;
+            x2 = currentPoint.X;
+            y2 = currentPoint.Y - 1;
+            x3 = currentPoint.X;
+            y3 = currentPoint.Y - 2;
             break;
           case Direction.E: // right
-            x2 = currentX + 1;
-            y2 = currentY;
-            x3 = currentX + 2;
-            y3 = currentY;
+            x2 = currentPoint.X + 1;
+            y2 = currentPoint.Y;
+            x3 = currentPoint.X + 2;
+            y3 = currentPoint.Y;
             break;
           case Direction.S: // down
-            x2 = currentX;
-            y2 = currentY + 1;
-            x3 = currentX;
-            y3 = currentY + 2;
+            x2 = currentPoint.X;
+            y2 = currentPoint.Y + 1;
+            x3 = currentPoint.X;
+            y3 = currentPoint.Y + 2;
             break;
           case Direction.W: // left
-            x2 = currentX - 1;
-            y2 = currentY;
-            x3 = currentX - 2;
-            y3 = currentY;
+            x2 = currentPoint.X - 1;
+            y2 = currentPoint.Y;
+            x3 = currentPoint.X - 2;
+            y3 = currentPoint.Y;
             break;
           default: // Should never happen -- just to make compiler happy
-            x3 = x2 = currentX;
-            y3 = y2 = currentY;
+            x3 = x2 = currentPoint.X;
+            y3 = y2 = currentPoint.Y;
             break;
         }
         if (x2 < BorderPadding || y2 < BorderPadding || x3 < BorderPadding || y3 < BorderPadding  // Out of bounds
@@ -215,6 +241,7 @@ namespace DunGen.TerrainGen
           || !overallMask[y2, x2] || !overallMask[y3, x3]   // Not in mask
           || explored[y2, x2] || explored[y3, x3])      // Already visited
         {
+          points.Push(currentPointTracker);
           continue;
         }
 
@@ -231,6 +258,7 @@ namespace DunGen.TerrainGen
             // That tile's group has been connected, so remove it from dependant
             d.DeCategorizeAll(x3, y3, DungeonTiles.Category.Room);
           }
+          points.Push(currentPointTracker);
           continue;
         }
 
@@ -239,15 +267,18 @@ namespace DunGen.TerrainGen
         explored[y2, x2] = true;
         d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
 
+        this.RunCallbacks(d);
+
+        lastDirection = dir;
         // R E C U R S E !
-        this.RecursiveBacktrack_TilesAsWalls(d, x3, y3, explored, overallMask, r, dir);
+        points.Push(currentPointTracker);
+        points.Push(new PointTracking(new Point(x3, y3)));
 
-      } while (untried.Count > 0);
-
-      // Case 3: We have explored this tile and all tried recursing
-      // into al of its adjacent tiles. Time to pop back up in the
-      // stack, to explore a previous tile's adjacents
-      return;
+        // Case 3: We have explored this tile and all tried recursing
+        // into al of its adjacent tiles. Time to pop back up in the
+        // stack, to explore a previous tile's adjacents
+        continue;
+      }
     }
   }
 }

@@ -22,8 +22,8 @@ namespace dungen_cli
     static void Main(string[] args)
     {
       // Generate Dungeon
-      int width = 25,
-          height = 25;
+      int width = 300,
+          height = 300;
 
       // Generate a mask. But not a very good one.
       bool[,] algMask = new bool[height, width];
@@ -52,42 +52,42 @@ namespace dungen_cli
         TerrainGenCallbacks = debugSettings ? new List<Action<DungeonTiles>>() { d => RenderToImage(d) } : null,
         TerrainGenAlgs = new Dictionary<ITerrainGenAlgorithm, bool[,]>()
         {
-          {
-            new MonteCarloRoomCarver()
-            {
-              GroupForDebug = debugSettings,
-              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
-              RoomWidthMin = 3,
-              RoomWidthMax = 5,
-              RoomHeightMin = 3,
-              RoomHeightMax = 5,
-              Attempts = 500,
-              TargetRoomCount = 2
-            },
-            algMask
-          },
-          {
-            new LinearRecursiveDivision()
-            {
-              GroupForDebug = debugSettings, 
-              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
-              BuildStrategy = LinearRecursiveDivision.ExistingDataHandling.Avoid,
-              RoomSize = 1,
-              Variability = 0.5
-            },
-            algMask
-          },
-
           //{
-          //  new RecursiveBacktracker()
+          //  new MonteCarloRoomCarver()
           //  {
-          //    TilesAsWalls = true,
-          //    BorderPadding = 0,
-          //    Momentum = 0.45,
-          //    ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
+          //    GroupForDebug = debugSettings,
+          //    WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+          //    RoomWidthMin = 3,
+          //    RoomWidthMax = 5,
+          //    RoomHeightMin = 3,
+          //    RoomHeightMax = 5,
+          //    Attempts = 500,
+          //    TargetRoomCount = 0
           //  },
           //  algMask
           //},
+          //{
+          //  new LinearRecursiveDivision()
+          //  {
+          //    GroupForDebug = debugSettings,
+          //    WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+          //    BuildStrategy = LinearRecursiveDivision.ExistingDataHandling.Avoid,
+          //    RoomSize = 1,
+          //    Variability = 0.5
+          //  },
+          //  algMask
+          //},
+
+          {
+            new RecursiveBacktracker()
+            {
+              TilesAsWalls = true,
+              BorderPadding = 0,
+              Momentum = 0.45,
+              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
+            },
+            algMask
+          },
           //{
           //  new DeadEndFiller()
           //  {
