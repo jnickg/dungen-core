@@ -243,9 +243,10 @@ namespace DunGen.Rendering
       int totalHeight = tiles.Height * tileSz_px + 1;
 
       Image img = new Bitmap(totalWidth, totalHeight);
-      Graphics g = Graphics.FromImage(img);
-
-      this.Render(tiles, g);
+      using (Graphics g = Graphics.FromImage(img))
+      {
+        this.Render(tiles, g);
+      }
 
       return img;
     }

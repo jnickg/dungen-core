@@ -15,15 +15,17 @@ namespace dungen_cli
     {
       System.Threading.Interlocked.Increment(ref imgcounter);
       DungeonTileRenderer renderer = new DungeonTileRenderer();
-      Image renderedDungeon = renderer.Render(d);
-      renderedDungeon.Save(String.Format("dungeon_{0}.bmp", imgcounter), ImageFormat.Bmp);
+      using (Image renderedDungeon = renderer.Render(d))
+      {
+        renderedDungeon.Save(String.Format("dungeon_{0}.bmp", imgcounter), ImageFormat.Bmp);
+      }
     }
 
     static void Main(string[] args)
     {
       // Generate Dungeon
-      int width = 300,
-          height = 300;
+      int width = 51,
+          height = 51;
 
       // Generate a mask. But not a very good one.
       bool[,] algMask = new bool[height, width];
@@ -52,20 +54,20 @@ namespace dungen_cli
         TerrainGenCallbacks = debugSettings ? new List<Action<DungeonTiles>>() { d => RenderToImage(d) } : null,
         TerrainGenAlgs = new Dictionary<ITerrainGenAlgorithm, bool[,]>()
         {
-          //{
-          //  new MonteCarloRoomCarver()
-          //  {
-          //    GroupForDebug = debugSettings,
-          //    WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
-          //    RoomWidthMin = 3,
-          //    RoomWidthMax = 5,
-          //    RoomHeightMin = 3,
-          //    RoomHeightMax = 5,
-          //    Attempts = 500,
-          //    TargetRoomCount = 0
-          //  },
-          //  algMask
-          //},
+          {
+            new MonteCarloRoomCarver()
+            {
+              GroupForDebug = debugSettings,
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+              RoomWidthMin = 4,
+              RoomWidthMax = 10,
+              RoomHeightMin = 4,
+              RoomHeightMax = 10,
+              Attempts = 500,
+              TargetRoomCount = 15
+            },
+            algMask
+          },
           //{
           //  new LinearRecursiveDivision()
           //  {
@@ -83,18 +85,18 @@ namespace dungen_cli
             {
               TilesAsWalls = true,
               BorderPadding = 0,
-              Momentum = 0.45,
+              Momentum = 0.25,
               ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
             },
             algMask
           },
-          //{
-          //  new DeadEndFiller()
-          //  {
-          //    FillPasses = 1
-          //  },
-          //  algMask
-          //}
+          {
+            new DeadEndFiller()
+            {
+              FillPasses = 20
+            },
+            algMask
+          }
         },
       };
 
