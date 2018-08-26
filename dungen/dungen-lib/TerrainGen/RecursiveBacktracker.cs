@@ -108,13 +108,16 @@ namespace DunGen.TerrainGen
       Point origin = originPool[r.Next() % originPool.Count];
 
       // Launch into recursive algorithm
-      if (this.TilesAsWalls)
+      switch (base.WallStyle)
       {
-        this.RecursiveBacktrack_TilesAsWalls(d, origin.X, origin.Y, isExplored, mask, r);
-      }
-      else
-      {
-        throw new NotImplementedException("Doesn't yet support Boundaries as walls."); // TODO
+        case WallFormationStyle.Tiles:
+          this.RecursiveBacktrack_TilesAsWalls(d, origin.X, origin.Y, isExplored, mask, r);
+          break;
+        case WallFormationStyle.Boundaries:
+        this.RecursiveBacktrack_BoundariesAsWalls(d, origin.X, origin.Y, isExplored, mask, r);
+          break;
+        default:
+          throw new NotSupportedException("Unsupported WallFormationStyile value selected");
       }
     }
 
@@ -124,6 +127,23 @@ namespace DunGen.TerrainGen
       E,
       S,
       W
+    }
+
+    private Tile.MoveType GetMoveFor(Direction d)
+    {
+      switch (d)
+      {
+        case Direction.N:
+          return Tile.MoveType.Open_NORTH;
+        case Direction.E:
+          return Tile.MoveType.Open_EAST;
+        case Direction.S:
+          return Tile.MoveType.Open_SOUTH;
+        case Direction.W:
+          return Tile.MoveType.Open_WEST;
+        default:
+          throw new ArgumentException();
+      }
     }
 
     private struct PointTracking
@@ -150,6 +170,123 @@ namespace DunGen.TerrainGen
       }
     }
 
+    private void RecursiveBacktrack_BoundariesAsWalls(DungeonTiles d, int startX, int startY, bool[,] explored, bool[,] overallMask, Random r)
+    {
+      if (null == explored || null == overallMask) return;
+      Stack<PointTracking> points = new Stack<PointTracking>();
+      Direction lastDirection = Direction.N;
+
+      points.Push(new PointTracking(new Point(startX, startY)));
+      while (points.Count > 0)
+      {
+        PointTracking currentPointTracker = points.Pop();
+        Point currentPoint = currentPointTracker.ThisPoint;
+        List<Direction> currentUntried = currentPointTracker.UntriedDirections;
+
+        if (currentUntried.Count == 0) continue;
+
+        if (currentPoint.X >= explored.GetLength(1) || currentPoint.Y >= explored.GetLength(0) || currentPoint.X < 0 || currentPoint.Y < 0) continue;
+
+        // Case 1: Current point is not within bounds
+        if (!overallMask[currentPoint.Y, currentPoint.X]) continue;
+
+        // Case 2: We are at an unexplored tile. Mark the tile as explored and carve it up
+        explored[currentPoint.Y, currentPoint.X] = true;
+        d[currentPoint.Y, currentPoint.X].Physics = d[currentPoint.Y, currentPoint.X].Physics.OpenUp(GetMoveFor(lastDirection).GetOpposite());
+
+        // Pick a random direction to explore
+        Direction dir = lastDirection;
+        // Can use momentum
+        if (currentUntried.Contains(lastDirection))
+        {
+          List<Direction> candidates = new List<Direction>();
+          for (int i = 0; i < (int)(Momentum * 100); ++i)
+          {
+            candidates.Add(lastDirection);
+          }
+          foreach (Direction nextDir in currentUntried.Where(aDir => aDir != lastDirection))
+          {
+            for (int i = 0; i < (int)((1.0 - Momentum) * 33.3); ++i)
+            {
+              candidates.Add(nextDir);
+            }
+          }
+          dir = candidates[r.Next(candidates.Count)];
+        }
+        else // Last direction already explored; pick randomly
+        {
+          dir = currentUntried[r.Next(currentUntried.Count)];
+        }
+        currentUntried.Remove(dir);
+
+        int x2, y2; // Adjacent coordinate
+        switch (dir)
+        {
+          case Direction.N: // up
+            x2 = currentPoint.X;
+            y2 = currentPoint.Y - 1;
+            break;
+          case Direction.E: // right
+            x2 = currentPoint.X + 1;
+            y2 = currentPoint.Y;
+            break;
+          case Direction.S: // down
+            x2 = currentPoint.X;
+            y2 = currentPoint.Y + 1;
+            break;
+          case Direction.W: // left
+            x2 = currentPoint.X - 1;
+            y2 = currentPoint.Y;
+            break;
+          default: // Should never happen -- just to make compiler happy
+            x2 = currentPoint.X;
+            y2 = currentPoint.Y;
+            break;
+        }
+        if (x2 < BorderPadding || y2 < BorderPadding  // Out of bounds
+          || x2 >= explored.GetLength(1) - BorderPadding || y2 >= explored.GetLength(0) - BorderPadding // Out of bounds
+          || !overallMask[y2, x2] // Not in mask
+          || explored[y2, x2] )// Already visited
+        {
+          points.Push(currentPointTracker);
+          continue;
+        }
+
+        // Special case: we want to connect to the area due to our strategy, but do NOT want to recurse
+        if (d[y2, x2].Physics != Tile.MoveType.Wall &&
+          this.ExistingDataStrategy == OpenTilesStrategy.ConnectToRooms)
+        {
+          if (d.GetCategoriesFor(x2, y2).Contains(DungeonTiles.Category.Room))
+          {
+            explored[y2, x2] = true;
+            d[currentPoint.Y, currentPoint.X].Physics = d[currentPoint.Y, currentPoint.X].Physics.OpenUp(GetMoveFor(dir));
+            d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(GetMoveFor(dir).GetOpposite());
+            // That tile's group has been connected, so remove it from dependant
+            d.DeCategorizeAll(x2, y2, DungeonTiles.Category.Room);
+          }
+          points.Push(currentPointTracker);
+          continue;
+        }
+
+        // Tiles as walls means we traverse an adjacent (x2,y2) tile,
+        // before moving to the "next" tile (x3,y3). So, do that.
+        explored[y2, x2] = true;
+        d[currentPoint.Y, currentPoint.X].Physics = d[currentPoint.Y, currentPoint.X].Physics.OpenUp(GetMoveFor(dir));
+        d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(GetMoveFor(dir).GetOpposite());
+
+        this.RunCallbacks(d);
+
+        lastDirection = dir;
+        // R E C U R S E !
+        points.Push(currentPointTracker);
+        points.Push(new PointTracking(new Point(x2, y2)));
+
+        // Case 3: We have explored this tile and all tried recursing
+        // into al of its adjacent tiles. Time to pop back up in the
+        // stack, to explore a previous tile's adjacents
+        continue;
+      }
+    }
 
     private void RecursiveBacktrack_TilesAsWalls(DungeonTiles d, int startX, int startY, bool[,] explored, bool[,] overallMask, Random r)
     {

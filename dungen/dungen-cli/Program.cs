@@ -86,7 +86,8 @@ namespace dungen_cli
               TilesAsWalls = true,
               BorderPadding = 0,
               Momentum = 0.25,
-              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms
+              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms,
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries
             },
             algMask
           },
