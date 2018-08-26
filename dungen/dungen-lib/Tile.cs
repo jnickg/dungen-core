@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace DunGen
@@ -165,6 +166,21 @@ namespace DunGen
       if (0 != (t & Tile.MoveType.Open_WEST)) ++sidesOpened;
       return sidesOpened;
 
+    }
+
+    public static IList<Tile> GetAdjacents(this Tile t)
+    {
+      IList<Tile> adjacents = new List<Tile>();
+      if (t.Parent == null) return adjacents;
+
+      DungeonTiles d = t.Parent;
+      Point t_loc = t.Location;
+      if (d.TileIsValid(t_loc.X, t_loc.Y + 1)) adjacents.Add(d[t_loc.Y + 1, t_loc.X]);
+      if (d.TileIsValid(t_loc.X, t_loc.Y - 1)) adjacents.Add(d[t_loc.Y - 1, t_loc.X]);
+      if (d.TileIsValid(t_loc.X + 1, t_loc.Y)) adjacents.Add(d[t_loc.Y, t_loc.X + 1]);
+      if (d.TileIsValid(t_loc.X - 1, t_loc.Y)) adjacents.Add(d[t_loc.Y, t_loc.X - 1]);
+
+      return adjacents;
     }
   }
 }

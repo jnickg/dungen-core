@@ -140,6 +140,10 @@ namespace DunGen.TerrainGen
         if (currentRegion.Width * currentRegion.Height <= this.RoomSize)
         {
           d.Categorize(currentRegion, DungeonTiles.Category.Room);
+          if (this.GroupRooms)
+          {
+            d.CreateGroup(currentRegion);
+          }
           continue;
         }
 

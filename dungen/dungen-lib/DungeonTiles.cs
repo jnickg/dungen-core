@@ -81,6 +81,36 @@ namespace DunGen
     #endregion
 
     #region Members
+    public Tile GetRandomTile(Random r = null)
+    {
+      if (null == r) r = new Random();
+      return this[r.Next(this.Height), r.Next(this.Width)];
+    }
+
+    public Tile GetRandomTile(bool[,] mask, Random r = null)
+    {
+      if (null == r) r = new Random();
+      if (null == mask) throw new ArgumentNullException();
+      List<Tile> tilePool = new List<Tile>(this.GetAllIn(mask));
+      return tilePool[r.Next(tilePool.Count)];
+    }
+
+    public IEnumerable<Tile> GetAllIn(bool[,] mask)
+    {
+      if (null == mask) return new HashSet<Tile>();
+
+      ISet<Tile> rtn = new HashSet<Tile>();
+      for (int y = 0; y < this.Height; ++y)
+      {
+        for (int x = 0; x < this.Width; ++x)
+        {
+          if (mask[y,x]) rtn.Add(this[y,x]);
+        }
+      }
+
+      return rtn;
+    }
+
     public DungeonTiles(int width, int height, Tile.MoveType startingPhyics = Tile.MoveType.Wall)
     {
       ResetTiles(width, height, startingPhyics);
@@ -291,6 +321,39 @@ namespace DunGen
           }
         }
       }
+    }
+
+    public void CarveBetween(Tile t1, Tile t2)
+    {
+      CarveBetween(t1.Location, t2.Location);
+    }
+
+    /// <summary>
+    /// Carves openings from/to the specified Points
+    /// </summary>
+    public void CarveBetween(Point p1, Point p2)
+    {
+      if (this.IsHex) throw new NotImplementedException();
+    }
+
+    public Tile.MoveType GetCardinality(Tile from, Tile to)
+    {
+      return GetCardinality(from.Location, to.Location);
+    }
+
+    /// <summary>
+    /// If adjacent, returns the cardinal direction from/to the specified Points.
+    /// If not adjacent, gives closest approximation of cardinality.
+    /// </summary>
+    public Tile.MoveType GetCardinality(Point from, Point to)
+    {
+      if (this.IsHex) throw new NotImplementedException();
+
+      int dx = to.X - from.X;
+      int dy = to.Y - from.Y;
+
+      if (Math.Abs(dx) > Math.Abs(dy)) return (dx > 0) ? Tile.MoveType.Open_EAST : Tile.MoveType.Open_WEST;
+      else return (dy > 0) ? Tile.MoveType.Open_SOUTH: Tile.MoveType.Open_NORTH;
     }
 
     public bool TileIsValid(int x, int y)

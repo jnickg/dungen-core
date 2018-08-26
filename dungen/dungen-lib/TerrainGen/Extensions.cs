@@ -82,5 +82,21 @@ namespace DunGen.TerrainGen
 
       return splitMasks;
     }
+
+    public static T PickRandomly<T>(this IEnumerable<T> t, Random r = null)
+    {
+      if (null == r) r = new Random();
+      IList<T> t_list = new List<T>(t);
+      if (t_list.Count == 0) return default(T);
+      return t_list[r.Next(t_list.Count)];
+    }
+
+    public static T PullRandomly<T>(this ICollection<T> t, Random r = null)
+    {
+      if (null == r) r = new Random();
+      T rando = t.PickRandomly(r);
+      t.Remove(rando);
+      return rando;
+    }
   }
 }
