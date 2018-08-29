@@ -29,12 +29,12 @@ namespace dungen_cli
 
       // Generate a mask. But not a very good one.
       bool[,] algMask = new bool[height, width];
-      Random maskGen = new Random();
+      Random r = new Random();
       for (int y = 0; y < algMask.GetLength(0); ++y)
       {
         for (int x = 0; x < algMask.GetLength(1); ++x)
         {
-          //algMask[y, x] = maskGen.NextDouble() < 0.60d;
+          //algMask[y, x] = r.NextDouble() < 0.60d;
           algMask[y, x] = true;
         }
       }
@@ -47,6 +47,10 @@ namespace dungen_cli
 #endif
 
       DungeonGenerator generator = new DungeonGenerator();
+      generator.WorkingDungeon = new Dungeon()
+      {
+        Tiles = new DungeonTiles(width, height)
+      };
       generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
       {
         DoReset = false,
@@ -54,36 +58,47 @@ namespace dungen_cli
         Width = width,
         Height = height,
         TerrainGenCallbacks = debugSettings ? new List<Action<DungeonTiles>>() { d => RenderToImage(d) } : null,
-        TerrainGenAlgs = new Dictionary<ITerrainGenAlgorithm, bool[,]>()
+        TerrainGenAlgRuns = new List<AlgorithmRun>
         {
-          //{
-          //  new MonteCarloRoomCarver()
-          //  {
-          //    GroupForDebug = debugSettings,
-          //    WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
-          //    RoomWidthMin = 4,
-          //    RoomWidthMax = 10,
-          //    RoomHeightMin = 4,
-          //    RoomHeightMax = 10,
-          //    Attempts = 500,
-          //    TargetRoomCount = 15
-          //  },
-          //  algMask
-          //},
-          //{
-          //  new LinearRecursiveDivision()
-          //  {
-          //    GroupForDebug = groupDebug,
-          //    GroupRooms = true,
-          //    WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
-          //    BuildStrategy = LinearRecursiveDivision.ExistingDataHandling.Avoid,
-          //    RoomSize = 16,
-          //    Variability = 0.0
-          //  },
-          //  algMask
-          //},
+          new AlgorithmRun()
           {
-            new BlobRecursiveDivision()
+            Alg = new MonteCarloRoomCarver()
+            {
+              GroupForDebug = debugSettings,
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+              RoomWidthMin = 4,
+              RoomWidthMax = 10,
+              RoomHeightMin = 4,
+              RoomHeightMax = 10,
+              Attempts = 500,
+              TargetRoomCount = 15
+            },
+            Context = new TerrainGenAlgorithmContext()
+            {
+              Mask = algMask,
+              R = r
+            }
+          },
+          new AlgorithmRun()
+          {
+            Alg = new LinearRecursiveDivision()
+            {
+              GroupForDebug = groupDebug,
+              GroupRooms = true,
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+              BuildStrategy = LinearRecursiveDivision.ExistingDataHandling.Avoid,
+              RoomSize = 16,
+              Variability = 0.0
+            },
+            Context = new TerrainGenAlgorithmContext()
+            {
+              Mask = algMask,
+              R = r
+            }
+          },
+          new AlgorithmRun()
+          {
+            Alg = new BlobRecursiveDivision()
             {
               GroupForDebug = groupDebug,
               GroupRooms = true,
@@ -92,26 +107,40 @@ namespace dungen_cli
               GapCount = 10,
               MaxGapProportion = 0.01
             },
-            algMask
+            Context = new TerrainGenAlgorithmContext()
+            {
+              Mask = algMask,
+              R = r
+            }
           },
-          //{
-          //  new RecursiveBacktracker()
-          //  {
-          //    TilesAsWalls = true,
-          //    BorderPadding = 0,
-          //    Momentum = 0.25,
-          //    ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms,
-          //    WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Tiles
-          //  },
-          //  algMask
-          //},
-          //{
-          //  new DeadEndFiller()
-          //  {
-          //    FillPasses = 1
-          //  },
-          //  algMask
-          //}
+          new AlgorithmRun()
+          {
+            Alg = new RecursiveBacktracker()
+            {
+              TilesAsWalls = true,
+              BorderPadding = 0,
+              Momentum = 0.25,
+              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms,
+              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Tiles
+            },
+            Context = new TerrainGenAlgorithmContext()
+            {
+              Mask = algMask,
+              R = r
+            }
+          },
+          new AlgorithmRun()
+          {
+            Alg = new DeadEndFiller()
+            {
+              FillPasses = 1
+            },
+            Context = new TerrainGenAlgorithmContext()
+            {
+              Mask = algMask,
+              R = r
+            }
+          },
         },
       };
 
@@ -119,10 +148,10 @@ namespace dungen_cli
 
       RenderToImage(dungeon.Tiles);
 
-      foreach(var alg in dungeon.Algorithms.Keys)
+      foreach(var run in generator.Options.TerrainGenAlgRuns)
       {
-        Console.WriteLine("Algorithm {0}", alg.Name);
-        foreach(var param in alg.Parameters.Parameters)
+        Console.WriteLine("Algorithm {0}", run.Alg.Name);
+        foreach(var param in run.Alg.Parameters.Parameters)
         {
           Console.WriteLine("   {0,-10} used for {1,-10} param \'{2,-15}\'  ({3})", param.Value, param.Category, param.Name, param.Description);
         }

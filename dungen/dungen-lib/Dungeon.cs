@@ -28,15 +28,8 @@ namespace DunGen
       }
     }
 
-    /// <summary>
-    /// Algorithms that were run on the Dungeon's tiles, and the mask used when
-    /// it was run.
-    /// </summary>
-    public IDictionary<ITerrainGenAlgorithm, bool[,]> Algorithms { get; set; }
-
     public Dungeon()
     {
-      this.Algorithms = new Dictionary<ITerrainGenAlgorithm, bool[,]>();
     }
   }
 }

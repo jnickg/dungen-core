@@ -30,6 +30,37 @@ namespace DunGen
     /// Gets a prototype instance of this algorithm's parameters.
     /// </summary>
     AlgorithmParams GetParamsPrototype();
+    /// <summary>
+    /// Runs the Algorithm with the specified context
+    /// </summary>
+    void Run(IAlgorithmContext context);
+  }
+
+  /// <summary>
+  /// A context in which an Algorithm can be run.
+  /// </summary>
+  public interface IAlgorithmContext
+  {
+    Dungeon D { get; set; }
+    bool[,] Mask { get; set; }
+    Random R { get; set; }
+  }
+
+  /// <summary>
+  /// A pairing of an algorithm with its appropriate context
+  /// </summary>
+  public class AlgorithmRun
+  {
+    public IAlgorithm Alg { get; set; }
+    public IAlgorithmContext Context { get; set; }
+
+    public void RunAlgorithm()
+    {
+      if (null != Alg)
+      {
+        Alg.Run(Context);
+      }
+    }
   }
 
   /// <summary>
@@ -44,11 +75,9 @@ namespace DunGen
       get => this.GetType().Name;
     }
 
-    /// <summary>
-    /// The magic sauce that allows for easy retrieval of parameter
-    /// information, and setting of actual algorithm's properties
-    /// via those parameter info objects.
-    /// </summary>
+    // The magic sauce that allows for easy retrieval of parameter
+    // information, and setting of actual algorithm's properties
+    // via those parameter info objects.
     public AlgorithmParams Parameters
     {
       get
@@ -147,5 +176,7 @@ namespace DunGen
 
       return prototype;
     }
+
+    public abstract void Run(IAlgorithmContext context);
   }
 }

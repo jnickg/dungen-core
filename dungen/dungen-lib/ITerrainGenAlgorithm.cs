@@ -47,6 +47,7 @@ namespace DunGen
     /// How this algorithm behaves, given its current parameters.
     /// </summary>
     TerrainModBehavior Behavior { get; }
+
     /// <summary>
     /// The style of this algorithm.
     /// </summary>
@@ -64,6 +65,27 @@ namespace DunGen
     /// </summary>
     void Run(DungeonTiles d, bool[,] mask, Random r);
   }
+
+  /// <summary>
+  /// A general context for a Terrain Generating Algorithm,
+  /// with zero frills.
+  /// </summary>
+  public class TerrainGenAlgorithmContext : IAlgorithmContext
+  {
+    /// <summary>
+    /// The Dungeon on which to operate in this context.
+    /// </summary>
+    public Dungeon D { get; set; }
+    /// <summary>
+    /// The mask with which to operate on the dungeon.
+    /// </summary>
+    public bool[,] Mask { get; set; }
+    /// <summary>
+    /// If non-null the Random instance to use when generating.
+    /// </summary>
+    public Random R { get; set; }
+  }
+
 
   /// <summary>
   /// Shared base implementation for Terrain Generating algorithms
@@ -115,6 +137,11 @@ namespace DunGen
 
     #region Members
     public abstract void Run(DungeonTiles d, bool[,] mask, Random r);
+
+    public override void Run(IAlgorithmContext context)
+    {
+      Run(context.D.Tiles, context.Mask, context.R);
+    }
 
     public void AttachCallback(Action<DungeonTiles> callback)
     {
