@@ -13,8 +13,8 @@ namespace DunGen
     private string _directory = AppDomain.CurrentDomain.BaseDirectory;
     #endregion
 
-    public List<IAlgorithm> Algorithms { get; private set; }
-    public List<ITerrainGenAlgorithm> TerrainGenAlgorithms { get; private set; }
+    public List<IAlgorithm> AlgorithmProtos { get; private set; }
+    public List<ITerrainGenAlgorithm> TerrainGenAlgorithmProtos { get; private set; }
 
     /// <summary>
     /// The current directory. Changing this clears the enumerated
@@ -33,17 +33,25 @@ namespace DunGen
       }
     }
 
-    public void Clear()
+    public AlgorithmPluginManager(string directory = "")
     {
-      this.Algorithms = new List<IAlgorithm>();
-      this.TerrainGenAlgorithms = new List<ITerrainGenAlgorithm>();
+      if (null != directory && "" != directory)
+      {
+        this.Directory = directory;
+      }
     }
 
-    public void ReEnumerate()
+    public void Clear()
     {
-      this.Algorithms = new List<IAlgorithm>(
+      this.AlgorithmProtos = new List<IAlgorithm>();
+      this.TerrainGenAlgorithmProtos = new List<ITerrainGenAlgorithm>();
+    }
+
+    public void Enumerate()
+    {
+      this.AlgorithmProtos = new List<IAlgorithm>(
         LoadPluginsFromPath<IAlgorithm>(this.Directory));
-      this.TerrainGenAlgorithms = new List<ITerrainGenAlgorithm>(
+      this.TerrainGenAlgorithmProtos = new List<ITerrainGenAlgorithm>(
         LoadPluginsFromPath<ITerrainGenAlgorithm>(this.Directory));
     }
 
@@ -103,6 +111,7 @@ namespace DunGen
         //  t.GetInterface(pluginType.Name) != null
         if (pluginType.IsAssignableFrom(t))
         {
+          if (t.IsAbstract) continue;
           T plugin = (T)Activator.CreateInstance(t);
           if (plugin != null)
           {

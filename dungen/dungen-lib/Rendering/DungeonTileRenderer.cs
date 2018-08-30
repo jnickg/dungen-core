@@ -146,7 +146,7 @@ namespace DunGen.Rendering
 
     /// <summary>
     /// Draws the border for tile (x, y) in the specified DungeonTiles,
-    /// to the specified graphics & rectangle coordinates.
+    /// to the specified graphics and rectangle coordinates.
     /// </summary>
     /// <param name="tiles">The DungeonTiles for which this border is being drawn</param>
     /// <param name="x">The x-location of the tile whose border is being drawn</param>

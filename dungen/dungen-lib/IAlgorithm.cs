@@ -9,7 +9,7 @@ namespace DunGen
   /// An interface satisfied by all algorithms that run when generating
   /// a dungeon
   /// </summary>
-  public interface IAlgorithm
+  public interface IAlgorithm : ICloneable
   {
     /// <summary>
     /// The name of this algorithm.
@@ -47,7 +47,8 @@ namespace DunGen
   }
 
   /// <summary>
-  /// A pairing of an algorithm with its appropriate context
+  /// A pairing of an algorithm with its appropriate context. Also
+  /// handles some basic logic of actually running the algorithm.
   /// </summary>
   public class AlgorithmRun
   {
@@ -59,6 +60,25 @@ namespace DunGen
       if (null != Alg)
       {
         Alg.Run(Context);
+      }
+    }
+
+    public void PrepareFor(Dungeon d)
+    {
+      if (null == d) throw new ArgumentNullException();
+      if (null == Context) Context = new AlgorithmContextBase();
+
+      Context.D = d;
+
+      if (Context.Mask == null && Context.D != null)
+      {
+        Context.Mask = Context.D.Tiles.DefaultMask;
+      }
+      if (Context.Mask.GetLength(0) != Context.D.Tiles.Height ||
+          Context.Mask.GetLength(1) != Context.D.Tiles.Width)
+      {
+        throw new Exception("Invalid mask for algorithm run; can't be " +
+          "used with given Dungeon");
       }
     }
   }
@@ -117,7 +137,7 @@ namespace DunGen
     {
       AlgorithmParams prototype = new AlgorithmParams()
       {
-        Parameters = new List<IAlgorithmParameter>()
+        List = new List<IAlgorithmParameter>()
       };
 
       foreach (PropertyInfo propInfo in this.GetType().GetProperties())
@@ -170,7 +190,7 @@ namespace DunGen
 
           if (null == newParam) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
           // ... and add it to the list of parameters!
-          prototype.Parameters.Add(newParam);
+          prototype.List.Add(newParam);
         }
       }
 
@@ -178,5 +198,17 @@ namespace DunGen
     }
 
     public abstract void Run(IAlgorithmContext context);
+
+    public object Clone()
+    {
+      Type algT = this.GetType();
+      if (algT.IsAbstract) return null;
+      IAlgorithm algClone = (IAlgorithm)Activator.CreateInstance(algT);
+      if (algClone != null && algClone.TakesParameters)
+      {
+        algClone.Parameters = this.Parameters;
+      }
+      return algClone;
+    }
   }
 }

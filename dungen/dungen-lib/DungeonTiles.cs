@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace DunGen
 {
@@ -9,6 +11,7 @@ namespace DunGen
   /// A collection of Tiles comprosing a Dungeon's physical layout. Can be
   /// categorized and grouped
   /// </summary>
+  [DataContract(Name = "layout")]
   public class DungeonTiles
   {
     #region Nested Types
@@ -33,14 +36,61 @@ namespace DunGen
     #endregion
 
     #region Private Members
-    private Tile[,] Tiles { get; set; }
+    private bool[,] _defaultMask = null;
+
+    private Tile[,] _tiles;
+
+    /// <summary>
+    /// Shim member tied to actual Tiles data, for the purposes of serialization.
+    /// For performance purposes, users should not use this member directly. Instead,
+    /// interact with the Tiles field.
+    /// </summary>
+    [DataMember(IsRequired = true, Name = "tiles")]
+    private TileCollection _tiles_DataContract
+    {
+      get
+      {
+        return Tiles.Jaggedize_DC();
+      }
+
+      set
+      {
+        Tiles = value.UnJaggedize();
+      }
+    }
+
+    private Tile[,] Tiles {
+      get
+      {
+        return _tiles;
+      }
+
+      set
+      {
+        this._tiles = value;
+        this.TilesById = new Dictionary<int, Point>();
+        this.Tiles_Set = new HashSet<Tile>();
+        for (int y = 0; y < value.GetLength(0); ++y)
+        {
+          for (int x = 0; x < value.GetLength(1); ++x)
+          {
+            value[y, x].Parent = this;
+            this.Tiles_Set.Add(value[y, x]);
+            this.TilesById.Add(value[y, x].Id, new Point(x, y));
+          }
+        }
+      }
+    }
     private IDictionary<Category, IList<ISet<Tile>>> CategoryGroups { get; set; }
     #endregion
 
     #region Properties
     public Dungeon Parent { get; internal set; }
+
     public ISet<Tile> Tiles_Set { get; set; }
+
     public IDictionary<int, Point> TilesById { get; set; }
+
     public bool IsHex { get; private set; }
 
     public Tile this[int y, int x]
@@ -56,10 +106,52 @@ namespace DunGen
     }
 
     /// <summary>
+    /// Default all-true mask for this set of DungeonTiles.
+    /// </summary>
+    public bool[,] DefaultMask
+    {
+      get
+      {
+        if (null == _defaultMask ||
+          this._defaultMask.GetLength(0) != this.Height ||
+          this._defaultMask.GetLength(1) != this.Width)
+        {
+          _defaultMask = new bool[this.Height, this.Width];
+
+          for (int y = 0; y < _defaultMask.GetLength(0); ++y)
+          {
+            for (int x = 0; x < _defaultMask.GetLength(1); ++x)
+            {
+              _defaultMask[y, x] = true;
+            }
+          }
+        }
+
+        return _defaultMask;
+      }
+    }
+
+    private IList<ISet<Tile>> _groups;
+
+    /// <summary>
     /// A List of Tile groupings, represented as Sets. Each list should contain
     /// only tiles contained by the "Tiles" property.
     /// </summary>
-    public IList<ISet<Tile>> Groups { get; private set; }
+    public IList<ISet<Tile>> Groups
+    {
+      get
+      {
+        if (null == _groups)
+        {
+          _groups = new List<ISet<Tile>>();
+        }
+        return _groups;
+      }
+      private set
+      {
+        _groups = value;
+      }
+    }
 
     public int Width
     {
@@ -111,6 +203,11 @@ namespace DunGen
       return rtn;
     }
 
+    public DungeonTiles()
+    {
+      ResetTiles(1, 1);
+    }
+
     public DungeonTiles(int width, int height, Tile.MoveType startingPhyics = Tile.MoveType.Wall)
     {
       ResetTiles(width, height, startingPhyics);
@@ -118,23 +215,20 @@ namespace DunGen
 
     public void ResetTiles(int width, int height, Tile.MoveType startingPhyics = Tile.MoveType.Wall)
     {
-      this.Tiles = new Tile[height, width];
-      this.TilesById = new Dictionary<int, Point>();
-      this.Groups = new List<ISet<Tile>>();
-      this.Tiles_Set = new HashSet<Tile>();
+      Tile[,] tiles = new Tile[height, width];
       for (int y = 0; y < height; ++y)
       {
         for (int x = 0; x < width; ++x)
         {
-          this[y, x] = new Tile()
+          tiles[y, x] = new Tile()
           {
             Parent = this,
             Physics = startingPhyics
           };
-          this.Tiles_Set.Add(this[y, x]);
-          this.TilesById.Add(this[y, x].Id, new Point(x, y));
         }
       }
+      this.Tiles = tiles;
+      this.Groups = new List<ISet<Tile>>();
       this.IsHex = false; // TODO
       this.CategoryGroups = new Dictionary<Category, IList<ISet<Tile>>>();
       foreach(Category c in (Category[])Enum.GetValues(typeof(Category)))

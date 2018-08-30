@@ -65,10 +65,7 @@ namespace DunGen
     public override object Value
     {
       get => _value;
-      set
-      {
-        _value = (double)value;
-      }
+      set => _value = Double.Parse(value.ToString());
     }
     public override object Default { get => _default; }
 
@@ -101,7 +98,11 @@ namespace DunGen
     private int _min;
     private int _max;
 
-    public override object Value { get => _value; set => _value = (int)value; }
+    public override object Value
+    {
+      get => _value;
+      set => _value = Int32.Parse(value.ToString());
+    }
     public override object Default { get => _default; }
 
     public IntegerAlgorithmParameter(string name, string description, int min, int max, int dflt)
@@ -146,11 +147,7 @@ namespace DunGen
     public override object Value
     {
       get => _value;
-      set
-      {
-        if (value.GetType() != _selection) throw new ArgumentException(String.Format("Value must be of type {0}", _selection));
-        _value = value;
-      }
+      set => _value = Enum.Parse(_selection, value.ToString());
     }
 
     public override object Default { get => _default; }
@@ -192,11 +189,7 @@ namespace DunGen
     public override object Value
     {
       get => _value;
-      set
-      {
-        if (false == (value is bool)) throw new ArgumentException("Value must be boolean");
-        _value = (bool)value;
-      }
+      set => _value = Boolean.Parse(value.ToString());
     }
 
     public override object Default

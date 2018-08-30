@@ -9,22 +9,26 @@ namespace DunGen
   public class DungeonGenerator
   {
     #region Nested Types
+    /// <summary>
+    /// An object containing user-specified options for how the DungeonGenerator should
+    /// behave when creating a new Dungeon
+    /// </summary>
     public class DungeonGeneratorOptions
     {
       /// <summary>
       /// Whether to reset the dungeon when Generated
       /// </summary>
-      public bool DoReset { get; set; }
+      public bool DoReset { get; set; } = false;
       /// <summary>
       /// The width of the dungeon to generate. Ignored if tiles are passed in, and
       /// DoReset is false.
       /// </summary>
-      public int Width { get; set; }
+      public int Width { get; set; } = 0;
       /// <summary>
       /// The height of the dungeon to generate. Ignored if tiles are passed in, and
       /// DoReset is false.
       /// </summary>
-      public int Height { get; set; }
+      public int Height { get; set; } = 0;
       /// <summary>
       /// A list of egress connections. If populated prior to generation, algorithms
       /// must connect to these points. After generating, this contains the dungeon's
@@ -32,7 +36,7 @@ namespace DunGen
       /// </summary>
       public IList<Point> EgressConnections { get; set; } = new List<Point>();
       /// <summary>
-      /// Ongoing list of the algorithms that have been run.
+      /// List of algorithm runs to use with this set of options
       /// </summary>
       public IList<AlgorithmRun> TerrainGenAlgRuns { get; set; } = new List<AlgorithmRun>();
       /// <summary>
@@ -43,7 +47,11 @@ namespace DunGen
     #endregion
 
     #region Statics
-    private static Dungeon CreateNewOrReturn(DungeonGeneratorOptions options, Dungeon d = null)
+    /// <summary>
+    /// Given the specified input options, and optional input dungeon, prepares and returns a
+    /// Dungeon object that is ready to work on.
+    /// </summary>
+    private static Dungeon PrepareWorkingDungeon(DungeonGeneratorOptions options, Dungeon d = null)
     {
       if (null == options) return new Dungeon();
 
@@ -52,7 +60,7 @@ namespace DunGen
         d = new Dungeon();
       }
 
-      if (d.Tiles.Width != options.Width || d.Tiles.Height != options.Height || options.DoReset)
+      if ((d.Tiles.Width != options.Width || d.Tiles.Height != options.Height) && options.DoReset)
       {
         d.Tiles.ResetTiles(options.Width, options.Height);
       }
@@ -60,7 +68,7 @@ namespace DunGen
       return d;
     }
 
-    public static Dungeon Generate(DungeonGeneratorOptions options, Dungeon workingDungeon = null)
+    public static Dungeon Generate(DungeonGeneratorOptions options, Dungeon starterDungeon = null)
     {
       bool reset = false;
       List<AlgorithmRun> terrainAlgRuns = new List<AlgorithmRun>();
@@ -71,8 +79,6 @@ namespace DunGen
       {
         terrainAlgRuns.AddRange(options.TerrainGenAlgRuns);
         reset = options.DoReset;
-        width = options.Width;
-        height = options.Height;
       }
 
       // Input validation
@@ -82,27 +88,17 @@ namespace DunGen
         throw new ArgumentNullException();
       }
 
+      // Prepare context for each algorithm run appropriately.
+
+      Dungeon workingDungeon = PrepareWorkingDungeon(options, starterDungeon);
+      // Prepare algorithm runs to work on the dungeon
       foreach (var run in terrainAlgRuns)
       {
-        if (run.Context.Mask.GetLength(0) != height ||
-            run.Context.Mask.GetLength(1) != width)
-        {
-          throw new ArgumentException("Inconsistent width/height in specified options (check algorithm mask sizes)");
-        }
+        run.PrepareFor(workingDungeon);
       }
-
-      // Create the dungeon
-      Dungeon generatedDungeon = CreateNewOrReturn(options, workingDungeon);
 
       // Generate terrain
-      DungeonTiles tiles = generatedDungeon.Tiles;
-
-      // Add new dungeon to algorithm's context
-      foreach (var algRun in terrainAlgRuns)
-      {
-        algRun.Context.D = generatedDungeon;
-      }
-
+      DungeonTiles tiles = workingDungeon.Tiles;
       for (int i = 0; i < terrainAlgRuns.Count; ++i)
       {
         ISet<Tile> algTiles = new HashSet<Tile>();
@@ -132,7 +128,7 @@ namespace DunGen
 
       // TODO Generate infestations
 
-      return generatedDungeon;
+      return workingDungeon;
     }
     #endregion
     
@@ -141,6 +137,10 @@ namespace DunGen
 
     public Dungeon WorkingDungeon { get; set; }
 
+    /// <summary>
+    /// Generates and returns a dungeon given this object's specified options and
+    /// working dungeon.
+    /// </summary>
     public Dungeon Generate()
     {
       return Generate(this.Options, this.WorkingDungeon);

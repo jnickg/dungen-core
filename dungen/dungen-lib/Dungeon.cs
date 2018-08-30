@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace DunGen
 {
@@ -9,6 +11,7 @@ namespace DunGen
   /// A dungeon, its tiles, infestations, and information about how
   /// it was created.
   /// </summary>
+  [DataContract(Name = "dungeon")]
   public class Dungeon
   {
     #region Private Members
@@ -18,6 +21,7 @@ namespace DunGen
     /// <summary>
     /// The tiles associated with this Dungeon
     /// </summary>
+    [DataMember(IsRequired = true, Name = "layout")]
     public DungeonTiles Tiles
     {
       get { return PROPERTY_tiles; }
@@ -30,6 +34,7 @@ namespace DunGen
 
     public Dungeon()
     {
+      this.Tiles = new DungeonTiles(0, 0);
     }
   }
 }

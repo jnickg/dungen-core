@@ -7,7 +7,7 @@ namespace DunGen
 {
   public class AlgorithmParams
   {
-    public IList<IAlgorithmParameter> Parameters { get; set; }
+    public IList<IAlgorithmParameter> List { get; set; }
   }
 
   public static partial class Extensions
@@ -19,7 +19,7 @@ namespace DunGen
     /// </summary>
     public static void ApplyTo(this AlgorithmParams algParams, IAlgorithm algorithm)
     {
-      foreach (IAlgorithmParameter param in algParams.Parameters)
+      foreach (IAlgorithmParameter param in algParams.List)
       {
         foreach (PropertyInfo pi in algorithm.GetType().GetProperties())
         {
@@ -42,7 +42,7 @@ namespace DunGen
     public static AlgorithmParams ApplyFrom(this AlgorithmParams algParams, IAlgorithm algorithm)
     {
       AlgorithmParams setParams = algParams;
-      foreach (IAlgorithmParameter param in setParams.Parameters)
+      foreach (IAlgorithmParameter param in setParams.List)
       {
         foreach (PropertyInfo pi in algorithm.GetType().GetProperties())
         {

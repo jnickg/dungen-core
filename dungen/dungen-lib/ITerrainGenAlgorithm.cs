@@ -70,7 +70,7 @@ namespace DunGen
   /// A general context for a Terrain Generating Algorithm,
   /// with zero frills.
   /// </summary>
-  public class TerrainGenAlgorithmContext : IAlgorithmContext
+  public class AlgorithmContextBase : IAlgorithmContext
   {
     /// <summary>
     /// The Dungeon on which to operate in this context.
@@ -131,7 +131,7 @@ namespace DunGen
       "between open tiles. Algorithms may ignore this parameter if they" +
       "can not support a particular wall formation style.",
       typeof(WallFormationStyle),
-      WallFormationStyle.Tiles)]
+      WallFormationStyle.Boundaries)]
     public WallFormationStyle WallStyle { get; set; }
     #endregion
 
