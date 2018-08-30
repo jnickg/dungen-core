@@ -88,9 +88,9 @@ namespace DunGen
 
 
   /// <summary>
-  /// Shared base implementation for Terrain Generating algorithms
-  /// Currently not needed but added anyways in anticipation of
-  /// TerrainGen specific implementations being needed later.
+  /// Shared base implementation for Terrain Generating algorithms.
+  /// Plugin developers can expand on this abstract type, or completely
+  /// implement the ITerrainGenAlgorithm interface themselves.
   /// </summary>
   public abstract class TerrainGenAlgorithmBase : AlgorithmBase, ITerrainGenAlgorithm
   {
