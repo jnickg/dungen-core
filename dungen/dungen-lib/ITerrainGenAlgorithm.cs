@@ -86,6 +86,18 @@ namespace DunGen
       Tiles,
       Boundaries
     }
+
+    /// <summary>
+    /// Strategy for handling existing open tiles in a dungeon
+    /// when this algorithm runs.
+    /// </summary>
+    public enum OpenTilesStrategy
+    {
+      Avoid,
+      ConnectToRooms,
+      Ignore,
+      Overwrite
+    }
     #endregion
 
     #region Non-Parameter Properties
@@ -94,6 +106,12 @@ namespace DunGen
     #endregion
 
     #region Parameter Properties
+    //======================================================================
+    // Parameter values defined here should be `virtual` so that children
+    // can overwrite them in cases where default values should be different,
+    // or that property is actually NOT supported at all
+    //======================================================================
+
 #if DEBUG
     [BooleanAlgorithmParameterInfo(
       "Whether to group generated tiles for debug purposes, often with " +
@@ -107,13 +125,27 @@ namespace DunGen
       false)]
     public bool GroupRooms { get; set; }
 
-    [SelectionAlgorithmParameterInfo(
+    protected const string WallStyle_Help =
       "How this algorithm should form walls when introducing divisions " +
-      "between open tiles. Algorithms may ignore this parameter if they" +
-      "can not support a particular wall formation style.",
+      "between open tiles. Algorithms may ignore this parameter if they " +
+      "can not support a particular wall formation style.";
+
+    [SelectionAlgorithmParameterInfo(
+      WallStyle_Help,
       typeof(WallFormationStyle),
       WallFormationStyle.Boundaries)]
-    public WallFormationStyle WallStyle { get; set; }
+    public virtual WallFormationStyle WallStyle { get; set; }
+
+    protected const string ExistingDataStrategy_Help =
+      "How this algorithm should interact with existing open tiles, if " +
+      "there are any in its mask. Algorithms may ignore this parameter if " +
+      "they can not support a particular strategy.";
+
+    [SelectionAlgorithmParameterInfo(
+      ExistingDataStrategy_Help,
+      typeof(OpenTilesStrategy),
+      OpenTilesStrategy.Ignore)]
+    public virtual OpenTilesStrategy ExistingDataStrategy { get; set; }
     #endregion
 
     #region Members

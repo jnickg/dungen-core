@@ -54,7 +54,6 @@ namespace DunGen.Lib.Test
           {
             Alg = new RecursiveBacktracker()
             {
-              TilesAsWalls = true,
               BorderPadding = 0,
               Momentum = 0.25,
               ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms,

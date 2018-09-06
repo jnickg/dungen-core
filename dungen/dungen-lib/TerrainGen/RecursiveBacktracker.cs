@@ -8,24 +8,6 @@ namespace DunGen.TerrainGen
 {
   public class RecursiveBacktracker : TerrainGenAlgorithmBase
   {
-    public enum OpenTilesStrategy
-    {
-      Avoid,
-      ConnectToRooms,
-      Ignore
-    }
-
-    [SelectionAlgorithmParameterInfo(
-      "How this algorithm should interact with existing open tiles, if there are any in its mask",
-      typeof(OpenTilesStrategy),
-      OpenTilesStrategy.Avoid)]
-    public OpenTilesStrategy ExistingDataStrategy { get; set; }
-
-    [BooleanAlgorithmParameterInfo(
-      "Whether this algorithm should use entire tiles as walls (true) or just tile borders (false)",
-      true)]
-    public bool TilesAsWalls { get; set; }
-
     [IntegerAlgorithmParamInfo(
       "If using tiles as walls, how many tiles to pad the outside of the algorithm's mask",
       1,
@@ -33,7 +15,6 @@ namespace DunGen.TerrainGen
       int.MaxValue)]
     public int BorderPadding { get; set; }
 
-    // TODO make this thing work
     [DecimalAlgorithmParamInfo(
       "A 0.0 to 1.0 percentage factor of how likely the algorithm is to maintain its current direction",
       0.33,

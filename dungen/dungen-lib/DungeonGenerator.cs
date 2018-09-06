@@ -74,6 +74,7 @@ namespace DunGen
       List<AlgorithmRun> terrainAlgRuns = new List<AlgorithmRun>();
       int width = 0;
       int height = 0;
+      Random r = new Random();
 
       if (null != options)
       {
@@ -95,6 +96,7 @@ namespace DunGen
       foreach (var run in terrainAlgRuns)
       {
         run.PrepareFor(workingDungeon);
+        if (run.Context.R == null) run.Context.R = r;
       }
 
       // Generate terrain
