@@ -47,6 +47,25 @@ namespace DunGen
   }
 
   /// <summary>
+  /// A general context for an Algorithm, with zero frills.
+  /// </summary>
+  public class AlgorithmContextBase : IAlgorithmContext
+  {
+    /// <summary>
+    /// The Dungeon on which to operate in this context.
+    /// </summary>
+    public Dungeon D { get; set; }
+    /// <summary>
+    /// The mask with which to operate on the dungeon.
+    /// </summary>
+    public bool[,] Mask { get; set; }
+    /// <summary>
+    /// If non-null the Random instance to use when generating.
+    /// </summary>
+    public Random R { get; set; }
+  }
+
+  /// <summary>
   /// A pairing of an algorithm with its appropriate context. Also
   /// handles some basic logic of actually running the algorithm.
   /// </summary>

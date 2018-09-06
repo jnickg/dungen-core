@@ -135,6 +135,7 @@ namespace DunGen.CLI
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
             .InformationalVersion);
       });
+      rootApp.Out = Console.Out;
       try
       {
         rootApp.Execute(args);
@@ -438,6 +439,12 @@ namespace DunGen.CLI
           });
         });
       }
+
+      command.OnExecute(() =>
+      {
+        command.ShowHelp();
+        return 0;
+      });
     }
 
     private static void GeneratorRunsListCommand_Configure(CommandLineApplication cmd)

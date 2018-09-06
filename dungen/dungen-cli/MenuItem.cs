@@ -86,18 +86,27 @@ namespace DunGen.CLI
 
           interactiveEditor.Command("*", (cmd) =>
           {
-            cmd.Description = "Print all available child commands";
+            var fromRootOption = cmd.Option("-r|--root",
+              "Print commands from the root of the menu",
+              CommandOptionType.NoValue);
+            cmd.Description = "Print available commands";
+            cmd.ExtendedHelpText = "Defaults to printing only child commands. Use -r to print the whole menu";
             cmd.HelpOption(HelpOptionString);
 
             cmd.OnExecute(() =>
             {
-              this.PrintPretty(Console.Out, " ", false);
+              MenuItem printRoot = this;
+              if (fromRootOption.HasValue())
+              {
+                while (printRoot.Parent != null) printRoot = printRoot.Parent;
+              }
+              printRoot.PrintPretty(Console.Out, " ", false, this);
               return 0;
             });
           });
 
-          Console.WriteLine(GetLocationString());
-
+          Console.WriteLine();
+          Console.WriteLine("MENU BREADCRUMB: {0}", GetLocationString());
           interactiveEditor.ShowHelp();
 
           if (null != StatusMessage) Console.WriteLine(StatusMessage());
@@ -120,10 +129,8 @@ namespace DunGen.CLI
           }
           catch (Exception ex)
           {
-            Console.WriteLine("Something unknown went wrong");
+            Console.WriteLine("Something went wrong processing your command.");
             Console.WriteLine("Error: {0}", ex.Message);
-            Console.WriteLine("Exiting this menu level...");
-            return 1;
           }
         }
         return statusVal;
@@ -149,9 +156,10 @@ namespace DunGen.CLI
 
   internal static class Extensions
   {
-    internal static void PrintPretty(this MenuItem item, TextWriter writer, string indent, bool last)
+    internal static void PrintPretty(this MenuItem printRoot, TextWriter writer, string indent, bool last, MenuItem me = null)
     {
       string toWrite = indent;
+      bool useStar = (null != me && printRoot == me);
       if (last)
       {
         toWrite += @"└─";
@@ -163,11 +171,11 @@ namespace DunGen.CLI
         indent += "│ ";
       }
 
-      writer.WriteLine("{0,-15} - {1}", toWrite + item.Name, item.Description);
+      writer.WriteLine("{0,-15} {1} {2}", toWrite + printRoot.Name, (useStar ? "*" : "-"), printRoot.Description);
 
-      for (int i = 0; i < item.Children.Count; i++)
+      for (int i = 0; i < printRoot.Children.Count; i++)
       {
-        item.Children[i].PrintPretty(writer, indent, i == item.Children.Count - 1);
+        printRoot.Children[i].PrintPretty(writer, indent, i == printRoot.Children.Count - 1, me);
       }
     }
   }
