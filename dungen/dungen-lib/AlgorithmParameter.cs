@@ -222,14 +222,42 @@ namespace DunGen
   /// are to be considered modifiable parameters of the algorithm.
   /// </summary>
   [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-  public class AlgorithmParameterInfo : System.Attribute
+  public abstract class AlgorithmParameterInfo : System.Attribute
   {
-    // TODO make this identical to IAlgorithmParameter in some way, so that
-    // all an algorithm implementer has to do is add this attribute to their
-    // AlgorithmParameter's parameter properties, so that the system can
-    // hoover up all the attributes
+    /// <summary>
+    /// The category of Parameter described by this AlgorithmParameterInfo
+    /// object.
+    /// </summary>
     public ParameterCategory Category { get; private set; }
-    public string Description { get; private set; }
+
+    /// <summary>
+    /// If not NULL or empty, a human-readable description of this Parameter.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this Parameter is supported by the Algorithm implementation.
+    /// Defaults to true, but may be set to false by Algorithms that don't
+    /// support inherited Parameters (i.e. by overriding the Parameter and
+    /// defining a new AlgorithmParameterInfo for the Parameter).
+    /// 
+    /// If false, this parameter will still appear in the Algorithm's
+    /// "Parameters" property.
+    /// </summary>
+    public bool Supported { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show this Parameter. Can be set to false for common
+    /// Parameters not worth showing repeatedly, or for super secret
+    /// hidden Easter-egg Parameters.
+    /// </summary>
+    public bool Show { get; set; } = true;
+
+    public AlgorithmParameterInfo(ParameterCategory category)
+    {
+      if (category == ParameterCategory.UNKNOWN) throw new ArgumentException("Must supply known Parameter Category");
+      this.Category = category;
+    }
 
     public AlgorithmParameterInfo(ParameterCategory category, string description)
     {
@@ -237,14 +265,43 @@ namespace DunGen
       this.Category = category;
       this.Description = description;
     }
+
+    /// <summary>
+    /// Creates an Editable Parameter object from this Parameter's descriptor
+    /// </summary>
+    /// <param name="Name">The name of the property to show.</param>
+    /// <returns>An object implementing IAlgorithmParameter, or NULL
+    /// of none could be generated.</returns>
+    public IAlgorithmParameter ToEditableParam(string Name)
+    {
+      // TODO make it so it's system configurable whether to show unsupported params
+      if (!Supported) return null;
+      return ConvertToEditableParam(Name);
+    }
+
+    protected abstract IAlgorithmParameter ConvertToEditableParam(string Name);
   }
 
   public class IntegerAlgorithmParamInfo : AlgorithmParameterInfo
   {
-    public int Minimum { get; private set; }
-    public int Maximum { get; private set; }
-    public int Default { get; private set; }
+    /// <summary>
+    /// The minimum value for this Parameter.
+    /// </summary>
+    public int Minimum { get; set; } = int.MinValue;
 
+    /// <summary>
+    /// The maxmimum value for this Parameter.
+    /// </summary>
+    public int Maximum { get; set; } = int.MaxValue;
+
+    /// <summary>
+    /// The default value for this Parameter.
+    /// </summary>
+    public int Default { get; set; } = 0;
+
+    public IntegerAlgorithmParamInfo()
+      : base(ParameterCategory.Integer)
+    { }
 
     public IntegerAlgorithmParamInfo(string description, int defaultValue, int min, int max)
       : base(ParameterCategory.Integer, description)
@@ -253,15 +310,44 @@ namespace DunGen
       this.Maximum = max;
       this.Default = defaultValue;
     }
+
+    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    {
+      return new IntegerAlgorithmParameter(
+          Name,
+          this.Description,
+          this.Minimum,
+          this.Maximum,
+          this.Default);
+    }
   }
 
   public class DecimalAlgorithmParamInfo : AlgorithmParameterInfo
   {
-    public double Minimum { get; private set; }
-    public double Maximum { get; private set; }
-    public double Default { get; private set; }
-    public int PrecisionPoints { get; private set; }
+    /// <summary>
+    /// The minimum value for this Parameter.
+    /// </summary>
+    public double Minimum { get; set; } = double.MinValue;
 
+    /// <summary>
+    /// The maxmimum value for this Parameter.
+    /// </summary>
+    public double Maximum { get; set; } = double.MaxValue;
+
+    /// <summary>
+    /// The default value for this Parameter.
+    /// </summary>
+    public double Default { get; set; } = 0.0;
+
+    /// <summary>
+    /// The minimum number of precision points the algorithm agrres to honor
+    /// when the algorithm runs. If "0", the value is unspecified.
+    /// </summary>
+    public int PrecisionPoints { get; set; } = 0;
+
+    public DecimalAlgorithmParamInfo()
+      :base(ParameterCategory.Decimal)
+    { }
 
     public DecimalAlgorithmParamInfo(string description, double defaultValue, double min, double max, int precisionPts)
       : base(ParameterCategory.Decimal, description)
@@ -271,23 +357,73 @@ namespace DunGen
       this.Default = defaultValue;
       this.PrecisionPoints = precisionPts;
     }
+
+    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    {
+      return new DecimalAlgorithmParameter(
+          Name,
+          this.Description,
+          this.Minimum,
+          this.Maximum,
+          this.Default,
+          this.PrecisionPoints);
+    }
   }
 
   public class SelectionAlgorithmParameterInfo : AlgorithmParameterInfo
   {
-    private Type _selection;
-    private object _default;
+    private Type _selection = null;
+    private object _default = null;
 
+    /// <summary>
+    /// The Enumerated type of this Selection Parameter. NULL if unspecified.
+    /// </summary>
     public Type Selection
     {
       get => _selection;
+      set
+      {
+        if (null != value && false == value.IsEnum)
+        {
+          throw new ArgumentException("Provided \"selection\" must be an Enumeration");
+        }
+
+        if (_default != null && _default.GetType() != value)
+        {
+          _default = null;
+        }
+
+        _selection = value;
+      }
     }
 
+    /// <summary>
+    /// The default value for this Selection Parameter. NULL if unspecified.
+    /// </summary>
     public object Default
     {
       get => _default;
+      set
+      {
+        if (value != null && false == value.GetType().IsEnum)
+        {
+          throw new ArgumentException("Provided \"Default\" value must be an Enumeration");
+        }
+
+        if (_selection != null && _selection != value.GetType())
+        {
+          throw new ArgumentException("\"Default\" must be a value of the provided Selection type");
+        }
+
+        _default = value;
+      }
     }
 
+    /// <summary>
+    /// A list of available choices from the Selection type. If there are
+    /// exceptions or values this Parameter does not support, this property
+    /// will reflect those exceptions.
+    /// </summary>
     public List<string> Choices
     {
       get
@@ -301,31 +437,50 @@ namespace DunGen
       }
     }
 
+    public SelectionAlgorithmParameterInfo()
+      : base(ParameterCategory.Selection)
+    { }
+
     public SelectionAlgorithmParameterInfo(string description, Type selection, object defaultValue)
       : base(ParameterCategory.Selection, description)
     {
-      if (false == selection.IsEnum)
-      {
-        throw new ArgumentException("Provided \"selection\" must be an Enumeration");
-      }
-
-      if (defaultValue.GetType() != selection)
-      {
-        throw new ArgumentException("\"defaultValue\" must be a value of the provided selection");
-      }
-
       this._selection = selection;
       this._default = defaultValue;
+    }
+
+    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    {
+      return new SelectionAlgorithmParameter(
+          Name,
+          this.Description,
+          this.Selection,
+          this.Default);
     }
   }
 
   public class BooleanAlgorithmParameterInfo : AlgorithmParameterInfo
   {
-    public bool Default { get; private set; }
+    /// <summary>
+    /// The default boolean value for this parameter.
+    /// </summary>
+    public bool Default { get; set; }
+
+    public BooleanAlgorithmParameterInfo()
+      : base(ParameterCategory.Boolean)
+    { }
+
     public BooleanAlgorithmParameterInfo(string description, bool defaultValue)
       : base(ParameterCategory.Boolean, description)
     {
       this.Default = defaultValue;
+    }
+
+    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    {
+      return new BooleanAlgorithmParameter(
+          Name,
+          this.Description,
+          this.Default);
     }
   }
   #endregion

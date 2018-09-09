@@ -106,6 +106,7 @@ namespace DunGen.CLI
           });
 
           Console.WriteLine();
+          Console.WriteLine("====================================================================================================");
           Console.WriteLine("MENU BREADCRUMB: {0}", GetLocationString());
           interactiveEditor.ShowHelp();
 

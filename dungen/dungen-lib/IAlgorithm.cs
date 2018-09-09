@@ -41,8 +41,19 @@ namespace DunGen
   /// </summary>
   public interface IAlgorithmContext
   {
+    /// <summary>
+    /// The dungeon on which the Algorithm should run
+    /// </summary>
     Dungeon D { get; set; }
+    /// <summary>
+    /// The mask which the Algorithm should use when operating on
+    /// the Context's dungeon
+    /// </summary>
     bool[,] Mask { get; set; }
+    /// <summary>
+    /// If not NULL, A user-specified Random object to be used by the
+    /// Algorithm.
+    /// </summary>
     Random R { get; set; }
   }
 
@@ -114,9 +125,20 @@ namespace DunGen
       get => this.GetType().Name;
     }
 
-    // The magic sauce that allows for easy retrieval of parameter
-    // information, and setting of actual algorithm's properties
-    // via those parameter info objects.
+    /// <summary>
+    /// Generates an AlgorithmParams object based on the Algorithm's type
+    /// information, and populates it with the Algorithm object's current
+    /// parameter values (i.e. from the object's associated Parameter
+    /// properties).
+    ///
+    /// Should not be manipulated directly. Instead, retrieve and latch
+    /// Parameter values using the pattern shown below:
+    /// <code>
+    ///   var editableParams = algObject.Parameters; // Retrieve
+    ///   // Manipulate params object to change values
+    ///   algObject.Parameters = editableParams; // Latch
+    /// </code>
+    /// </summary>
     public AlgorithmParams Parameters
     {
       get
@@ -163,61 +185,31 @@ namespace DunGen
       {
         foreach (AlgorithmParameterInfo paramInfo in propInfo.GetCustomAttributes<AlgorithmParameterInfo>())
         {
-          IAlgorithmParameter newParam = null;
+          if (!paramInfo.Show) continue;
+          if (!paramInfo.Supported) continue;
 
-          BooleanAlgorithmParameterInfo boolInfo = paramInfo as BooleanAlgorithmParameterInfo;
-          if (null != boolInfo)
-          {
-            newParam = new BooleanAlgorithmParameter(
-              propInfo.Name,
-              paramInfo.Description,
-              boolInfo.Default);
-          }
-
-          IntegerAlgorithmParamInfo numericInfo = paramInfo as IntegerAlgorithmParamInfo;
-          if (null != numericInfo)
-          {
-            newParam = new IntegerAlgorithmParameter(
-              propInfo.Name,
-              paramInfo.Description,
-              numericInfo.Minimum,
-              numericInfo.Maximum,
-              numericInfo.Default);
-          }
-
-          DecimalAlgorithmParamInfo decimalInfo = paramInfo as DecimalAlgorithmParamInfo;
-          if (null != decimalInfo)
-          {
-            newParam = new DecimalAlgorithmParameter(
-              propInfo.Name,
-              paramInfo.Description,
-              decimalInfo.Minimum,
-              decimalInfo.Maximum,
-              decimalInfo.Default,
-              decimalInfo.PrecisionPoints);
-          }
-
-          SelectionAlgorithmParameterInfo selectionInfo = paramInfo as SelectionAlgorithmParameterInfo;
-          if (null != selectionInfo)
-          {
-            newParam = new SelectionAlgorithmParameter(
-              propInfo.Name,
-              paramInfo.Description,
-              selectionInfo.Selection,
-              selectionInfo.Default);
-          }
-
-          if (null == newParam) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
+          IAlgorithmParameter newParam = paramInfo.ToEditableParam(propInfo.Name);
+          // TODO make it so it's system configurable whether to show unsupported params
+          if (null == newParam && paramInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
           // ... and add it to the list of parameters!
-          prototype.List.Add(newParam);
+          if (null != newParam) prototype.List.Add(newParam);
         }
       }
 
       return prototype;
     }
 
+    /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>
     public abstract void Run(IAlgorithmContext context);
 
+    /// <summary>
+    /// Full clone of this Algorithm object, including current parameter
+    /// values.
+    /// </summary>
+    /// <returns>
+    /// An instance of IAlgorithm identical to the type of the object on
+    /// which the call was made.
+    /// </returns>
     public object Clone()
     {
       Type algT = this.GetType();

@@ -8,22 +8,32 @@ namespace DunGen.TerrainGen
 {
   public class DiffusionLimitedAggregation : TerrainGenAlgorithmBase
   {
+    private const string DensityFactor_Help =
+      "A 0.0–1.0 decimal percentage, representing the density " +
+      "of open-Tile aggregation. Values between 0.1% and 50% allowed.";
+
+    /// <summary>
+    /// See Help text.
+    /// </summary>
     [DecimalAlgorithmParamInfo(
-      "A 0.0 to 1.0 percentage, up to 50%, representing the density " +
-      "factor used when running this algorithm",
-      0.2, 0.01, 0.5, 2)]
+      Description = DensityFactor_Help,
+      Default = 0.250,
+      Minimum = 0.001,
+      Maximum = 0.500)]
     public double DensityFactor { get; set; }
 
     [SelectionAlgorithmParameterInfo(
-      WallStyle_Help,
-      typeof(WallFormationStyle),
-      WallFormationStyle.Tiles)]
+      Description = WallStyle_Help,
+      Selection = typeof(WallFormationStyle),
+      Default = WallFormationStyle.Tiles,
+      Supported = false)]
     public override WallFormationStyle WallStyle { get; set; }
 
     [SelectionAlgorithmParameterInfo(
-      ExistingDataStrategy_Help,
-      typeof(OpenTilesStrategy),
-      OpenTilesStrategy.Overwrite)]
+      Description = ExistingDataStrategy_Help,
+      Selection = typeof(OpenTilesStrategy),
+      Default = OpenTilesStrategy.Overwrite,
+      Supported = false)]
     public override OpenTilesStrategy ExistingDataStrategy { get; set; }
 
     public override TerrainModBehavior Behavior
