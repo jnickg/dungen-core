@@ -23,9 +23,9 @@ namespace DunGen.TerrainGen
     }
 
     [SelectionAlgorithmParameterInfo(
-      _BuildStrategyDescription,
-      typeof(ExistingDataHandling),
-      ExistingDataHandling.Avoid)]
+      Description = _BuildStrategyDescription,
+      Selection = typeof(ExistingDataHandling),
+      Default = ExistingDataHandling.Avoid)]
     public ExistingDataHandling BuildStrategy { get; set; }
 
     private const string _RoomSizeDescription =
@@ -52,7 +52,7 @@ namespace DunGen.TerrainGen
 
     public override void Run(DungeonTiles d, bool[,] mask, Random r)
     {
-      if (this.WallStyle == WallFormationStyle.Tiles) throw new NotImplementedException();
+      if (this.WallStrategy == WallFormation.Tiles) throw new NotImplementedException();
       if (null == r) r = new Random();
 
       bool[,] existingDataMask = new bool[d.Height, d.Width];
@@ -113,7 +113,7 @@ namespace DunGen.TerrainGen
     /// </summary>
     private Tile.MoveType DetermineClosureMethod(bool forHorizontalDivide)
     {
-      if (this.WallStyle == WallFormationStyle.Tiles) return Tile.MoveType.Open_HORIZ;
+      if (this.WallStrategy == WallFormation.Tiles) return Tile.MoveType.Open_HORIZ;
 
       if (forHorizontalDivide)
       {

@@ -32,6 +32,9 @@ namespace DunGen
       }
     }
 
+    [DataMember(IsRequired = false, Name = "runs")]
+    public AlgorithmRunInfoList Runs { get; set; } = new AlgorithmRunInfoList();
+
     public Dungeon()
     {
       this.Tiles = new DungeonTiles(0, 0);

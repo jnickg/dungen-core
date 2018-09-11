@@ -81,7 +81,7 @@ namespace DunGen
     /// style, even if they don't support forming walls
     /// themselves
     /// </summary>
-    public enum WallFormationStyle
+    public enum WallFormation
     {
       Tiles,
       Boundaries
@@ -91,10 +91,24 @@ namespace DunGen
     /// Strategy for handling existing open tiles in a dungeon
     /// when this algorithm runs.
     /// </summary>
-    public enum OpenTilesStrategy
+    public enum OpenTilesHandling
     {
       Avoid,
       ConnectToRooms,
+      ConnectToHalls,
+      Connect,
+      Ignore,
+      Overwrite
+    }
+
+    /// <summary>
+    /// Strategy for handling any egress specified in the
+    /// Dungeon, when this algorithm runs.
+    /// </summary>
+    public enum EgressHandling
+    {
+      Avoid,
+      Connect,
       Ignore,
       Overwrite
     }
@@ -130,7 +144,7 @@ namespace DunGen
       Show = false)]
     public bool GroupRooms { get; set; }
 
-    protected const string WallStyle_Help =
+    protected const string WallStrategy_Help =
       "How this algorithm should form walls when introducing divisions " +
       "between open tiles. Algorithms may ignore this parameter if they " +
       "can not support a particular wall formation style.";
@@ -139,12 +153,12 @@ namespace DunGen
     /// See help text.
     /// </summary>
     [SelectionAlgorithmParameterInfo(
-      WallStyle_Help,
-      typeof(WallFormationStyle),
-      WallFormationStyle.Boundaries)]
-    public virtual WallFormationStyle WallStyle { get; set; }
+      Description = WallStrategy_Help,
+      Selection = typeof(WallFormation),
+      Default = WallFormation.Boundaries)]
+    public virtual WallFormation WallStrategy { get; set; }
 
-    protected const string ExistingDataStrategy_Help =
+    protected const string OpenTilesStrategy_Help =
       "How this algorithm should interact with existing open tiles, if " +
       "there are any in its mask. Algorithms may ignore this parameter if " +
       "they can not support a particular strategy.";
@@ -153,13 +167,35 @@ namespace DunGen
     /// See help text.
     /// </summary>
     [SelectionAlgorithmParameterInfo(
-      ExistingDataStrategy_Help,
-      typeof(OpenTilesStrategy),
-      OpenTilesStrategy.Ignore)]
-    public virtual OpenTilesStrategy ExistingDataStrategy { get; set; }
+      Description = OpenTilesStrategy_Help,
+      Selection = typeof(OpenTilesHandling),
+      Default = OpenTilesHandling.Ignore)]
+    public virtual OpenTilesHandling OpenTilesStrategy { get; set; }
+
+    protected const string EgressStrategy_Help =
+      "How this algorithm should interact with egress openings, if " +
+      "there are any in its mask. Algorithms may ignore this parameter" +
+      "if they cannot support a particular strategy";
+
+    /// <summary>
+    /// See help text.
+    /// </summary>
+    [SelectionAlgorithmParameterInfo(
+      Description = EgressStrategy_Help,
+      Selection = typeof(EgressHandling),
+      Default = EgressHandling.Ignore)]
+    public virtual EgressHandling EgressStrategy { get; set; }
     #endregion
 
     #region Members
+    /// <summary>
+    /// Runs this algorithm on the specified tiles, with the specified mask.
+    /// </summary>
+    /// <param name="d">A collection of tiles on which this algorithm will
+    /// operate.</param>
+    /// <param name="mask">The masked subregion of the specified DungeonTiles,
+    /// on which this algorithm will operate.</param>
+    /// <param name="r">An optional Randomness provider.</param>
     public abstract void Run(DungeonTiles d, bool[,] mask, Random r);
 
     /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>

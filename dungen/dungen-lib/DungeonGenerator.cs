@@ -60,7 +60,7 @@ namespace DunGen
         d = new Dungeon();
       }
 
-      if ((d.Tiles.Width != options.Width || d.Tiles.Height != options.Height) && options.DoReset)
+      if ((d.Tiles.Width != options.Width || d.Tiles.Height != options.Height) || options.DoReset)
       {
         d.Tiles.ResetTiles(options.Width, options.Height);
       }
@@ -70,16 +70,17 @@ namespace DunGen
 
     public static Dungeon Generate(DungeonGeneratorOptions options, Dungeon starterDungeon = null)
     {
-      bool reset = false;
       List<AlgorithmRun> terrainAlgRuns = new List<AlgorithmRun>();
-      int width = 0;
-      int height = 0;
-      Random r = new Random();
+      AlgorithmRandom r = AlgorithmRandom.RandomInstance();
 
       if (null != options)
       {
+        if (options.Width == 0 || options.Height == 0)
+        {
+          throw new ArgumentException("Neither Width nor Height can be 0");
+        }
+
         terrainAlgRuns.AddRange(options.TerrainGenAlgRuns);
-        reset = options.DoReset;
       }
 
       // Input validation
@@ -126,6 +127,7 @@ namespace DunGen
           }
         }
         terrainAlgRuns[i].RunAlgorithm();
+        workingDungeon.Runs.Add(terrainAlgRuns[i].ToInfo());
       }
 
       // TODO Generate infestations

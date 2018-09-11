@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace DunGen
@@ -17,7 +20,7 @@ namespace DunGen
     // TerrainGenAlgorithm   // An entire TerrainGenAlgorithm with its own set of parameters
   }
 
-  public interface IAlgorithmParameter : ICloneable
+  public interface IEditingAlgorithmParameter : ICloneable
   {
     ParameterCategory Category { get; }
     string Name { get; }
@@ -27,193 +30,86 @@ namespace DunGen
   }
   #endregion
 
-  #region AlgorithmParameter Types
-  public abstract class AlgorithmParameterBase : IAlgorithmParameter
+  #region EditingAlgorithmParameter Types
+  [DataContract(Name = "param")]
+  [KnownType("GetKnownTypes")]
+  public class EditingAlgorithmParameter : IEditingAlgorithmParameter
   {
-    private ParameterCategory _category;
-    private string _name;
-    private string _description;
-
-    public ParameterCategory Category { get => _category; protected set => _category = value; }
-    public string Name { get => _name; protected set => _name = value; }
-    public string Description { get => _description; protected set => _description = value; }
-
-    public abstract object Value { get; set; }
-    public abstract object Default { get; }
-
-    public AlgorithmParameterBase(ParameterCategory category, string name, string description)
-    {
-      if (category == ParameterCategory.UNKNOWN) throw new ArgumentException("Must supply known Parameter Category");
-      this._category = category;
-      this._name = name;
-      this._description = description;
-    }
-
-    public abstract void SetToDefault(); // Implemented in child class so non-null default can be used
-
-    public abstract object Clone();
-  }
-
-  public class DecimalAlgorithmParameter : AlgorithmParameterBase
-  {
-    private double _value;
-    private double _default;
-    private double _min;
-    private double _max;
-    private int _precisionPoints;
-
-    public override object Value
-    {
-      get => _value;
-      set => _value = Double.Parse(value.ToString());
-    }
-    public override object Default { get => _default; }
-
-    public DecimalAlgorithmParameter(string name, string description, double min, double max, double dflt, int precisionPts)
-      : base(ParameterCategory.Decimal, name, description)
-    {
-      this._min = min;
-      this._max = max;
-      this._default = dflt;
-      this._precisionPoints = precisionPts;
-
-      SetToDefault();
-    }
-
-    public override object Clone()
-    {
-      return new DecimalAlgorithmParameter(this.Name, this.Description, this._min, this._max, this._default, this._precisionPoints);
-    }
-
-    public override void SetToDefault()
-    {
-      this._value = _default;
-    }
-  }
-
-  public class IntegerAlgorithmParameter : AlgorithmParameterBase
-  {
-    private int _value;
-    private int _default;
-    private int _min;
-    private int _max;
-
-    public override object Value
-    {
-      get => _value;
-      set => _value = Int32.Parse(value.ToString());
-    }
-    public override object Default { get => _default; }
-
-    public IntegerAlgorithmParameter(string name, string description, int min, int max, int dflt)
-      : base(ParameterCategory.Integer, name, description)
-    {
-      this._min = min;
-      this._max = max;
-      this._default = dflt;
-      SetToDefault();
-    }
-
-    public override object Clone()
-    {
-      return new IntegerAlgorithmParameter(this.Name, this.Description, this._min, this._max, this._default);
-    }
-
-    public override void SetToDefault()
-    {
-      this._value = _default;
-    }
-  }
-
-  public class SelectionAlgorithmParameter : AlgorithmParameterBase
-  {
-    private Type _selection;
-    private object _default;
     private object _value;
 
-    public List<string> Choices
+    public AlgorithmParameterInfo ParamInfo
     {
-      get
+      get;
+      set;
+    }
+
+    public ParameterCategory Category
+    {
+      get;
+      set;
+    }
+
+    [DataMember(IsRequired = true, Name = "name", Order = 0)]
+    public string Name
+    {
+      get;
+      set;
+    }
+
+    public string Description
+    {
+      get;
+      set;
+    }
+
+    [DataMember(IsRequired = true, Name = "val", Order = 2)]
+    public object Value
+    {
+      get => _value;
+      set
       {
-        List<string> choices = new List<string>();
-        foreach (var v in Enum.GetValues(_selection.GetType()))
+        if (ParamInfo == null) _value = value; // Deserialization
+        if (ParamInfo != null && !ParamInfo.TryParseValue(value, out _value))
         {
-          Choices.Add(v.ToString());
+          throw new ArgumentException(String.Format("Invalid value for parameter {0}: {1}", Name, value));
         }
-        return choices;
       }
     }
 
-    public override object Value
+    [DataMember(IsRequired = true, Name = "dflt", Order = 1)]
+    public object Default
     {
-      get => _value;
-      set => _value = Enum.Parse(_selection, value.ToString());
+      get;
+      set;
     }
 
-    public override object Default { get => _default; }
-
-    public SelectionAlgorithmParameter(string name, string description, Type selection, object defaultValue)
-      : base(ParameterCategory.Selection, name, description)
+    public object Clone()
     {
-      if (false == selection.IsEnum)
+      return new EditingAlgorithmParameter()
       {
-        throw new ArgumentException("Provided \"selection\" must be an Enumeration");
-      }
-
-      if (defaultValue.GetType() != selection)
-      {
-        throw new ArgumentException(String.Format("\"defaultValue\" must be of type {0}", _selection));
-      }
-
-      this._selection = selection;
-      this._default = defaultValue;
-      SetToDefault();
+        Category = this.Category,
+        Name = this.Name,
+        Description = this.Description,
+        Value = this.Value,
+        Default = this.Default
+      };
     }
 
-    public override object Clone()
+    public EditingAlgorithmParameter()
+    { }
+
+    public EditingAlgorithmParameter(AlgorithmParameterInfo api)
     {
-      return new SelectionAlgorithmParameter(this.Name, this.Description, this._selection, this._default);
+      this.ParamInfo = api;
+      // TODO this should be able to pull info from API
     }
 
-    public override void SetToDefault()
+    public static IEnumerable<Type> GetKnownTypes()
     {
-      this._value = _default;
+      return AlgorithmParameterInfo.GetKnownTypes();
     }
   }
 
-  public class BooleanAlgorithmParameter : AlgorithmParameterBase
-  {
-    private bool _value;
-    private bool _default;
-
-    public override object Value
-    {
-      get => _value;
-      set => _value = Boolean.Parse(value.ToString());
-    }
-
-    public override object Default
-    {
-      get => _default;
-    }
-
-    public BooleanAlgorithmParameter(string name, string description, bool dflt)
-      : base(ParameterCategory.Boolean, name, description)
-    {
-      this._default = dflt;
-      SetToDefault();
-    }
-
-    public override object Clone()
-    {
-      return new BooleanAlgorithmParameter(this.Name, this.Description, this._default);
-    }
-
-    public override void SetToDefault()
-    {
-      this._value = _default;
-    }
-  }
   #endregion
 
   #region AlgorithmParameterInfo Types
@@ -272,14 +168,49 @@ namespace DunGen
     /// <param name="Name">The name of the property to show.</param>
     /// <returns>An object implementing IAlgorithmParameter, or NULL
     /// of none could be generated.</returns>
-    public IAlgorithmParameter ToEditableParam(string Name)
+    public IEditingAlgorithmParameter ToEditableParam(string Name)
     {
       // TODO make it so it's system configurable whether to show unsupported params
       if (!Supported) return null;
       return ConvertToEditableParam(Name);
     }
 
-    protected abstract IAlgorithmParameter ConvertToEditableParam(string Name);
+    protected abstract IEditingAlgorithmParameter ConvertToEditableParam(string Name);
+
+    public virtual bool TryParseValue(IEditingAlgorithmParameter param, out object parsedValue)
+    {
+      return TryParseValue(param.Value, out parsedValue);
+    }
+
+    public abstract bool TryParseValue(object value, out object parsedValue);
+
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      List<Type> knownTypes = new List<Type>()
+      {
+        typeof(int),    // IntegerAlgorithmParamInfo
+        typeof(double), // DecimalAlgorithmParamInfo
+        typeof(bool)    // BooleanAlgorithmParamInfo
+      };
+
+      // Reflect through every Algorithm type loaded, to identify all
+      // enumerations we need to know about for SelectionAlgorithmParameterInfo
+      foreach (var assy in AppDomain.CurrentDomain.GetAssemblies())
+      {
+        // Linq is so handy but seriously it's garbage to debug those nested .Where().Select() calls
+        Type[] types = assy.GetTypes();
+        // Of all the loaded Algorithms...
+        types = types.Where(t => typeof(IAlgorithm).IsAssignableFrom(t)).ToArray();
+        IEnumerable<PropertyInfo> props = types.SelectMany(t => t.GetProperties().AsEnumerable());
+        // ... We want Enum-based properties that are marked as an Algorithm Parameter
+        props = props.Where(p => p.PropertyType.IsEnum &&
+                                 null != p.PropertyType.GetCustomAttributes<AlgorithmParameterInfo>(true));
+        knownTypes.AddRange(props.Select(p => p.PropertyType));
+      }
+
+      // Transform it to a set and back, to remove duplicates
+      return knownTypes.Distinct().ToList();
+    }
   }
 
   public class IntegerAlgorithmParamInfo : AlgorithmParameterInfo
@@ -311,14 +242,36 @@ namespace DunGen
       this.Default = defaultValue;
     }
 
-    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
     {
-      return new IntegerAlgorithmParameter(
-          Name,
-          this.Description,
-          this.Minimum,
-          this.Maximum,
-          this.Default);
+      return new EditingAlgorithmParameter(this)
+      {
+        Name = Name,
+        Description = this.Description,
+        Default = this.Default,
+        Category = ParameterCategory.Integer,
+        Value = this.Default
+      };
+    }
+
+    public override bool TryParseValue(object value, out object parsedValue)
+    {
+      bool valueOk = false;
+      int intValue = 0;
+      // See if we can simply cast it
+      if (value.GetType().IsPrimitive)
+      {
+        intValue = (int)value;
+        valueOk = (intValue >= Minimum && intValue <= Maximum);
+      }
+      // Next try parsing it
+      if (int.TryParse(value.ToString(), out intValue))
+      {
+        valueOk = (intValue >= Minimum && intValue <= Maximum);
+      }
+
+      parsedValue = intValue;
+      return valueOk;
     }
   }
 
@@ -358,15 +311,36 @@ namespace DunGen
       this.PrecisionPoints = precisionPts;
     }
 
-    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
     {
-      return new DecimalAlgorithmParameter(
-          Name,
-          this.Description,
-          this.Minimum,
-          this.Maximum,
-          this.Default,
-          this.PrecisionPoints);
+      return new EditingAlgorithmParameter(this)
+      {
+        Name = Name,
+        Description = this.Description,
+        Default = this.Default,
+        Category = ParameterCategory.Decimal,
+        Value = this.Default
+      };
+    }
+
+    public override bool TryParseValue(object value, out object parsedValue)
+    {
+      bool valueOk = false;
+      double dblValue;
+      // See if we can simply cast it
+      if (value.GetType().IsPrimitive)
+      {
+        dblValue = (double)value;
+        valueOk = (dblValue >= Minimum && dblValue <= Maximum);
+      }
+      // Next try parsing it
+      if (double.TryParse(value.ToString(), out dblValue))
+      {
+        valueOk = (dblValue >= Minimum && dblValue <= Maximum);
+      }
+
+      parsedValue = dblValue;
+      return valueOk;
     }
   }
 
@@ -444,17 +418,39 @@ namespace DunGen
     public SelectionAlgorithmParameterInfo(string description, Type selection, object defaultValue)
       : base(ParameterCategory.Selection, description)
     {
-      this._selection = selection;
-      this._default = defaultValue;
+      this.Selection = selection;
+      this.Default = defaultValue;
     }
 
-    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
     {
-      return new SelectionAlgorithmParameter(
-          Name,
-          this.Description,
-          this.Selection,
-          this.Default);
+      return new EditingAlgorithmParameter(this)
+      {
+        Name = Name,
+        Description = this.Description,
+        Default = this.Default,
+        Category = ParameterCategory.Selection,
+        Value = this.Default
+      };
+    }
+
+    public override bool TryParseValue(object value, out object parsedValue)
+    {
+      bool valueOk = false;
+      object valueObj = null;
+
+      if (value is string || value.GetType().IsEnum)
+      {
+        valueOk = Enum.TryParse(Selection, value.ToString(), out valueObj);
+      }
+      if (value.GetType().IsPrimitive)
+      {
+        valueOk = Enum.IsDefined(Selection, value);
+        valueObj = Enum.ToObject(Selection, value);
+      }
+
+      parsedValue = valueObj;
+      return valueOk;
     }
   }
 
@@ -475,12 +471,34 @@ namespace DunGen
       this.Default = defaultValue;
     }
 
-    protected override IAlgorithmParameter ConvertToEditableParam(string Name)
+    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
     {
-      return new BooleanAlgorithmParameter(
-          Name,
-          this.Description,
-          this.Default);
+      return new EditingAlgorithmParameter(this)
+      {
+        Name = Name,
+        Description = this.Description,
+        Default = this.Default,
+        Category = ParameterCategory.Boolean,
+        Value = this.Default
+      };
+    }
+
+    public override bool TryParseValue(object value, out object parsedValue)
+    {
+      bool valueOk = false;
+      bool valBool = false;
+      if (value.GetType().IsPrimitive)
+      {
+        valBool = (bool)value;
+        valueOk = true;
+      }
+      if (value is string)
+      {
+        valueOk = Boolean.TryParse(value.ToString(), out valBool);
+      }
+
+      parsedValue = valBool;
+      return valueOk;
     }
   }
   #endregion

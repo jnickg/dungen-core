@@ -54,7 +54,7 @@ namespace DunGen
     /// If not NULL, A user-specified Random object to be used by the
     /// Algorithm.
     /// </summary>
-    Random R { get; set; }
+    AlgorithmRandom R { get; set; }
   }
 
   /// <summary>
@@ -73,7 +73,7 @@ namespace DunGen
     /// <summary>
     /// If non-null the Random instance to use when generating.
     /// </summary>
-    public Random R { get; set; }
+    public AlgorithmRandom R { get; set; }
   }
 
   /// <summary>
@@ -178,7 +178,7 @@ namespace DunGen
     {
       AlgorithmParams prototype = new AlgorithmParams()
       {
-        List = new List<IAlgorithmParameter>()
+        List = new List<IEditingAlgorithmParameter>()
       };
 
       foreach (PropertyInfo propInfo in this.GetType().GetProperties())
@@ -188,7 +188,7 @@ namespace DunGen
           if (!paramInfo.Show) continue;
           if (!paramInfo.Supported) continue;
 
-          IAlgorithmParameter newParam = paramInfo.ToEditableParam(propInfo.Name);
+          IEditingAlgorithmParameter newParam = paramInfo.ToEditableParam(propInfo.Name);
           // TODO make it so it's system configurable whether to show unsupported params
           if (null == newParam && paramInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
           // ... and add it to the list of parameters!

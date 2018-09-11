@@ -61,7 +61,7 @@ namespace DunGen.TerrainGen
     {
       // Implemented via http://weblog.jamisbuck.org/2015/1/15/better-recursive-division-algorithm
 
-      if (this.WallStyle != WallFormationStyle.Boundaries) throw new NotImplementedException();
+      if (this.WallStrategy != WallFormation.Boundaries) throw new NotImplementedException();
       if (null == r) r = new Random();
 
       // CLOBBER!

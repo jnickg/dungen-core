@@ -29,7 +29,13 @@ namespace DunGen
       {
         // Serialize dungeon to XML
         DataContractSerializer xml = new DataContractSerializer(typeof(Dungeon));
-        var settings = new XmlWriterSettings { Indent = true };
+        var settings = new XmlWriterSettings
+        {
+#if DEBUG
+          Indent = true,
+          IndentChars = "\t",
+#endif
+        };
         using (var w = XmlWriter.Create(memoryStream, settings))
         {
           xml.WriteObject(w, d);

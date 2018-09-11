@@ -28,6 +28,7 @@ namespace DunGen
     /// the other BOTH must have appropriate values: Open_EAST and Open_WEST
     /// respectively.
     /// </summary>
+    [Flags]
     public enum MoveType : UInt32
     {
       Wall            = 0x00000000, // Considered "no data" for the purpose of maze generation

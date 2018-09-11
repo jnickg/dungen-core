@@ -2,12 +2,28 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
+using System.Linq;
+using System.Runtime.Serialization;
 
 namespace DunGen
 {
-  public class AlgorithmParams
+  [DataContract(Name = "algParams")]
+  [KnownType(typeof(EditingAlgorithmParameter))]
+  public class AlgorithmParams : ICloneable
   {
-    public IList<IAlgorithmParameter> List { get; set; }
+    [DataMember(IsRequired = true, Name = "list")]
+    public IList<IEditingAlgorithmParameter> List { get; set; } = new List<IEditingAlgorithmParameter>();
+
+    public object Clone()
+    {
+      AlgorithmParams clone = new AlgorithmParams();
+
+      List<IEditingAlgorithmParameter> clonedParams = new List<IEditingAlgorithmParameter>();
+      clonedParams.AddRange(this.List.Select(p => (IEditingAlgorithmParameter)p.Clone()));
+      clone.List = clonedParams;
+
+      return clone;
+    }
   }
 
   public static partial class Extensions
@@ -19,15 +35,19 @@ namespace DunGen
     /// </summary>
     public static void ApplyTo(this AlgorithmParams algParams, IAlgorithm algorithm)
     {
-      foreach (IAlgorithmParameter param in algParams.List)
+      foreach (IEditingAlgorithmParameter param in algParams.List)
       {
         foreach (PropertyInfo pi in algorithm.GetType().GetProperties())
         {
+          List<AlgorithmParameterInfo> apis = pi.GetCustomAttributes<AlgorithmParameterInfo>().ToList();
+          if (apis.Count == 0) continue;
           if (pi.Name == param.Name)
           {
-            // TODO ck if requested value is VALID before applying
-            pi.SetValue(algorithm, param.Value);
-            continue;
+            if (apis.ToList().Count > 1) throw new Exception("Too many AlgorithmParameterInfo objects for this property");
+            AlgorithmParameterInfo paramInfo = apis.ToList().First();
+            object parsedValue;
+            if (!paramInfo.TryParseValue(param, out parsedValue)) throw new Exception("Invalid value to be set");
+            pi.SetValue(algorithm, parsedValue);
           }
         }
       }
@@ -42,7 +62,7 @@ namespace DunGen
     public static AlgorithmParams ApplyFrom(this AlgorithmParams algParams, IAlgorithm algorithm)
     {
       AlgorithmParams setParams = algParams;
-      foreach (IAlgorithmParameter param in setParams.List)
+      foreach (IEditingAlgorithmParameter param in setParams.List)
       {
         foreach (PropertyInfo pi in algorithm.GetType().GetProperties())
         {

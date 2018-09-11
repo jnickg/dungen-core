@@ -8,35 +8,37 @@ namespace DunGen.TerrainGen
 {
   public class RecursiveBacktracker : TerrainGenAlgorithmBase
   {
+    public const string BorderPadding_Help = 
+      "If using tiles as walls, how many tiles to pad the outside of the " +
+      "algorithm's mask";
+
     [IntegerAlgorithmParamInfo(
-      "If using tiles as walls, how many tiles to pad the outside of the algorithm's mask",
-      1,
-      0,
-      int.MaxValue)]
+      Description = BorderPadding_Help,
+      Default = 1,
+      Minimum = 0,
+      Maximum = int.MaxValue)]
     public int BorderPadding { get; set; }
 
+    public const string Momentum_Help =
+      "A 0.0 to 1.0 percentage factor of how likely the algorithm is to " +
+      "maintain its current direction";
+
     [DecimalAlgorithmParamInfo(
-      "A 0.0 to 1.0 percentage factor of how likely the algorithm is to maintain its current direction",
-      0.33,
-      0.01,
-      0.95,
-      2)]
+      Description = Momentum_Help,
+      Default = 0.33,
+      Minimum = 0.01,
+      Maximum = 0.95,
+      PrecisionPoints = 2)]
     public double Momentum { get; set; }
 
     public override TerrainModBehavior Behavior
     {
-      get
-      {
-        return TerrainModBehavior.Carve;
-      }
+      get => TerrainModBehavior.Carve;
     }
 
     public override TerrainGenStyle Style
     {
-      get
-      {
-        return TerrainGenStyle.Bldg_Halls;
-      }
+      get => TerrainGenStyle.Bldg_Halls;
     }
 
     public override void Run(DungeonTiles d, bool[,] mask, Random r)
@@ -67,7 +69,7 @@ namespace DunGen.TerrainGen
         for (int x = 0; x < isExplored.GetLength(1); ++x)
         {
           isExplored[y, x] = false;
-          if (this.ExistingDataStrategy == OpenTilesStrategy.Avoid &&
+          if (this.OpenTilesStrategy == OpenTilesHandling.Avoid &&
               d[y, x].Physics != Tile.MoveType.Wall)
           {
             isExplored[y, x] = true;
@@ -89,12 +91,12 @@ namespace DunGen.TerrainGen
       Point origin = originPool[r.Next() % originPool.Count];
 
       // Launch into recursive algorithm
-      switch (base.WallStyle)
+      switch (base.WallStrategy)
       {
-        case WallFormationStyle.Tiles:
+        case WallFormation.Tiles:
           this.RecursiveBacktrack_TilesAsWalls(d, origin.X, origin.Y, isExplored, mask, r);
           break;
-        case WallFormationStyle.Boundaries:
+        case WallFormation.Boundaries:
         this.RecursiveBacktrack_BoundariesAsWalls(d, origin.X, origin.Y, isExplored, mask, r);
           break;
         default:
@@ -235,7 +237,7 @@ namespace DunGen.TerrainGen
 
         // Special case: we want to connect to the area due to our strategy, but do NOT want to recurse
         if (d[y2, x2].Physics != Tile.MoveType.Wall &&
-          this.ExistingDataStrategy == OpenTilesStrategy.ConnectToRooms)
+          this.OpenTilesStrategy == OpenTilesHandling.ConnectToRooms)
         {
           if (d.GetCategoriesFor(x2, y2).Contains(DungeonTiles.Category.Room))
           {
@@ -365,7 +367,7 @@ namespace DunGen.TerrainGen
 
         // Special case: we want to connect to the area due to our strategy, but do NOT want to recurse
         if (d[y3, x3].Physics != Tile.MoveType.Wall &&
-          this.ExistingDataStrategy == OpenTilesStrategy.ConnectToRooms)
+          this.OpenTilesStrategy == OpenTilesHandling.ConnectToRooms)
         {
           if (d.GetCategoriesFor(x3, y3).Contains(DungeonTiles.Category.Room))
           {

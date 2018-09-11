@@ -95,12 +95,13 @@ namespace DunGen.CLI
 
             cmd.OnExecute(() =>
             {
+              Console.WriteLine("FULL MENU:");
               MenuItem printRoot = this;
               if (fromRootOption.HasValue())
               {
                 while (printRoot.Parent != null) printRoot = printRoot.Parent;
               }
-              printRoot.PrintPretty(Console.Out, " ", false, this);
+              printRoot.PrintPretty(Console.Out, " ", false, this, printRoot);
               return 0;
             });
           });
@@ -132,6 +133,12 @@ namespace DunGen.CLI
           {
             Console.WriteLine("Something went wrong processing your command.");
             Console.WriteLine("Error: {0}", ex.Message);
+#if DEBUG
+            Console.WriteLine("Module: {0}", ex.TargetSite.Module.ToString());
+            Console.WriteLine("At: {0}", ex.TargetSite.ToString());
+            Console.WriteLine("Stack Trace:");
+            Console.WriteLine(ex.StackTrace);
+#endif
           }
         }
         return statusVal;
@@ -157,10 +164,11 @@ namespace DunGen.CLI
 
   internal static class Extensions
   {
-    internal static void PrintPretty(this MenuItem printRoot, TextWriter writer, string indent, bool last, MenuItem me = null)
+    internal static void PrintPretty(this MenuItem printRoot, TextWriter writer, string indent, bool last, MenuItem me = null, MenuItem realRoot = null)
     {
       string toWrite = indent;
-      bool useStar = (null != me && printRoot == me);
+      bool isMe = (null != me && printRoot == me);
+      bool isRoot = (null != realRoot && printRoot == realRoot);
       if (last)
       {
         toWrite += @"└─";
@@ -168,15 +176,23 @@ namespace DunGen.CLI
       }
       else
       {
-        toWrite += @"├─";
-        indent += "│ ";
+        if (isRoot)
+        {
+          toWrite += "";
+          indent += "";
+        }
+        else
+        {
+          toWrite += @"├─";
+          indent += "│ ";
+        }
       }
 
-      writer.WriteLine("{0,-15} {1} {2}", toWrite + printRoot.Name, (useStar ? "*" : "-"), printRoot.Description);
+      writer.WriteLine("{0,-15} {1} {2}", toWrite + printRoot.Name, (isMe ? "*" : "-"), printRoot.Description);
 
       for (int i = 0; i < printRoot.Children.Count; i++)
       {
-        printRoot.Children[i].PrintPretty(writer, indent, i == printRoot.Children.Count - 1, me);
+        printRoot.Children[i].PrintPretty(writer, indent, i == printRoot.Children.Count - 1, me, realRoot);
       }
     }
   }

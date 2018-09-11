@@ -77,7 +77,7 @@ namespace DunGen.TerrainGen
       {
         d.SetAllToo(Tile.MoveType.Wall, mask);
       }
-
+      
       if (null == r) r = new Random();
 
       bool[,] isExplored = (bool[,])mask.Clone();
@@ -165,7 +165,7 @@ namespace DunGen.TerrainGen
           }
         }
         // Close off boundaries if appropriate
-        if (this.WallStyle == WallFormationStyle.Boundaries)
+        if (this.WallStrategy == WallFormation.Boundaries)
         {
           for (int nuY = y; nuY < y + h; ++nuY)
           {

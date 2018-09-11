@@ -22,23 +22,31 @@ namespace DunGen.TerrainGen
       Maximum = 0.500)]
     public double DensityFactor { get; set; }
 
+    /// <summary>
+    /// Disabled for DiffusionLimitedAggregation.
+    /// <see cref="TerrainGenAlgorithmBase.WallStrategy"/>
+    /// </summary>
     [SelectionAlgorithmParameterInfo(
-      Description = WallStyle_Help,
-      Selection = typeof(WallFormationStyle),
-      Default = WallFormationStyle.Tiles,
+      Description = WallStrategy_Help,
+      Selection = typeof(WallFormation),
+      Default = WallFormation.Tiles,
       Supported = false)]
-    public override WallFormationStyle WallStyle { get; set; }
+    public override WallFormation WallStrategy { get; set; }
 
+    /// <summary>
+    /// Disabled for DiffusionLimitedAggregation.
+    /// <see cref="TerrainGenAlgorithmBase.OpenTilesStrategy"/>
+    /// </summary>
     [SelectionAlgorithmParameterInfo(
-      Description = ExistingDataStrategy_Help,
-      Selection = typeof(OpenTilesStrategy),
-      Default = OpenTilesStrategy.Overwrite,
+      Description = OpenTilesStrategy_Help,
+      Selection = typeof(OpenTilesHandling),
+      Default = OpenTilesHandling.Overwrite,
       Supported = false)]
-    public override OpenTilesStrategy ExistingDataStrategy { get; set; }
+    public override OpenTilesHandling OpenTilesStrategy { get; set; }
 
     public override TerrainModBehavior Behavior
     {
-      get => TerrainModBehavior.Carve;
+      get => TerrainModBehavior.Clobber;
     }
 
     public override TerrainGenStyle Style

@@ -9,16 +9,16 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Linq;
 
 namespace DunGen.Lib.Test
 {
   [TestClass]
   public class TestDungeon
   {
-    [TestMethod]
-    public void SaveAndLoad()
+    private DungeonGenerator GetTestDungeonGenerator()
     {
-      Random r = new Random(1337);
+      AlgorithmRandom r = new AlgorithmRandom(1337);
 
       int width = 51;
       int height = 51;
@@ -37,7 +37,7 @@ namespace DunGen.Lib.Test
             Alg = new MonteCarloRoomCarver()
             {
               GroupForDebug = false,
-              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries,
+              WallStrategy = TerrainGenAlgorithmBase.WallFormation.Boundaries,
               RoomWidthMin = 4,
               RoomWidthMax = 10,
               RoomHeightMin = 4,
@@ -56,8 +56,8 @@ namespace DunGen.Lib.Test
             {
               BorderPadding = 0,
               Momentum = 0.25,
-              ExistingDataStrategy = RecursiveBacktracker.OpenTilesStrategy.ConnectToRooms,
-              WallStyle = TerrainGenAlgorithmBase.WallFormationStyle.Boundaries
+              OpenTilesStrategy = RecursiveBacktracker.OpenTilesHandling.ConnectToRooms,
+              WallStrategy = TerrainGenAlgorithmBase.WallFormation.Boundaries
             },
             Context = new AlgorithmContextBase()
             {
@@ -66,10 +66,15 @@ namespace DunGen.Lib.Test
           },
         },
       };
+      return generator;
+    }
+
+    [TestMethod]
+    public void SaveAndLoad()
+    {
+      DungeonGenerator generator = GetTestDungeonGenerator();
 
       Dungeon d = generator.Generate();
-
-      List<Tile> testTiles = new List<Tile>();
 
       string tmpFilePath = System.IO.Path.GetTempFileName();
 
@@ -94,6 +99,34 @@ namespace DunGen.Lib.Test
       // TODO test more than just physics... when there is more to test.
 
       File.Delete(tmpFilePath);
+    }
+
+    [TestMethod]
+    public void AlgorithmRunInfo_ExactReproduction()
+    {
+      DungeonGenerator g1 = GetTestDungeonGenerator();
+
+      Dungeon d1 = g1.Generate();
+
+      DungeonGenerator g2 = new DungeonGenerator()
+      {
+        Options = new DungeonGenerator.DungeonGeneratorOptions()
+        {
+          DoReset = true,
+          Height = d1.Tiles.Height,
+          Width = d1.Tiles.Width,
+          // Here's what we're actually testing: that reconstructing the run gives exact results
+          TerrainGenAlgRuns = new List<AlgorithmRun>(d1.Runs.Select(r => r.ReconstructRun())),
+        }
+      };
+
+      Dungeon d2 = g2.Generate();
+
+      // AHHH TODO this is failing!
+      foreach (Tile t in d1.Tiles.Tiles_Set)
+      {
+        Assert.IsTrue(t.Physics == d2.Tiles[t.Location.Y, t.Location.X].Physics);
+      }
     }
   }
 }
