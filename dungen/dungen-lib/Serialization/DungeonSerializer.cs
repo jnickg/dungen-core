@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 
-namespace DunGen
+namespace DunGen.Serialization
 {
   public class DungeonSerializer
   {

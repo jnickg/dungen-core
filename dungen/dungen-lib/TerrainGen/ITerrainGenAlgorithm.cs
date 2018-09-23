@@ -1,10 +1,11 @@
-﻿using System;
+﻿using DunGen.Algorithm;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
 using System.Text;
 
-namespace DunGen
+namespace DunGen.TerrainGen
 {
   /// <summary>
   /// Enumeration of types of behavior this algorithm can have when run

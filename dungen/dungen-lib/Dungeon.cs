@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DunGen.Generator;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.Serialization;

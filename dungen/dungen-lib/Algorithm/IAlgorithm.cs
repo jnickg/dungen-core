@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
-namespace DunGen
+namespace DunGen.Algorithm
 {
   /// <summary>
   /// An interface satisfied by all algorithms that run when generating

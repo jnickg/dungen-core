@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DunGen.Algorithm;
+using DunGen.TerrainGen;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -6,44 +8,8 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 
-namespace DunGen.TerrainGen
+namespace DunGen.Serialization
 {
-  [CollectionDataContract(Name = "algPalette", KeyName = "name", ValueName = "algPreset")]
-  public class AlgorithmPalette : Dictionary<string, AlgorithmPaletteItem>
-  {
-  }
-
-  [DataContract(Name = "algPreset")]
-  public class AlgorithmPaletteItem : ICloneable
-  {
-    [DataMember(IsRequired = true, Name = "type", Order = 1)]
-    public string TypeName { get; set; }
-
-    [DataMember(IsRequired = false, Name = "params", Order = 2)]
-    public AlgorithmParams ParamPresets { get; set; }
-
-    public object Clone()
-    {
-      return new AlgorithmPaletteItem()
-      {
-        TypeName = this.TypeName,
-        ParamPresets = (AlgorithmParams)this.ParamPresets.Clone()
-      };
-    }
-
-    public IAlgorithm CreateInstance()
-    {
-      IAlgorithm alg = AlgorithmPluginManager.GetAlgorithm(this.TypeName);
-
-      if (alg.TakesParameters)
-      {
-        alg.Parameters = (AlgorithmParams)this.ParamPresets.Clone();
-      }
-
-      return alg;
-    }
-  }
-
   public class AlgorithmPaletteSerializer
   {
     public AlgorithmPaletteSerializer()

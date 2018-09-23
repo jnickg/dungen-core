@@ -1,10 +1,12 @@
-﻿using System;
+﻿using DunGen.Algorithm;
+using DunGen.TerrainGen;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 
-namespace DunGen
+namespace DunGen.Generator
 {
   public class DungeonGenerator
   {

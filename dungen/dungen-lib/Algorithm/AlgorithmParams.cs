@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace DunGen
+namespace DunGen.Algorithm
 {
   [DataContract(Name = "algParams")]
   [KnownType(typeof(EditingAlgorithmParameter))]

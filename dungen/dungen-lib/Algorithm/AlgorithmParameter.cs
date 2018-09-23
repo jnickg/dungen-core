@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace DunGen
+namespace DunGen.Algorithm
 {
   #region Types and Interfaces
   public enum ParameterCategory

@@ -1,7 +1,4 @@
-﻿using DunGen;
-using DunGen.Rendering;
-using DunGen.TerrainGen;
-using Microsoft.Extensions.CommandLineUtils;
+﻿using Microsoft.Extensions.CommandLineUtils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,6 +10,13 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Linq;
 using System.Text;
+using DunGen;
+using DunGen.Rendering;
+using DunGen.TerrainGen;
+using DunGen.Plugins;
+using DunGen.Algorithm;
+using DunGen.Serialization;
+using DunGen.Generator;
 
 namespace DunGen.CLI
 {
@@ -66,31 +70,26 @@ namespace DunGen.CLI
                 }
               }
             },
-            new MenuItem("plugins")
+            new MenuItem("plugin")
             {
               Description = "Manages algorithm plugins",
               Children = new List<MenuItem>()
               {
-                new MenuItem("add")
+                new MenuItem("install")
                 {
-                  Description = "Add a new algorithm plugin",
-                  Configure = AlgorithmsPluginsAddCommand_Configure
+                  Description = "Install a new algorithm plugin",
+                  Configure = AlgorithmsPluginsInstallCommand_Configure
                 },
                 new MenuItem("list")
                 {
-                  Description = "List all loaded algorithm plugins",
+                  Description = "List all installed algorithm plugins",
                   Configure = AlgorithmsPluginsListCommand_Configure
                 },
-                new MenuItem("remove")
+                new MenuItem("uninstall")
                 {
-                  Description = "Remove an algorithm plugin",
-                  Configure = AlgorithmsPluginsRemoveCommand_Configure
+                  Description = "Uninstall an algorithm plugin",
+                  Configure = AlgorithmsPluginsUninstallCommand_Configure
                 },
-                new MenuItem("show")
-                {
-                  Description = "Show details on a single algorithm",
-                  Configure = AlgorithmsPluginsShowCommand_Configure
-                }
               }
             },
           }
@@ -166,10 +165,10 @@ namespace DunGen.CLI
       }
     };
 
+    private static readonly string default_plugin_dir = "Plugins";
+    private static readonly DirectoryInfo _pluginDir = Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, default_plugin_dir));
     private static readonly int default_dungeon_height = 51;
     private static readonly int default_dungeon_width = 51;
-    private static AlgorithmPluginManager _notPlugins;
-    private static AlgorithmPluginManager _installedPlugins;
     private static AlgorithmPalette _currentPalette;
     private static Dungeon loadedDungeon = null;
     private static string loadedDungeon_fileName = string.Empty;
@@ -177,19 +176,20 @@ namespace DunGen.CLI
 
     static void Main(string[] args)
     {
+      Console.WriteLine("Loading DunGen CLI...");
       // Initialize Program Data
-      _notPlugins = new AlgorithmPluginManager();
-      _notPlugins.Enumerate();
+      DirectoryInfo pluginDir = Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, default_plugin_dir));
 
-      _currentPalette = new AlgorithmPalette();
-      foreach (var alg in AlgorithmPluginManager.GetAllLoadedAlgorithms())
+      Action<FileInfo> loadNotifier = (file) =>
       {
-        _currentPalette.Add(alg.Name + "_default", new AlgorithmPaletteItem()
-        {
-          TypeName = alg.GetType().FullName,
-          ParamPresets = alg.GetParamsPrototype()
-        });
-      }
+#if DEBUG
+        Console.WriteLine("Loaded assembly: {0}", file.FullName);
+#endif
+      };
+      AlgorithmPluginEnumerator.Enumerate(pluginDir.GetFiles().ToList(), loadNotifier);
+
+      _currentPalette = AlgorithmPalette.DefaultPalette(
+        AlgorithmPluginEnumerator.GetAllLoadedAlgorithms());
 
       // Configure and run interactive program
       // Reference: https://github.com/anthonyreilly/ConsoleArgs/blob/master/Program.cs
@@ -559,7 +559,7 @@ namespace DunGen.CLI
       {
         cmd.OnExecute(() =>
         {
-          foreach (IAlgorithm alg in AlgorithmPluginManager.GetAllLoadedAlgorithms())
+          foreach (IAlgorithm alg in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
           {
             _runs.Add(new AlgorithmRun()
             {
@@ -606,32 +606,10 @@ namespace DunGen.CLI
 
     private static void AlgorithmsListCommand_Configure(CommandLineApplication cmd)
     {
-      var directoryOption = cmd.Option("-p|--plugins <path>",
-        "Specifies a directory in which to search for Algorithms. " +
-        "If specified, only algorithms in the plugin will be listed.",
-        CommandOptionType.SingleValue);
-      var allOption = cmd.Option("-a|--all",
-        "List ALL plugins available, including those currently configured " +
-        "with DunGen as well as those listed with a -p/--plugins option",
-        CommandOptionType.NoValue);
-
       cmd.OnExecute(() =>
       {
         List<IAlgorithm> algsToList = new List<IAlgorithm>();
-        algsToList.AddRange(_notPlugins.AlgorithmProtos);
-
-        if (directoryOption.HasValue())
-        {
-          string customDir = directoryOption.Value();
-          var plugins = new AlgorithmPluginManager(customDir);
-          plugins.Enumerate();
-          if (false == allOption.HasValue())
-          {
-            // Only show the algorithms in the plugin
-            algsToList.Clear();
-          }
-          algsToList.AddRange(plugins.AlgorithmProtos);
-        }
+        algsToList.AddRange(AlgorithmPluginEnumerator.GetAllLoadedAlgorithms());
 
         foreach(var alg in algsToList)
         {
@@ -781,7 +759,7 @@ namespace DunGen.CLI
     {
       int algCounter = 0;
 
-      foreach (var algProto in AlgorithmPluginManager.GetAllLoadedAlgorithms())
+      foreach (var algProto in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
       {
         // Add a discrete command for each algorithm available
         command.Command(algCounter++.ToString(), (algCmd) =>
@@ -862,7 +840,7 @@ namespace DunGen.CLI
       {
         cmd.OnExecute(() =>
         {
-          foreach (IAlgorithm alg in AlgorithmPluginManager.GetAllLoadedAlgorithms())
+          foreach (IAlgorithm alg in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
           {
             _runs.Add(new AlgorithmRun()
             {
@@ -881,24 +859,84 @@ namespace DunGen.CLI
       });
     }
 
-    private static void AlgorithmsPluginsShowCommand_Configure(CommandLineApplication cmd)
-    {
-      // TODO
-    }
-
     private static void AlgorithmsPluginsListCommand_Configure(CommandLineApplication cmd)
     {
-      // TODO
+      cmd.OnExecute(() =>
+      {
+        foreach (var plugin in _pluginDir.GetFiles())
+        {
+          Console.WriteLine("Loaded assembly {0}", plugin.Name);
+        }
+        return 0;
+      });
     }
 
-    private static void AlgorithmsPluginsRemoveCommand_Configure(CommandLineApplication cmd)
+    private static void AlgorithmsPluginsUninstallCommand_Configure(CommandLineApplication cmd)
     {
-      // TODO
+      cmd.OnExecute(() =>
+      {
+        throw new NotSupportedException("Can't yet uninstall plugins at runtime. " +
+          "Close the program, manually remove from Plugins folder, and re-launch.");
+        return 0;
+      });
     }
 
-    private static void AlgorithmsPluginsAddCommand_Configure(CommandLineApplication cmd)
+    private static void AlgorithmsPluginsInstallCommand_Configure(CommandLineApplication cmd)
     {
-      // TODO
+      var locationArgument = cmd.Argument("Location",
+        "Path to the DLL or Directory of DLLs that should be installed");
+
+      var recurseOption = cmd.Option("-r|--recursive",
+        "If the specified location is a directory, recurse into subdirectories.",
+        CommandOptionType.NoValue);
+
+      var temporaryOption = cmd.Option("-t|--temp",
+        "Only install plugin for this runtime; do not add it as a permanent plugin",
+        CommandOptionType.NoValue);
+
+      cmd.OnExecute(() =>
+      {
+        List<FileInfo> pluginsToInstall = new List<FileInfo>();
+        string pluginPath = Path.GetFullPath(locationArgument.Value);
+        if (File.Exists(pluginPath))
+        {
+          pluginsToInstall.Add(new FileInfo(locationArgument.Value));
+        }
+        else if (Directory.Exists(pluginPath))
+        {
+          // Define a recursive action to enumerate subdirectories. Keep it
+          // anonymous so as not to pollute the Program class
+          Action<DirectoryInfo, bool> enumerate = null;
+          enumerate = new Action<DirectoryInfo, bool>((dir, r) =>
+          {
+            pluginsToInstall.AddRange(dir.GetFiles());
+            if (r)
+            {
+              foreach (var subdir in dir.GetDirectories())
+              {
+                enumerate?.Invoke(subdir, r);
+              }
+            }
+          });
+
+          DirectoryInfo pluginDir = new DirectoryInfo(locationArgument.Value);
+          enumerate?.Invoke(pluginDir, recurseOption.HasValue());
+        }
+
+        Action<FileInfo> successfulInstall = (newPlugin) =>
+        {
+          Console.WriteLine("Loaded plugin {0}", newPlugin.FullName);
+          if (temporaryOption.HasValue()) return;
+          string fileName = Path.GetFileName(newPlugin.FullName);
+          string destFile = Path.Combine(_pluginDir.FullName, fileName);
+          Console.WriteLine("Copying to {0}...", destFile);
+          newPlugin.CopyTo(destFile);
+        };
+
+        AlgorithmPluginEnumerator.Enumerate(pluginsToInstall, successfulInstall);
+
+        return 0;
+      });
     }
   }
 }

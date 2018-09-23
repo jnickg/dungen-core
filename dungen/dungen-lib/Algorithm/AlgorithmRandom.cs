@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using System.Reflection;
 using System.Text;
 
-namespace DunGen
+namespace DunGen.Algorithm
 {
   /// <summary>
   /// A pseudorandom generator that can be saved/loaded, producing the

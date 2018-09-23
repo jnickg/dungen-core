@@ -18,7 +18,7 @@ namespace DunGen.Lib.Test
     private static readonly int _dungeonWidth_default = 51;
     private static readonly bool[,] _dungeonMask_default;
     private static readonly AlgorithmRandom _r = new AlgorithmRandom(1337696937);
-    private static AlgorithmPluginManager _notPlugins = new AlgorithmPluginManager();
+    private static AlgorithmPluginEnumerator _notPlugins = new AlgorithmPluginEnumerator();
 
     static TestTerrainGenAlgorithms()
     {

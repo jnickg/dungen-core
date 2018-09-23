@@ -1,10 +1,12 @@
-﻿using System;
+﻿using DunGen.Algorithm;
+using DunGen.Plugins;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace DunGen
+namespace DunGen.Generator
 {
   [CollectionDataContract(Name = "runList", ItemName = "algRunInfo")]
   public class AlgorithmRunInfoList : List<AlgorithmRunInfo>
@@ -84,7 +86,7 @@ namespace DunGen
 
     private static IAlgorithm FindAlgorithm(string typeName)
     {
-      return AlgorithmPluginManager.GetAlgorithm(typeName);
+      return AlgorithmPluginEnumerator.GetAlgorithm(typeName);
     }
   }
 
