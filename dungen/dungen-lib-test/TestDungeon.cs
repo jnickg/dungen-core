@@ -10,6 +10,9 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Linq;
+using DunGen.Generator;
+using DunGen.Algorithm;
+using DunGen.Serialization;
 
 namespace DunGen.Lib.Test
 {

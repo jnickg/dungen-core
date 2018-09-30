@@ -63,6 +63,11 @@ namespace DunGen.CLI
                   Description = "Remove an algorithm from the palette",
                   Configure = AlgorithmsPaletteRemoveCommand_Configure
                 },
+                new MenuItem("render")
+                {
+                  Description = "Render algorithm presets to a color palette, for painting",
+                  Configure = AlgorithmsPaletteRenderCommand_Configure
+                },
                 new MenuItem("save")
                 {
                   Description = "Save algorithm palette to a file",
@@ -157,6 +162,11 @@ namespace DunGen.CLI
                 {
                   Description = "List the algorithm runs",
                   Configure = GeneratorRunsListCommand_Configure
+                },
+                new MenuItem("read")
+                {
+                  Description = "Attempt to read algorithm runs from an image file",
+                  Configure = GeneratorRunsReadCommand_Configure
                 }
               }
             }
@@ -604,6 +614,49 @@ namespace DunGen.CLI
       });
     }
 
+    private static void GeneratorRunsReadCommand_Configure(CommandLineApplication cmd)
+    {
+      var fileArgument = cmd.Argument("Filename",
+        "The path to the file containing a pre-drawn map layout");
+
+      var clearOption = cmd.Option("-c|--clear",
+        "Set this option to clear the algorithm runs first",
+        CommandOptionType.NoValue);
+
+      cmd.OnExecute(() =>
+      {
+        if (null == _currentPalette)
+        {
+          throw new Exception("Must have an algorithm palette loaded to read image");
+        }
+
+        if (_runs.Count != 0 && !clearOption.HasValue())
+        {
+          throw new Exception(String.Format("{0} Runs already set. Specify '-c' to clear runs first", _runs.Count));
+        }
+
+        Image maskSource = Bitmap.FromFile(Path.GetFullPath(fileArgument.Value));
+        var maskDictionary = MaskInterpreter.ParseMasks(maskSource, _currentPalette);
+
+        foreach (var maskPairing in maskDictionary)
+        {
+          if (!maskPairing.Value.ContainsTrue()) continue;
+          _runs.Add(new AlgorithmRun()
+          {
+            Alg = maskPairing.Key.CreateInstance(),
+            Context = new AlgorithmContextBase()
+            {
+              D = null,
+              Mask = maskPairing.Value,
+              R = null
+            }
+          });
+        }
+
+        return 0;
+      });
+    }
+
     private static void AlgorithmsListCommand_Configure(CommandLineApplication cmd)
     {
       cmd.OnExecute(() =>
@@ -635,6 +688,9 @@ namespace DunGen.CLI
       var overwriteOption = cmd.Option("-o|--overwrite",
         "Whether to overwrite the file of the given name, if it already exists.",
         CommandOptionType.NoValue);
+      var exportPdnOption = cmd.Option("--pdn",
+        "Specify this option to export the file to a Paint.NET color palette file",
+        CommandOptionType.NoValue);
 
       cmd.OnExecute(() =>
       {
@@ -650,7 +706,13 @@ namespace DunGen.CLI
         try
         {
           saver.Save(_currentPalette, saveName, doOverwrite ? FileMode.Create : FileMode.CreateNew);
-          Console.WriteLine("Dungeon saved to file: {0}", saveName);
+          Console.WriteLine("Palette saved to file: {0}", saveName);
+          if (exportPdnOption.HasValue())
+          {
+            string pdnFile = Path.GetFileNameWithoutExtension(saveName) + "_pdn.txt";
+            saver.ExportForPdn(_currentPalette, pdnFile, doOverwrite ? FileMode.Create : FileMode.CreateNew);
+            Console.WriteLine("Palette exported to PDN palette file: {0}", pdnFile);
+          }
         }
         catch (IOException)
         {
@@ -709,9 +771,10 @@ namespace DunGen.CLI
     {
       cmd.OnExecute(() =>
       {
+        Console.WriteLine("{0,-12} - {1,-30} - {2}", "COLOR", "NAME", "TYPE");
         foreach (var n in _currentPalette.Keys)
         {
-          Console.WriteLine("{0,-30} - {1}", n, _currentPalette[n].TypeName);
+          Console.WriteLine("0x{0,-10:X} - {1,-30} - {2}", _currentPalette[n].PaletteColor.ToArgb(), n, _currentPalette[n].TypeName);
         }
         return 0;
       });
@@ -750,6 +813,69 @@ namespace DunGen.CLI
             Console.WriteLine("Palette item {0} removed.", name);
           }
         }
+
+        return 0;
+      });
+    }
+
+    private static void AlgorithmsPaletteRenderCommand_Configure(CommandLineApplication command)
+    {
+      var fileNameArg = command.Argument("Filename",
+        "The name of the file to which the palette will be rendered");
+
+      var overwriteOption = command.Option("-o|--overwrite",
+        "Specify this option to force overwriting of an existing file",
+        CommandOptionType.NoValue);
+
+      var labelOption = command.Option("-l|--label",
+        "Specify this option to add labels for each palette item",
+        CommandOptionType.NoValue);
+
+      var voxelSizeOption = command.Option("-s|--size",
+        "The size of each palette square, in pixels",
+        CommandOptionType.SingleValue);
+
+      command.OnExecute(() =>
+      {
+        if (_currentPalette == null)
+        {
+          Console.WriteLine("ERROR: No algorithm palette loaded");
+          return 1;
+        }
+
+        string saveName = Path.GetFullPath(fileNameArg.Value);
+        bool doOverwrite = overwriteOption.HasValue();
+        bool doLabel = labelOption.HasValue();
+
+        int voxSz = voxelSizeOption.HasValue() ? int.Parse(voxelSizeOption.Value()) : 10;
+        int outputWidthFactor = doLabel ? 30 : 1;
+        int outputHeightFactor = _currentPalette.Count;
+        Bitmap output = new Bitmap(voxSz * outputWidthFactor, voxSz * outputHeightFactor);
+        Graphics g = Graphics.FromImage(output);
+
+        for (int i = 0; i < _currentPalette.Count; ++i)
+        {
+          var paletteEntry = _currentPalette.ElementAt(i);
+          Rectangle paletteVoxel = new Rectangle(0, i * voxSz, voxSz, voxSz);
+          Brush paletteItemColor = new SolidBrush(paletteEntry.Value.PaletteColor);
+          g.FillRectangle(paletteItemColor, paletteVoxel);
+          if (doLabel)
+          {
+            g.DrawString(
+              paletteEntry.Key,
+              new Font(FontFamily.GenericMonospace, (float)(voxSz * 0.8)),
+              new SolidBrush(Color.White),
+              (float) voxSz + 1,
+              (float) i * voxSz - 1);
+          }
+        }
+
+        if (File.Exists(saveName) && doOverwrite)
+        {
+          File.Delete(saveName);
+        }
+
+        output.Save(saveName);
 
         return 0;
       });

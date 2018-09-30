@@ -1,6 +1,7 @@
 ﻿using DunGen.Plugins;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.Serialization;
 
 namespace DunGen.Algorithm
@@ -13,11 +14,7 @@ namespace DunGen.Algorithm
       AlgorithmPalette defaultPalette = new AlgorithmPalette();
       foreach (var alg in algorithms)
       {
-        defaultPalette.Add(alg.Name + "_default", new AlgorithmPaletteItem()
-        {
-          TypeName = alg.GetType().FullName,
-          ParamPresets = alg.GetParamsPrototype()
-        });
+        defaultPalette.Add(alg.Name + "_default", alg.ToPaletteItem(true));
       }
       return defaultPalette;
     }
@@ -26,18 +23,38 @@ namespace DunGen.Algorithm
   [DataContract(Name = "algPreset")]
   public class AlgorithmPaletteItem : ICloneable
   {
+    private Color _paletteColor = Color.Empty;
+
     [DataMember(IsRequired = true, Name = "type", Order = 1)]
     public string TypeName { get; set; }
 
     [DataMember(IsRequired = false, Name = "params", Order = 2)]
     public AlgorithmParams ParamPresets { get; set; }
 
+    [DataMember(IsRequired = false, Name = "color", Order = 3)]
+    public Color PaletteColor
+    {
+      get
+      {
+        if (_paletteColor == Color.Empty)
+        {
+          _paletteColor = CreateInstance().ToDefaultColor();
+        }
+        return _paletteColor;
+      }
+      set
+      {
+        _paletteColor = value;
+      }
+    }
+
     public object Clone()
     {
       return new AlgorithmPaletteItem()
       {
         TypeName = this.TypeName,
-        ParamPresets = (AlgorithmParams)this.ParamPresets.Clone()
+        ParamPresets = (AlgorithmParams)this.ParamPresets.Clone(),
+        PaletteColor = this.PaletteColor
       };
     }
 
@@ -51,6 +68,26 @@ namespace DunGen.Algorithm
       }
 
       return alg;
+    }
+  }
+
+  public static partial class Extensions
+  {
+    public static Color ToDefaultColor(this IAlgorithm alg)
+    {
+      int hashColor = alg.GetHashCode();
+      hashColor = (int)(hashColor | 0xFF000000); // No transparency
+      return Color.FromArgb(hashColor);
+    }
+
+    public static AlgorithmPaletteItem ToPaletteItem(this IAlgorithm alg, bool defaultParams = false)
+    {
+      return new AlgorithmPaletteItem()
+      {
+        ParamPresets = defaultParams ? alg.GetParamsPrototype() : alg.Parameters,
+        TypeName = alg.GetType().FullName,
+        PaletteColor = alg.ToDefaultColor()
+      };
     }
   }
 }

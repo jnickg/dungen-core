@@ -106,6 +106,7 @@ namespace DunGen.Generator
       DungeonTiles tiles = workingDungeon.Tiles;
       for (int i = 0; i < terrainAlgRuns.Count; ++i)
       {
+        bool canSkip = true;
         ISet<Tile> algTiles = new HashSet<Tile>();
         for (int y = 0; y < tiles.Height; ++y)
         {
@@ -114,9 +115,14 @@ namespace DunGen.Generator
             if (terrainAlgRuns[i].Context.Mask[y, x])
             {
               algTiles.Add(tiles[y, x]);
+              canSkip = false;
             }
           }
         }
+
+        // If this algorithm is totally masked out, don't bother running it
+        if (canSkip) continue;
+
         if (null != options.TerrainGenCallbacks && options.TerrainGenCallbacks.Count > 0)
         {
           foreach (var cb in options.TerrainGenCallbacks)

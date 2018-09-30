@@ -8,6 +8,9 @@ using System;
 using DunGen.Rendering;
 using System.Drawing;
 using System.Drawing.Imaging;
+using DunGen.Algorithm;
+using DunGen.Plugins;
+using DunGen.Generator;
 
 namespace DunGen.Lib.Test
 {
@@ -18,7 +21,6 @@ namespace DunGen.Lib.Test
     private static readonly int _dungeonWidth_default = 51;
     private static readonly bool[,] _dungeonMask_default;
     private static readonly AlgorithmRandom _r = new AlgorithmRandom(1337696937);
-    private static AlgorithmPluginEnumerator _notPlugins = new AlgorithmPluginEnumerator();
 
     static TestTerrainGenAlgorithms()
     {
@@ -30,8 +32,6 @@ namespace DunGen.Lib.Test
           _dungeonMask_default[y, x] = true;
         }
       }
-
-      _notPlugins.Enumerate();
     }
 
     private DungeonGenerator CreateDefaultTestGenerator(IList<AlgorithmRun> runs)
@@ -55,7 +55,7 @@ namespace DunGen.Lib.Test
     [TestMethod]
     public void RunWithDefaultParams()
     {
-      foreach (var algProto in _notPlugins.AlgorithmProtos)
+      foreach (var algProto in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
       {
         IList<AlgorithmRun> runs = new List<AlgorithmRun>()
         {
@@ -101,7 +101,7 @@ namespace DunGen.Lib.Test
         R = _r
       };
 
-      foreach (var algProto in _notPlugins.AlgorithmProtos)
+      foreach (var algProto in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
       {
         IList<AlgorithmRun> runs = new List<AlgorithmRun>()
         {
