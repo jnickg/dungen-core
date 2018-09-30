@@ -9,6 +9,7 @@ namespace DunGen.CLI
 {
   internal class MenuItem
   {
+    public static readonly int GoHomeStatus = int.MaxValue;
     public static readonly string HelpOptionString = "-?|-h|--help";
 
     private List<MenuItem> _children = new List<MenuItem>();
@@ -72,6 +73,18 @@ namespace DunGen.CLI
           });
 
           LoadChildPredicates(interactiveEditor);
+
+          interactiveEditor.Command("~", (cmd) =>
+          {
+            cmd.Description = "Return to root of menu";
+            cmd.HelpOption(HelpOptionString);
+
+            cmd.OnExecute(() =>
+            {
+              return GoHomeStatus;
+            });
+          });
+
           interactiveEditor.Command("<", (cmd) =>
           {
             cmd.Description = IsRoot ? "Quit the program" : "Go up one menu level";
@@ -108,7 +121,7 @@ namespace DunGen.CLI
 
           Console.WriteLine();
           Console.WriteLine("====================================================================================================");
-          Console.WriteLine("MENU BREADCRUMB: {0}", GetLocationString());
+          Console.Title = GetLocationString();
           interactiveEditor.ShowHelp();
 
           if (null != StatusMessage) Console.WriteLine(StatusMessage());
@@ -140,7 +153,15 @@ namespace DunGen.CLI
             Console.WriteLine(ex.StackTrace);
 #endif
           }
+
+          // Short-circuit and return if the user has requested going back to the
+          // menu root.
+          if (statusVal == GoHomeStatus && !IsRoot)
+          {
+            return statusVal;
+          }
         }
+
         return statusVal;
       });
 
@@ -188,7 +209,7 @@ namespace DunGen.CLI
         }
       }
 
-      writer.WriteLine("{0,-15} {1} {2}", toWrite + printRoot.Name, (isMe ? "*" : "-"), printRoot.Description);
+      writer.WriteLine("{0,-20} {1} {2}", toWrite + printRoot.Name, (isMe ? "*" : "-"), printRoot.Description);
 
       for (int i = 0; i < printRoot.Children.Count; i++)
       {
