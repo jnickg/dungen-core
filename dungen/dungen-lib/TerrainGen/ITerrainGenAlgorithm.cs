@@ -202,6 +202,7 @@ namespace DunGen.TerrainGen
     /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>
     public override void Run(IAlgorithmContext context)
     {
+      // TODO get rid of the old version of Run and just use this
       Run(context.D.Tiles, context.Mask, context.R);
     }
 

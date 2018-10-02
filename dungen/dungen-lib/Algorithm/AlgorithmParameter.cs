@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DunGen.Plugins;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,10 +15,10 @@ namespace DunGen.Algorithm
     Integer,              // A whole-number numeric value
     Decimal,              // A decimal-point numeric value
     Selection,            // Select from a pre-set list of options
-    Boolean               // On-off switch
+    Boolean,              // On-off switch
+    Algorithm,            // An algorithm with its own set of parameters
     // TODO: These guys!
     // ParameterGroup,       // A list of other parameters, grouped together
-    // TerrainGenAlgorithm   // An entire TerrainGenAlgorithm with its own set of parameters
   }
 
   public interface IEditingAlgorithmParameter : ICloneable
@@ -207,6 +208,10 @@ namespace DunGen.Algorithm
                                  null != p.PropertyType.GetCustomAttributes<AlgorithmParameterInfo>(true));
         knownTypes.AddRange(props.Select(p => p.PropertyType));
       }
+
+      // Add all known algorithms so we can handle composite algorithms,
+      // or algorithms taking other algs as parameters.
+      knownTypes.AddRange(AlgorithmBase.GetKnownTypes());
 
       // Transform it to a set and back, to remove duplicates
       return knownTypes.Distinct().ToList();
@@ -499,6 +504,73 @@ namespace DunGen.Algorithm
 
       parsedValue = valBool;
       return valueOk;
+    }
+  }
+
+  public class AlgorithmAlgorithmParameterInfo : AlgorithmParameterInfo
+  {
+    public Type AlgorithmBaseType { get; set; } = typeof(IAlgorithm);
+
+    /// <summary>
+    /// The type of algorithm to be used by default. This currently can't hold
+    /// parameters, so users are limited to specifying a basic algorithm type
+    /// whose default parameters will be used.
+    /// </summary>
+    public Type Default { get; set; }
+
+    public AlgorithmAlgorithmParameterInfo()
+      : base(ParameterCategory.Algorithm)
+    { }
+
+    public override bool TryParseValue(object value, out object parsedValue)
+    {
+      bool valueOk = false;
+      parsedValue = null; // Will return will if unsuccessful
+      Type typeOfIAlgorithm = typeof(IAlgorithm);
+      Type typeOfValue = value.GetType();
+
+      if (typeOfValue.IsPrimitive || typeOfValue.IsEnum)
+      {
+        throw new ArgumentException("Can't parse an Algorithm type from the given value");
+      }
+      if (value is string)
+      {
+        // Do we need to deserialize a string?
+      }
+
+      // If the value is an info for some reason, instantiate it
+      if (typeOfValue == typeof(AlgorithmInfo))
+      {
+        AlgorithmInfo infoVal = value as AlgorithmInfo;
+        if (null != infoVal)
+        {
+          parsedValue = infoVal.ToInstance();
+          valueOk = true;
+        }
+      }
+
+      // The new value passed is an actual Algorithm
+      if (typeOfIAlgorithm.IsAssignableFrom(typeOfValue) &&
+          AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
+          !typeOfValue.IsAbstract)
+      {
+        parsedValue = value;
+        valueOk = true;
+      }
+
+      return valueOk;
+    }
+
+    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
+    {
+      return new EditingAlgorithmParameter(this)
+      {
+        Name = Name,
+        Description = this.Description,
+        Default = this.Default,
+        Category = ParameterCategory.Algorithm,
+        Value = AlgorithmPluginEnumerator.GetAlgorithm(Default)
+      };
     }
   }
   #endregion

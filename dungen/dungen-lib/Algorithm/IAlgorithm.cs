@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace DunGen.Algorithm
@@ -118,6 +120,8 @@ namespace DunGen.Algorithm
   /// the automatic reflective getting and setting of its 
   /// constituent parameters
   /// </summary>
+  [DataContract(Name = "algorithm")]
+  [KnownType("GetKnownTypes")]
   public abstract class AlgorithmBase : IAlgorithm
   {
     public virtual string Name
@@ -139,6 +143,7 @@ namespace DunGen.Algorithm
     ///   algObject.Parameters = editableParams; // Latch
     /// </code>
     /// </summary>
+    [DataMember(Name = "params", Order = 1, IsRequired = false)]
     public AlgorithmParams Parameters
     {
       get
@@ -220,6 +225,21 @@ namespace DunGen.Algorithm
         algClone.Parameters = this.Parameters;
       }
       return algClone;
+    }
+
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      // Reflect through every Algorithm type loaded, and just add them as potential candidates for
+      List<Type> knownTypes = new List<Type>();
+
+      foreach (var assy in AppDomain.CurrentDomain.GetAssemblies())
+      {
+        Type[] types = assy.GetTypes();
+
+        types = types.Where(t => typeof(IAlgorithm).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+      }
+
+      return knownTypes;
     }
   }
 }
