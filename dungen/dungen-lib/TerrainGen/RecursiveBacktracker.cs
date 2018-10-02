@@ -13,7 +13,7 @@ namespace DunGen.TerrainGen
       "If using tiles as walls, how many tiles to pad the outside of the " +
       "algorithm's mask";
 
-    [IntegerAlgorithmParamInfo(
+    [IntegerParameter(
       Description = BorderPadding_Help,
       Default = 1,
       Minimum = 0,
@@ -24,13 +24,19 @@ namespace DunGen.TerrainGen
       "A 0.0 to 1.0 percentage factor of how likely the algorithm is to " +
       "maintain its current direction";
 
-    [DecimalAlgorithmParamInfo(
+    [DecimalParameter(
       Description = Momentum_Help,
       Default = 0.33,
       Minimum = 0.01,
       Maximum = 0.95,
-      PrecisionPoints = 2)]
+      Precision = 2)]
     public double Momentum { get; set; }
+
+    [SelectionParameter(
+      Description = WallStrategy_Help,
+      SelectionType = typeof(WallFormation),
+      Default = WallFormation.Tiles)]
+    public override WallFormation WallStrategy { get => base.WallStrategy; set => base.WallStrategy = value; }
 
     public override TerrainModBehavior Behavior
     {

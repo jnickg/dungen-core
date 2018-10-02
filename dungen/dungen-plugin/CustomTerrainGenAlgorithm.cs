@@ -7,7 +7,7 @@ namespace DunGenPlugin
 {
   public class CustomTerrainGenAlgorithm : TerrainGenAlgorithmBase
   {
-    [IntegerAlgorithmParamInfo(
+    [IntegerParameter(
       Description = "A meaningless integer parameter",
       Maximum = int.MaxValue,
       Minimum = 0,

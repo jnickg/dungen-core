@@ -201,6 +201,28 @@ namespace DunGen.CLI
       _currentPalette = AlgorithmPalette.DefaultPalette(
         AlgorithmPluginEnumerator.GetAllLoadedAlgorithms());
 
+      _currentPalette.Add("Test1", new CompositeAlgorithm()
+      {
+        Algorithms = new AlgorithmList()
+        {
+          new RecursiveBacktracker()
+          {
+            WallStrategy = TerrainGenAlgorithmBase.WallFormation.Tiles,
+          },
+          new MonteCarloRoomCarver()
+          {
+            GroupRooms = true,
+            AvoidOpen = false,
+            RoomHeightMin = 3,
+            RoomWidthMin = 3,
+            RoomHeightMax = 10,
+            RoomWidthMax = 10,
+            TargetRoomCount = 15,
+          }
+        },
+        CompositeName = "ComposoteTest1"
+      }.ToPaletteItem());
+
       // Configure and run interactive program
       // Reference: https://github.com/anthonyreilly/ConsoleArgs/blob/master/Program.cs
       var rootApp = new CommandLineApplication();
@@ -509,10 +531,10 @@ namespace DunGen.CLI
         {
           algCmd.Description = String.Format("{0,-40} - ({1})", palletteItemName, algProto.Name);
           StringBuilder extendedHelp = new StringBuilder();
-          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.Name))));
+          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.ParamName))));
           foreach (var p in algProto.Parameters.List)
           {
-            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.Name, p.Description));
+            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.ParamName, p.Description));
             // TODO explain valid values for this parameter
           }
 
@@ -528,7 +550,7 @@ namespace DunGen.CLI
 
           algCmd.OnExecute(() =>
           {
-            ITerrainGenAlgorithm alg = algProto.Clone() as ITerrainGenAlgorithm;
+            IAlgorithm alg = algProto.Clone() as IAlgorithm;
             if (null == alg) throw new Exception("Can't clone Algorithm prototype for addition to run list.");
 
             // Apply non-default parameter values
@@ -540,12 +562,12 @@ namespace DunGen.CLI
               {
                 // Should be sent in like this: "-p SomeOption=value"
                 string paramName = paramOptionInput.Split('=').First();
-                if (1 == nonDefaultParams.List.Where((p) => p.Name == paramName).Count())
+                if (1 == nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count())
                 {
                   string paramVal = paramOptionInput.Split('=').Last(); // Second
 
                   nonDefaultParams.List
-                           .Where((p) => p.Name == paramName)
+                           .Where((p) => p.ParamName == paramName)
                            .ToList()
                            .ForEach((p) => p.Value = paramVal);
                 }
@@ -607,7 +629,7 @@ namespace DunGen.CLI
           Console.WriteLine("{0,2} - {1,-20}", counter++, run.Alg.Name);
           foreach (var p in run.Alg.Parameters.List)
           {
-            Console.WriteLine("\t{0,-20} - {1}", p.Name, p.Value);
+            Console.WriteLine(p);
           }
         }
         return 0;
@@ -671,10 +693,7 @@ namespace DunGen.CLI
           Console.WriteLine("Algorithm \"{0}\"", alg.Name);
           foreach (var param in alg.Parameters.List)
           {
-            Console.WriteLine("   {0,-20} {1,-15} - \"{2}\"",
-                String.Format("'{0}'", param.Name),
-                String.Format("({0})", param.Category),
-                param.Description);
+            Console.WriteLine(param);
           }
         }
         return 0;
@@ -774,7 +793,12 @@ namespace DunGen.CLI
         Console.WriteLine("{0,-12} - {1,-30} - {2}", "COLOR", "NAME", "TYPE");
         foreach (var n in _currentPalette.Keys)
         {
-          Console.WriteLine("0x{0,-10:X} - {1,-30} - {2}", _currentPalette[n].PaletteColor.ToArgb(), n, _currentPalette[n].TypeName);
+          string typeStr = String.Format("UNLOADED ({0})", _currentPalette[n].Info.Type.AssemblyQualifiedName);
+          if (_currentPalette[n].Info.Type.IsTypeLoaded())
+          {
+            typeStr = _currentPalette[n].Info.Type.ConvertToType(true).Name;
+          }
+          Console.WriteLine("0x{0,-10:X} - {1,-30} - {2}", _currentPalette[n].PaletteColor.ToArgb(), n, typeStr);
         }
         return 0;
       });
@@ -892,10 +916,10 @@ namespace DunGen.CLI
         {
           algCmd.Description = String.Format("{0,-40} - ({1})", algProto.Name, algProto.GetType().FullName);
           StringBuilder extendedHelp = new StringBuilder();
-          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.Name))));
+          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.ParamName))));
           foreach (var p in algProto.Parameters.List)
           {
-            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.Name, p.Description));
+            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.ParamName, p.Description));
             // TODO explain valid values for this parameter
           }
 
@@ -930,12 +954,12 @@ namespace DunGen.CLI
               {
                 // Should be sent in like this: "-p SomeOption=value"
                 string paramName = paramOptionInput.Split('=').First();
-                if (1 == nonDefaultParams.List.Where((p) => p.Name == paramName).Count())
+                if (1 == nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count())
                 {
                   string paramVal = paramOptionInput.Split('=').Last(); // Second
 
                   nonDefaultParams.List
-                           .Where((p) => p.Name == paramName)
+                           .Where((p) => p.ParamName == paramName)
                            .ToList()
                            .ForEach((p) => p.Value = paramVal);
                 }
@@ -950,11 +974,7 @@ namespace DunGen.CLI
               throw new ArgumentException("Palette item of that name exists. Specify " +
                 "overwrite option if you want to overwrite, or select a different name.");
             }
-            _currentPalette[paletteItemName.Value] = new AlgorithmPaletteItem()
-            {
-              ParamPresets = alg.Parameters,
-              TypeName = alg.GetType().FullName
-            };
+            _currentPalette[paletteItemName.Value] = alg.ToPaletteItem();
             Console.WriteLine("Palette item {0} updated to specified algorithm/parameters", paletteItemName.Value);
             return 0;
           });

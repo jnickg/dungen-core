@@ -16,7 +16,7 @@ namespace DunGen.TerrainGen
     /// <summary>
     /// See Help text.
     /// </summary>
-    [DecimalAlgorithmParamInfo(
+    [DecimalParameter(
       Description = DensityFactor_Help,
       Default = 0.250,
       Minimum = 0.001,
@@ -27,9 +27,9 @@ namespace DunGen.TerrainGen
     /// Disabled for DiffusionLimitedAggregation.
     /// <see cref="TerrainGenAlgorithmBase.WallStrategy"/>
     /// </summary>
-    [SelectionAlgorithmParameterInfo(
+    [SelectionParameter(
       Description = WallStrategy_Help,
-      Selection = typeof(WallFormation),
+      SelectionType = typeof(WallFormation),
       Default = WallFormation.Tiles,
       Supported = false)]
     public override WallFormation WallStrategy { get; set; }
@@ -38,9 +38,9 @@ namespace DunGen.TerrainGen
     /// Disabled for DiffusionLimitedAggregation.
     /// <see cref="TerrainGenAlgorithmBase.OpenTilesStrategy"/>
     /// </summary>
-    [SelectionAlgorithmParameterInfo(
+    [SelectionParameter(
       Description = OpenTilesStrategy_Help,
-      Selection = typeof(OpenTilesHandling),
+      SelectionType = typeof(OpenTilesHandling),
       Default = OpenTilesHandling.Overwrite,
       Supported = false)]
     public override OpenTilesHandling OpenTilesStrategy { get; set; }

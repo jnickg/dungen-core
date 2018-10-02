@@ -7,11 +7,11 @@ namespace DunGen.TerrainGen
 {
   public class DeadEndFiller : TerrainGenAlgorithmBase
   {
-    [IntegerAlgorithmParamInfo(
-      "The number of passes to take removing all single dead-end tiles",
-      50,
-      0,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "The number of passes to take removing all single dead-end tiles",
+      Default = 50,
+      Minimum = 0,
+      Maximum = int.MaxValue)]
     public int FillPasses { get; set; }
 
     public override TerrainModBehavior Behavior => TerrainModBehavior.Build;

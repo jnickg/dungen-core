@@ -126,9 +126,12 @@ namespace DunGen.Lib.Test
       Dungeon d2 = g2.Generate();
 
       // AHHH TODO this is failing!
-      foreach (Tile t in d1.Tiles.Tiles_Set)
+      for (int y = 0; y < d1.Tiles.Height; ++y)
       {
-        Assert.IsTrue(t.Physics == d2.Tiles[t.Location.Y, t.Location.X].Physics);
+        for (int x = 0; x < d1.Tiles.Width; ++x)
+        {
+          Assert.AreEqual(d1.Tiles[y, x].Physics, d2.Tiles[y, x].Physics);
+        }
       }
     }
   }

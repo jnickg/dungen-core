@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace DunGen.Algorithm
@@ -26,10 +28,6 @@ namespace DunGen.Algorithm
     /// algorithm.
     /// </summary>
     AlgorithmParams Parameters { get; set; }
-    /// <summary>
-    /// Gets a prototype instance of this algorithm's parameters.
-    /// </summary>
-    AlgorithmParams GetParamsPrototype();
     /// <summary>
     /// Runs the Algorithm with the specified context
     /// </summary>
@@ -118,6 +116,8 @@ namespace DunGen.Algorithm
   /// the automatic reflective getting and setting of its 
   /// constituent parameters
   /// </summary>
+  [DataContract(Name = "algorithm")]
+  [KnownType("GetKnownTypes")]
   public abstract class AlgorithmBase : IAlgorithm
   {
     public virtual string Name
@@ -139,11 +139,12 @@ namespace DunGen.Algorithm
     ///   algObject.Parameters = editableParams; // Latch
     /// </code>
     /// </summary>
+    [DataMember(Name = "params", Order = 1, IsRequired = false)]
     public AlgorithmParams Parameters
     {
       get
       {
-        return GetParamsPrototype().ApplyFrom(this);
+        return this.CurrentParameters();
       }
       set
       {
@@ -158,7 +159,7 @@ namespace DunGen.Algorithm
         bool containsParams = false;
         foreach (PropertyInfo propInfo in this.GetType().GetProperties())
         {
-          List<AlgorithmParameterInfo> infos = new List<AlgorithmParameterInfo>(propInfo.GetCustomAttributes<AlgorithmParameterInfo>());
+          List<Parameter> infos = new List<Parameter>(propInfo.GetCustomAttributes<Parameter>());
           if (infos.Count > 0)
           {
             containsParams = true;
@@ -171,32 +172,7 @@ namespace DunGen.Algorithm
 
     public AlgorithmBase()
     {
-      this.GetParamsPrototype().ApplyTo(this);
-    }
-
-    public AlgorithmParams GetParamsPrototype()
-    {
-      AlgorithmParams prototype = new AlgorithmParams()
-      {
-        List = new List<IEditingAlgorithmParameter>()
-      };
-
-      foreach (PropertyInfo propInfo in this.GetType().GetProperties())
-      {
-        foreach (AlgorithmParameterInfo paramInfo in propInfo.GetCustomAttributes<AlgorithmParameterInfo>())
-        {
-          if (!paramInfo.Show) continue;
-          if (!paramInfo.Supported) continue;
-
-          IEditingAlgorithmParameter newParam = paramInfo.ToEditableParam(propInfo.Name);
-          // TODO make it so it's system configurable whether to show unsupported params
-          if (null == newParam && paramInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
-          // ... and add it to the list of parameters!
-          if (null != newParam) prototype.List.Add(newParam);
-        }
-      }
-
-      return prototype;
+      this.ParamsPrototype().ApplyTo(this);
     }
 
     /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>
@@ -210,7 +186,7 @@ namespace DunGen.Algorithm
     /// An instance of IAlgorithm identical to the type of the object on
     /// which the call was made.
     /// </returns>
-    public object Clone()
+    public virtual object Clone()
     {
       Type algT = this.GetType();
       if (algT.IsAbstract) return null;
@@ -220,6 +196,55 @@ namespace DunGen.Algorithm
         algClone.Parameters = this.Parameters;
       }
       return algClone;
+    }
+
+    public override string ToString()
+    {
+      StringBuilder sb = new StringBuilder();
+
+      sb.AppendFormat("Algorithm \"{0}\"\n", Name);
+      foreach (var param in Parameters.List)
+      {
+        sb.AppendLine(param.ToString());
+      }
+
+      return sb.ToString();
+    }
+
+    public override bool Equals(object obj)
+    {
+      IAlgorithm objAsAlg = obj as IAlgorithm;
+      if (null == objAsAlg) return false;
+
+      return this.ToInfo().Equals(objAsAlg.ToInfo());
+    }
+
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      // Reflect through every Algorithm type loaded, and just add them as potential candidates for
+      List<Type> knownTypes = new List<Type>();
+
+      foreach (var assy in AppDomain.CurrentDomain.GetAssemblies())
+      {
+        Type[] types = assy.GetTypes();
+
+        Type[] iAlgTypes = types.Where(t => typeof(IAlgorithm).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+        Type[] algInfoTypes = types.Where(t => typeof(AlgorithmInfo).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+
+        knownTypes.AddRange(iAlgTypes);
+        knownTypes.AddRange(algInfoTypes);
+      }
+
+      return knownTypes;
+    }
+
+    public virtual AlgorithmInfo ToInfo()
+    {
+      return new AlgorithmInfo()
+      {
+        Type = new SerializableType(this.GetType()),
+        Parameters = this.TakesParameters ? this.Parameters : new AlgorithmParams()
+      };
     }
   }
 }

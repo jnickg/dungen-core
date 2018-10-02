@@ -16,6 +16,16 @@ namespace DunGen.TerrainGen
       "How this algorithm should interact with existing data in tiles, if " +
       "there are any in its mask";
 
+    private const string _RoomSizeDescription =
+      "The size at which subregions should no longer be divided. Set to " +
+      "\'1\' to create only corridors. This is an Area measurement.";
+
+    private const string _VaribilityDescription =
+      "A 0 to 1.0 percentage of variability in where subdivisions are made, " +
+      "relative to the center of the region being split, where 1.0 means 100% " +
+      "of the region's breadth can be used, and 0.0 means the subdivision will " +
+      "be created as close to the center as possible.";
+
     public enum ExistingDataHandling
     {
       Avoid,      // Attempts to create a maze without writing building walls where data already exists
@@ -23,32 +33,27 @@ namespace DunGen.TerrainGen
       Overwrite   // Clobbers all existing data within mask, before generating a maze
     }
 
-    [SelectionAlgorithmParameterInfo(
+    [SelectionParameter(
       Description = _BuildStrategyDescription,
-      Selection = typeof(ExistingDataHandling),
+      SelectionType = typeof(ExistingDataHandling),
       Default = ExistingDataHandling.Avoid)]
     public ExistingDataHandling BuildStrategy { get; set; }
 
-    private const string _RoomSizeDescription =
-      "The size at which subregions should no longer be divided. Set to " +
-      "\'1\' to create only corridors. This is an Area measurement.";
 
-    [IntegerAlgorithmParamInfo(
-      _RoomSizeDescription,
-      1,
-      1,
-      int.MaxValue)]
+
+    [IntegerParameter(
+      Description = _RoomSizeDescription,
+      Default = 1,
+      Minimum = 1,
+      Maximum = int.MaxValue)]
     public int RoomSize { get; set; }
 
-    [DecimalAlgorithmParamInfo(
-      "A 0 to 1.0 percentage of variability in where subdivisions are made, " +
-      "relative to the center of the region being split, where 1.0 means 100% " +
-      "of the region's breadth can be used, and 0.0 means the subdivision will " +
-      "be created as close to the center as possible.",
-      1.0,
-      0.0,
-      1.0,
-      5)]
+    [DecimalParameter(
+      Description = _VaribilityDescription,
+      Default = 1.0,
+      Minimum = 0.0,
+      Maximum = 1.0,
+      Precision = 5)]
     public double Variability { get; set; }
 
     public override void Run(DungeonTiles d, bool[,] mask, Random r)

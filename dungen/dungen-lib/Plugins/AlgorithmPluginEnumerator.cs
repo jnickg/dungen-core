@@ -23,17 +23,15 @@ namespace DunGen.Plugins
       return (null != GetAlgorithmType(typeName));
     }
 
-    public static IAlgorithm GetAlgorithm(string typeName)
+    public static IAlgorithm GetAlgorithm(Type algType)
     {
       IAlgorithm alg = null;
-
-      Type algType = GetAlgorithmType(typeName);
 
       if (null == algType)
       {
         throw new AlgorithmTypeNotFoundException("Algorithm TypeName not loaded in current AppDomain")
         {
-          TypeName = typeName
+          TypeName = algType.FullName
         };
       }
 
@@ -41,10 +39,18 @@ namespace DunGen.Plugins
 
       if (null == alg)
       {
-        throw new Exception(String.Format("Unable to instantiate IAlgorithm of type {0}", typeName));
+        throw new Exception(String.Format("Unable to instantiate IAlgorithm of type {0}", algType.FullName));
       }
 
       return alg;
+    }
+
+    public static IAlgorithm GetAlgorithm(string typeName)
+    {
+
+      Type algType = GetAlgorithmType(typeName);
+
+      return GetAlgorithm(algType);
     }
 
     public static IEnumerable<IAlgorithm> GetAllLoadedAlgorithms()
