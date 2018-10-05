@@ -19,26 +19,10 @@ namespace DunGen.Generator
   {
     private string _fullName = string.Empty;
 
-    [DataMember(Name = "algType", Order = 1)]
-    public string TypeName
-    {
-      get => _fullName;
-      set
-      {
-        if (null == FindAlgorithm(value))
-        {
-          throw new AlgorithmTypeNotFoundException("Unable to initialize AlgorithmRunInfo - TypeName is not an available Algorithm type")
-          {
-            TypeName = value
-          };
-        }
-        _fullName = value;
-      }
-    }
-    [DataMember(Name = "params", Order = 3)]
-    public AlgorithmParams Parameters { get; set; } = new AlgorithmParams();
+    [DataMember(Name = "algInfo", Order = 1)]
+    public AlgorithmInfo Info { get; set; } = new AlgorithmInfo();
 
-    [DataMember(Name = "mask", Order = 4)]
+    [DataMember(Name = "mask", Order = 3)]
     public BoolCollection Mask { get; set; } = null;
 
     [DataMember(Name = "r", Order = 2)]
@@ -65,23 +49,15 @@ namespace DunGen.Generator
     {
       return new AlgorithmRunInfo()
       {
-        TypeName = run.Alg.GetType().FullName,
-        Parameters = run.Alg.TakesParameters ? run.Alg.Parameters : new AlgorithmParams(),
+        Info = run.Alg.ToInfo(),
         Mask = run.Context.Mask.Jaggedize_DC(),
         RandomSeed = run.Context.R.Seed
       };
     }
 
-    private static IAlgorithm RecreateAlgorithmInstance(AlgorithmRunInfo info)
+    private static IAlgorithm RecreateAlgorithmInstance(AlgorithmRunInfo runInfo)
     {
-      IAlgorithm alg = FindAlgorithm(info.TypeName);
-
-      if (null != alg)
-      {
-        alg.Parameters = info.Parameters;
-      }
-
-      return alg;
+      return runInfo.Info.CreateInstance();
     }
 
     private static IAlgorithm FindAlgorithm(string typeName)

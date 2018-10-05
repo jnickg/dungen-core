@@ -237,6 +237,8 @@ namespace DunGen.Algorithm
         Type[] types = assy.GetTypes();
 
         types = types.Where(t => typeof(IAlgorithm).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+
+        knownTypes.AddRange(types);
       }
 
       return knownTypes;

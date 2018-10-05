@@ -32,6 +32,12 @@ namespace DunGen.TerrainGen
       PrecisionPoints = 2)]
     public double Momentum { get; set; }
 
+    [SelectionAlgorithmParameterInfo(
+      Description = WallStrategy_Help,
+      Selection = typeof(WallFormation),
+      Default = WallFormation.Tiles)]
+    public override WallFormation WallStrategy { get => base.WallStrategy; set => base.WallStrategy = value; }
+
     public override TerrainModBehavior Behavior
     {
       get => TerrainModBehavior.Carve;

@@ -191,7 +191,8 @@ namespace DunGen.Algorithm
       {
         typeof(int),    // IntegerAlgorithmParamInfo
         typeof(double), // DecimalAlgorithmParamInfo
-        typeof(bool)    // BooleanAlgorithmParamInfo
+        typeof(bool),   // BooleanAlgorithmParamInfo
+        typeof(AlgorithmType) // AlgorithmAlgorithmParamInfo
       };
 
       // Reflect through every Algorithm type loaded, to identify all
@@ -567,7 +568,7 @@ namespace DunGen.Algorithm
       {
         Name = Name,
         Description = this.Description,
-        Default = this.Default,
+        Default = new AlgorithmType(this.Default),
         Category = ParameterCategory.Algorithm,
         Value = AlgorithmPluginEnumerator.GetAlgorithm(Default)
       };

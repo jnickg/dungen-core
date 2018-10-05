@@ -774,7 +774,12 @@ namespace DunGen.CLI
         Console.WriteLine("{0,-12} - {1,-30} - {2}", "COLOR", "NAME", "TYPE");
         foreach (var n in _currentPalette.Keys)
         {
-          Console.WriteLine("0x{0,-10:X} - {1,-30} - {2}", _currentPalette[n].PaletteColor.ToArgb(), n, _currentPalette[n].TypeName);
+          string typeStr = String.Format("UNLOADED ({0})", _currentPalette[n].Info.Type.AssemblyQualifiedName);
+          if (_currentPalette[n].Info.Type.IsTypeLoaded())
+          {
+            typeStr = _currentPalette[n].Info.Type.ConvertToType(true).Name;
+          }
+          Console.WriteLine("0x{0,-10:X} - {1,-30} - {2}", _currentPalette[n].PaletteColor.ToArgb(), n, typeStr);
         }
         return 0;
       });
@@ -950,11 +955,7 @@ namespace DunGen.CLI
               throw new ArgumentException("Palette item of that name exists. Specify " +
                 "overwrite option if you want to overwrite, or select a different name.");
             }
-            _currentPalette[paletteItemName.Value] = new AlgorithmPaletteItem()
-            {
-              ParamPresets = alg.Parameters,
-              TypeName = alg.GetType().FullName
-            };
+            _currentPalette[paletteItemName.Value] = alg.ToPaletteItem();
             Console.WriteLine("Palette item {0} updated to specified algorithm/parameters", paletteItemName.Value);
             return 0;
           });

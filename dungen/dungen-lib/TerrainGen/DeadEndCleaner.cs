@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DunGen.TerrainGen
 {
-  class DeadEndCleaner : TerrainGenAlgorithmBase
+  public class DeadEndCleaner : TerrainGenAlgorithmBase
   {
     public enum CleanupStrategy
     {

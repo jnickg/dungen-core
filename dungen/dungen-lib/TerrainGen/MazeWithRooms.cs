@@ -5,10 +5,14 @@ using DunGen.Algorithm;
 
 namespace DunGen.TerrainGen
 {
+  /// <summary>
+  /// An algorithm taking inter-changeable strategies for generating rooms,
+  /// creating a maze, and removing egress. User may customize the algorithm's
+  /// constituent strategies (i.e. algorithms) or replace them altogether.
+  /// </summary>
   public class MazeWithRooms : TerrainGenAlgorithmBase
   {
     public override TerrainModBehavior Behavior => TerrainModBehavior.Clobber;
-
     public override TerrainGenStyle Style => TerrainGenStyle.Bldg;
 
     [AlgorithmAlgorithmParameterInfo(
