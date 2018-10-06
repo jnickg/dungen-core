@@ -17,8 +17,7 @@ namespace DunGen.Algorithm
     Selection,            // Select from a pre-set list of options
     Boolean,              // On-off switch
     Algorithm,            // An algorithm with its own set of parameters
-    // TODO: These guys!
-    // ParameterGroup,       // A list of other parameters, grouped together
+    Group,                // A list of other parameters, grouped together
   }
 
   public interface IEditingAlgorithmParameter : ICloneable
@@ -32,6 +31,90 @@ namespace DunGen.Algorithm
   #endregion
 
   #region EditingAlgorithmParameter Types
+
+  [CollectionDataContract(Name = "paramGroup", ItemName = "param")]
+  [KnownType(typeof(EditingAlgorithmParameter))]
+  public class EditingAlgorithmParameterGroup : List<IEditingAlgorithmParameter>, IEditingAlgorithmParameter
+  {
+    public GroupAlgorithmParameterInfo ParamInfo
+    {
+      get;
+      set;
+    }
+    public ParameterCategory Category => ParameterCategory.Group;
+
+    [DataMember(IsRequired = true, Name = "name", Order = 0)]
+    public string Name
+    {
+      get;
+      set;
+    }
+
+    public string Description
+    {
+      get;
+      set;
+    }
+
+    public EditingAlgorithmParameterGroup Values
+    {
+      get => this;
+      set
+      {
+        if (null != value && value.Count == this.Count)
+        {
+          for (int i = 0; i < this.Count; ++i)
+          {
+            this[i].Value = value[i].Value;
+          }
+        }
+      }
+    }
+
+    public object Value
+    {
+      get
+      {
+        return this;
+      }
+      set
+      {
+        Values = value as EditingAlgorithmParameterGroup;
+      }
+    }
+
+    public AlgorithmParameterGroup Defaults
+    {
+      get;
+      set;
+    }
+
+    public object Default
+    {
+      get => Defaults;
+      set => Defaults = value as AlgorithmParameterGroup;
+    }
+
+    public object Clone()
+    {
+      return new EditingAlgorithmParameterGroup()
+      {
+        Name = this.Name,
+        Description = this.Description,
+        Value = this.Value,
+        Default = this.Default
+      };
+    }
+
+    public EditingAlgorithmParameterGroup()
+    { }
+
+    public EditingAlgorithmParameterGroup(GroupAlgorithmParameterInfo api)
+    {
+      this.ParamInfo = api;
+    }
+  }
+
   [DataContract(Name = "param")]
   [KnownType("GetKnownTypes")]
   public class EditingAlgorithmParameter : IEditingAlgorithmParameter
@@ -118,9 +201,19 @@ namespace DunGen.Algorithm
   /// An attribute tag used to mark which properties of an IAlgorithmParameter instance
   /// are to be considered modifiable parameters of the algorithm.
   /// </summary>
-  [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+  [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
   public abstract class AlgorithmParameterInfo : System.Attribute
   {
+    /// <summary>
+    /// The relative ordering of this Attribute, relative to others, when
+    /// multiple AlgorithmParameterInfo attributes are applied to a single
+    /// Algorithm Property. If multiple attributes are applied to a non-
+    /// composite Algorithm Property (i.e. a basic type), the lowest-ordered
+    /// valid AlgorithmParameterInfo wil lbe used. If used on a composite
+    /// Algorithm Property, this will determine the order in which the
+    /// values appear.
+    /// </summary>
+    public int Order { get; set; } = 0;
     /// <summary>
     /// The category of Parameter described by this AlgorithmParameterInfo
     /// object.
@@ -166,21 +259,29 @@ namespace DunGen.Algorithm
     /// <summary>
     /// Creates an Editable Parameter object from this Parameter's descriptor
     /// </summary>
-    /// <param name="Name">The name of the property to show.</param>
+    /// <param name="PropertyName">The name of the property to show.</param>
     /// <returns>An object implementing IAlgorithmParameter, or NULL
     /// of none could be generated.</returns>
-    public IEditingAlgorithmParameter ToEditableParam(string Name)
+    public virtual IEditingAlgorithmParameter ToEditableParam(PropertyInfo property)
     {
       // TODO make it so it's system configurable whether to show unsupported params
       if (!Supported) return null;
-      return ConvertToEditableParam(Name);
+      return ConvertToEditableParam(property.Name);
     }
 
-    protected abstract IEditingAlgorithmParameter ConvertToEditableParam(string Name);
+    internal abstract IEditingAlgorithmParameter ConvertToEditableParam(string propertyName);
 
-    public virtual bool TryParseValue(IEditingAlgorithmParameter param, out object parsedValue)
+    public virtual bool TryApplyValue(IEditingAlgorithmParameter source, IAlgorithm destination)
     {
-      return TryParseValue(param.Value, out parsedValue);
+      PropertyInfo matchingProperty = destination.GetMatchingPropertyFor(source);
+      object parsedValue;
+      if (false == TryParseValue(source.Value, out parsedValue))
+      {
+        return false;
+      }
+
+      matchingProperty.SetValue(destination, parsedValue);
+      return true;
     }
 
     public abstract bool TryParseValue(object value, out object parsedValue);
@@ -189,10 +290,11 @@ namespace DunGen.Algorithm
     {
       List<Type> knownTypes = new List<Type>()
       {
-        typeof(int),    // IntegerAlgorithmParamInfo
-        typeof(double), // DecimalAlgorithmParamInfo
-        typeof(bool),   // BooleanAlgorithmParamInfo
-        typeof(AlgorithmType) // AlgorithmAlgorithmParamInfo
+        typeof(int),                      // IntegerAlgorithmParamInfo
+        typeof(double),                   // DecimalAlgorithmParamInfo
+        typeof(bool),                     // BooleanAlgorithmParamInfo
+        typeof(AlgorithmType),            // AlgorithmAlgorithmParamInfo
+        typeof(AlgorithmParameterGroup)   // GroupAlgorithmParameterInfo
       };
 
       // Reflect through every Algorithm type loaded, to identify all
@@ -248,11 +350,11 @@ namespace DunGen.Algorithm
       this.Default = defaultValue;
     }
 
-    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string propertyName)
     {
       return new EditingAlgorithmParameter(this)
       {
-        Name = Name,
+        Name = propertyName,
         Description = this.Description,
         Default = this.Default,
         Category = ParameterCategory.Integer,
@@ -317,11 +419,11 @@ namespace DunGen.Algorithm
       this.PrecisionPoints = precisionPts;
     }
 
-    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string propertyName)
     {
       return new EditingAlgorithmParameter(this)
       {
-        Name = Name,
+        Name = propertyName,
         Description = this.Description,
         Default = this.Default,
         Category = ParameterCategory.Decimal,
@@ -428,11 +530,11 @@ namespace DunGen.Algorithm
       this.Default = defaultValue;
     }
 
-    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string propertyName)
     {
       return new EditingAlgorithmParameter(this)
       {
-        Name = Name,
+        Name = propertyName,
         Description = this.Description,
         Default = this.Default,
         Category = ParameterCategory.Selection,
@@ -477,11 +579,11 @@ namespace DunGen.Algorithm
       this.Default = defaultValue;
     }
 
-    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string propertyName)
     {
       return new EditingAlgorithmParameter(this)
       {
-        Name = Name,
+        Name = propertyName,
         Description = this.Description,
         Default = this.Default,
         Category = ParameterCategory.Boolean,
@@ -562,16 +664,129 @@ namespace DunGen.Algorithm
       return valueOk;
     }
 
-    protected override IEditingAlgorithmParameter ConvertToEditableParam(string Name)
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string propertyName)
     {
       return new EditingAlgorithmParameter(this)
       {
-        Name = Name,
+        Name = propertyName,
         Description = this.Description,
         Default = new AlgorithmType(this.Default),
         Category = ParameterCategory.Algorithm,
         Value = AlgorithmPluginEnumerator.GetAlgorithm(Default)
       };
+    }
+  }
+
+  /// <summary>
+  /// Shim type to be used when creating groups of Algorithm Parameters
+  /// </summary>
+  /// <typeparam name="T">Any Type for which there exists an AlgorithmParameterInfo</typeparam>
+  [CollectionDataContract(Name = "paramGroup", ItemName = "param")]
+  [KnownType("GetKnownTypes")]
+  public class AlgorithmParameterGroup : List<object>
+  {
+    public AlgorithmParameterGroup() { }
+
+    public AlgorithmParameterGroup(IEnumerable<object> members)
+      : base(members)
+    { }
+
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      return AlgorithmParameterInfo.GetKnownTypes();
+    }
+  }
+
+  [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
+  public class GroupAlgorithmParameterInfo : AlgorithmParameterInfo
+  {
+    private bool ValidateGroupType(Type value)
+    {
+      return GetKnownTypes().Contains(value);
+    }
+
+    private static ArgumentException GenerateExceptionFor(AlgorithmParameterGroup group, int index)
+    {
+      // Object item = group[index];
+      // TODO
+      return new ArgumentException("TBD");
+    }
+
+    private static bool GroupTypesValid(AlgorithmParameterGroup group, bool throwOnFailure = false)
+    {
+      IEnumerable<Type> knownTypes = GetKnownTypes();
+
+      foreach (var param in group)
+      {
+        if (false == knownTypes.Contains(param.GetType()))
+        {
+          if (throwOnFailure) throw GenerateExceptionFor(group, group.IndexOf(param));
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public GroupAlgorithmParameterInfo()
+      : base(ParameterCategory.Group)
+    { }
+
+    public override bool TryApplyValue(IEditingAlgorithmParameter source, IAlgorithm destination)
+    {
+      PropertyInfo matchingProperty = destination.GetMatchingPropertyFor(source);
+      var sourceParamGroup = source.Value as AlgorithmParameterGroup;
+      if (null == sourceParamGroup || false == GroupTypesValid(sourceParamGroup)) return false;
+
+      var paramGroupInfos = matchingProperty.GetOrderedAlgParamInfos();
+      if (null == paramGroupInfos || sourceParamGroup.Count != paramGroupInfos.Count)
+      {
+        return false;
+      }
+
+      AlgorithmParameterGroup newValues = new AlgorithmParameterGroup();
+      for (int i = 0; i < sourceParamGroup.Count; ++i)
+      {
+        object parsedVal;
+        if (false == paramGroupInfos[i].TryParseValue(sourceParamGroup[i], out parsedVal))
+        {
+          return false;
+        }
+        newValues.Add(parsedVal);
+      }
+
+      matchingProperty.SetValue(destination, newValues);
+      return true;
+    }
+
+    public override bool TryParseValue(object value, out object parsedValue)
+    {
+      throw new NotSupportedException("Can't parse a value from a group of values");
+    }
+
+    public override IEditingAlgorithmParameter ToEditableParam(PropertyInfo property)
+    {
+      if (!Supported) return null;
+
+      int subParamCounter = 0;
+      Func<string> generateSubParamName = new Func<string>(
+        () => { return String.Format("{0}_{1}", property.Name, subParamCounter++); });
+
+      var apis = property.GetOrderedAlgParamInfos();
+      List<IEditingAlgorithmParameter> editables = apis.Select(api => api.ConvertToEditableParam(generateSubParamName.Invoke())).ToList();
+      var editableGroup = new EditingAlgorithmParameterGroup(this)
+      {
+        Name = property.Name,
+        Description = this.Description,
+      };
+
+      editableGroup.AddRange(editables);
+
+      return editableGroup;
+    }
+
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string property)
+    {
+      throw new NotSupportedException("Can't create EditableParam Group without PropertyInfo");
     }
   }
   #endregion

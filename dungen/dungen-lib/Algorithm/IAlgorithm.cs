@@ -193,7 +193,7 @@ namespace DunGen.Algorithm
           if (!paramInfo.Show) continue;
           if (!paramInfo.Supported) continue;
 
-          IEditingAlgorithmParameter newParam = paramInfo.ToEditableParam(propInfo.Name);
+          IEditingAlgorithmParameter newParam = paramInfo.ToEditableParam(propInfo);
           // TODO make it so it's system configurable whether to show unsupported params
           if (null == newParam && paramInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
           // ... and add it to the list of parameters!
