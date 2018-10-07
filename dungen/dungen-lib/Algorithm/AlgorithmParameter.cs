@@ -33,7 +33,7 @@ namespace DunGen.Algorithm
 
   #region EditingAlgorithmParameter Types
 
-  [CollectionDataContract(Name = "paramGroup", ItemName = "param")]
+  [CollectionDataContract(Name = "editableParamGroup", ItemName = "param")]
   [KnownType(typeof(EditingAlgorithmParameter))]
   public class EditingAlgorithmParameterGroup : List<IEditingAlgorithmParameter>, IEditingAlgorithmParameter
   {
@@ -101,6 +101,12 @@ namespace DunGen.Algorithm
             this[i].Value = paramGroup[i];
           }
         }
+        var algList = value as AlgorithmParameterAlgGroup;
+        if (null != algList)
+        {
+          this.Clear();
+          this.AddRange(algList.Select(alg => alg.AsEditable()));
+        }
       }
     }
 
@@ -118,13 +124,15 @@ namespace DunGen.Algorithm
 
     public object Clone()
     {
-      return new EditingAlgorithmParameterGroup()
+      var clone = new EditingAlgorithmParameterGroup()
       {
         Name = this.Name,
         Description = this.Description,
-        Value = this.Value,
         Default = this.Default
       };
+      clone.Clear();
+      clone.AddRange(this.Select(editable => (IEditingAlgorithmParameter)editable.Clone()));
+      return clone;
     }
 
     public EditingAlgorithmParameterGroup()
@@ -152,9 +160,21 @@ namespace DunGen.Algorithm
 
       return sb.ToString();
     }
+
+    public override bool Equals(object obj)
+    {
+      EditingAlgorithmParameterGroup other = obj as EditingAlgorithmParameterGroup;
+      if (null == other) return false;
+      if (this.Count != other.Count) return false;
+      for (int i = 0; i < this.Count; ++i)
+      {
+        if (false == this[i].Equals(other[i])) return false;
+      }
+      return true;
+    }
   }
 
-  [DataContract(Name = "param")]
+  [DataContract(Name = "editableParam")]
   [KnownType("GetKnownTypes")]
   public class EditingAlgorithmParameter : IEditingAlgorithmParameter
   {
@@ -235,6 +255,15 @@ namespace DunGen.Algorithm
     public override string ToString()
     {
       return String.Format("Name: {0} Value: {1} ({2})", this.Name, this.Value, this.Description);
+    }
+
+    public override bool Equals(object obj)
+    {
+      EditingAlgorithmParameter other = obj as EditingAlgorithmParameter;
+      if (null == other) return false;
+      return this.Category == other.Category &&
+             this.Name == other.Name &&
+             this.Value == other.Value;
     }
   }
 
@@ -346,7 +375,8 @@ namespace DunGen.Algorithm
         typeof(double),                   // DecimalAlgorithmParamInfo
         typeof(bool),                     // BooleanAlgorithmParamInfo
         typeof(AlgorithmType),            // AlgorithmAlgorithmParamInfo
-        typeof(AlgorithmParameterGroup)   // GroupAlgorithmParameterInfo
+        typeof(AlgorithmParameterGroup),  // GroupAlgorithmParameterInfo
+        typeof(AlgorithmParameterAlgGroup)// CompositeAlgorithmParameterInfo
       };
 
       // Reflect through every Algorithm type loaded, to identify all
@@ -767,7 +797,7 @@ namespace DunGen.Algorithm
         valueOk = true;
       }
 
-      parsedValue = (ParsedType)Convert.ChangeType(algValue, typeToParse);
+      parsedValue = (ParsedType)algValue;
 
       return valueOk;
     }
@@ -962,10 +992,8 @@ namespace DunGen.Algorithm
       bool valueOk = false;
       parsedValue = default(ParsedType); // Will return will if unsuccessful
       IAlgorithm algValue = null;
-      Type typeOfIAlgorithm = typeof(IAlgorithm);
-      Type typeOfValue = value.GetType();
 
-      if (typeOfValue.IsPrimitive || typeOfValue.IsEnum)
+      if (valueType.IsPrimitive || valueType.IsEnum)
       {
         throw new ArgumentException("Can't parse an Algorithm type from the given value");
       }
@@ -975,7 +1003,7 @@ namespace DunGen.Algorithm
       }
 
       // If the value is an info for some reason, instantiate it
-      if (typeOfValue == typeof(AlgorithmInfo))
+      if (valueType == typeof(AlgorithmInfo))
       {
         AlgorithmInfo infoVal = value as AlgorithmInfo;
         if (null != infoVal)
@@ -986,15 +1014,15 @@ namespace DunGen.Algorithm
       }
 
       // The new value passed is an actual Algorithm
-      if (typeOfIAlgorithm.IsAssignableFrom(typeOfValue) &&
-          AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
-          !typeOfValue.IsAbstract)
+      if (baseType.IsAssignableFrom(valueType) &&
+          AlgorithmBaseType.IsAssignableFrom(valueType) &&
+          !valueType.IsAbstract)
       {
         algValue = value as IAlgorithm;
         valueOk = true;
       }
 
-      parsedValue = (ParsedType)Convert.ChangeType(algValue, typeToParse);
+      parsedValue = (ParsedType)algValue;
 
       return valueOk;
     }
@@ -1011,22 +1039,22 @@ namespace DunGen.Algorithm
       return editableAlgs;
     }
 
-    public override IEditingAlgorithmParameter ToEditableParam(PropertyInfo property)
-    {
-      if (!Supported) return null;
+    //public override IEditingAlgorithmParameter ToEditableParam(PropertyInfo property)
+    //{
+    //  if (!Supported) return null;
 
-      var apis = property.GetOrderedAlgParamInfos();
-      List<IEditingAlgorithmParameter> editables = apis.Select(api => api.ConvertToEditableParam(api.GroupMemberName)).ToList();
-      var editableGroup = new EditingAlgorithmParameterGroup(this)
-      {
-        Name = property.Name,
-        Description = this.Description,
-      };
+    //  var apis = property.GetOrderedAlgParamInfos();
+    //  List<IEditingAlgorithmParameter> editables = apis.Select(api => api.ConvertToEditableParam(api.GroupMemberName)).ToList();
+    //  var editableGroup = new EditingAlgorithmParameterGroup(this)
+    //  {
+    //    Name = property.Name,
+    //    Description = this.Description,
+    //  };
 
-      editableGroup.AddRange(editables);
+    //  editableGroup.AddRange(editables);
 
-      return editableGroup;
-    }
+    //  return editableGroup;
+    //}
 
     public override bool TryApplyValue(IEditingAlgorithmParameter source, IAlgorithm destination)
     {
@@ -1050,4 +1078,19 @@ namespace DunGen.Algorithm
     }
   }
   #endregion
+
+  public static partial class Extensions
+  {
+    public static IEditingAlgorithmParameter AsEditable(this IAlgorithm alg)
+    {
+      return new EditingAlgorithmParameter()
+      {
+        Name = alg.Name,
+        Description = "No description available",
+        Default = default(IAlgorithm),
+        Category = ParameterCategory.Algorithm,
+        Value = alg
+      };
+    }
+  }
 }

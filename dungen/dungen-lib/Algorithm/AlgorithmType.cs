@@ -89,6 +89,12 @@ namespace DunGen.Algorithm
         return false;
       }
 
+      Type typeObj = obj as Type;
+      if (null != typeObj)
+      {
+        return this.AssemblyQualifiedName == typeObj.AssemblyQualifiedName;
+      }
+
       AlgorithmType p = obj as AlgorithmType;
       if (null == (System.Object)p)
       {

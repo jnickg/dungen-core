@@ -252,6 +252,14 @@ namespace DunGen.Algorithm
       return sb.ToString();
     }
 
+    public override bool Equals(object obj)
+    {
+      IAlgorithm objAsAlg = obj as IAlgorithm;
+      if (null == objAsAlg) return false;
+
+      return this.ToInfo().Equals(objAsAlg.ToInfo());
+    }
+
     public static IEnumerable<Type> GetKnownTypes()
     {
       // Reflect through every Algorithm type loaded, and just add them as potential candidates for

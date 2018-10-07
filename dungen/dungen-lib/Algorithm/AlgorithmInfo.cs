@@ -44,6 +44,15 @@ namespace DunGen.Algorithm
 
       return alg;
     }
+
+    public override bool Equals(object obj)
+    {
+      AlgorithmInfo other = obj as AlgorithmInfo;
+      if (null == other) return false;
+
+      return this.Type == other.Type && 
+             this.Parameters.Equals(other.Parameters);
+    }
   }
 
   public static partial class Extensions

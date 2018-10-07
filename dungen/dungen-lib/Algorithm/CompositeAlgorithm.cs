@@ -10,7 +10,7 @@ namespace DunGen.Algorithm
   public class CompositeAlgorithm : AlgorithmBase
   {
     [CompositeAlgorithmParameterInfo(
-      Description = "The algorithms comprosing this CompositeAlgorithm",
+      Description = "The algorithms comprising this CompositeAlgorithm",
       AlgorithmBaseType = typeof(IAlgorithm))]
     public AlgorithmParameterAlgGroup Algorithms { get; set; }
 

@@ -9,10 +9,20 @@ namespace DunGen.Algorithm
 {
   [DataContract(Name = "algParams")]
   [KnownType(typeof(EditingAlgorithmParameter))]
+  [KnownType(typeof(EditingAlgorithmParameterGroup))]
   public class AlgorithmParams : ICloneable
   {
     [DataMember(IsRequired = true, Name = "list")]
     public IList<IEditingAlgorithmParameter> List { get; set; } = new List<IEditingAlgorithmParameter>();
+
+    public IEditingAlgorithmParameter this[string Name]
+    {
+      get
+      {
+        return List.Where(editable => editable.Name == Name).FirstOrDefault();
+      }
+    }
+
 
     public object Clone()
     {
@@ -23,6 +33,18 @@ namespace DunGen.Algorithm
       clone.List = clonedParams;
 
       return clone;
+    }
+
+    public override bool Equals(object obj)
+    {
+      AlgorithmParams other = obj as AlgorithmParams;
+      if (null == other) return false;
+      if (this.List.Count != other.List.Count) return false;
+      for (int i = 0; i < this.List.Count; ++i)
+      {
+        if (false == this.List[i].Equals(other.List[i])) return false;
+      }
+      return true;
     }
   }
 
@@ -57,7 +79,11 @@ namespace DunGen.Algorithm
     {
       IEnumerable<PropertyInfo> algProperties = instance.GetType().GetProperties();
       var matchingProps = algProperties.Where(pi => pi.Name == param.Name);
-      if (matchingProps.Count() != 1) throw new Exception(String.Format("Multiple Properties with name mathing param: {0}", param.Name));
+      if (matchingProps.Count() == 0) return null;
+      if (matchingProps.Count() > 1)
+      {
+        throw new Exception(String.Format("Multiple Properties with name matching param: {0}", param.Name));
+      }
       return matchingProps.First();
     }
 
@@ -71,6 +97,11 @@ namespace DunGen.Algorithm
       foreach (IEditingAlgorithmParameter param in algParams.List)
       {
         PropertyInfo matchingProperty = algInstance.GetMatchingPropertyFor(param);
+
+        if (matchingProperty == null)
+        {
+          continue;
+        }
 
         var apis = matchingProperty.GetOrderedAlgParamInfos();
         if (apis.Count == 0) continue;
