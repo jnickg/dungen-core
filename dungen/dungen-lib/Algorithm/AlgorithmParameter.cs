@@ -61,12 +61,10 @@ namespace DunGen.Algorithm
       get => this;
       set
       {
-        if (null != value && value.Count == this.Count)
+        this.Clear();
+        if (value != null)
         {
-          for (int i = 0; i < this.Count; ++i)
-          {
-            this[i].Value = value[i].Value;
-          }
+          this.AddRange(value);
         }
       }
     }
@@ -79,7 +77,28 @@ namespace DunGen.Algorithm
       }
       set
       {
-        Values = value as EditingAlgorithmParameterGroup;
+        var editingVal = value as EditingAlgorithmParameterGroup;
+        if (null != editingVal)
+        {
+          this.Values = editingVal;
+          return;
+        }
+        // Copying from an IAlgorithm instance's current values
+        var paramGroup = value as AlgorithmParameterGroup;
+        if (null != paramGroup)
+        {
+          if (paramGroup.Count != this.Count)
+          {
+            // This is most likely to occur if the algorithm instance's param data is corrupted
+            // at run-time by the algorithm itself (somehow).
+            throw new ArgumentException(String.Format("Supplied AlgorithmParameterGroup should " +
+              "have {0} items. (Actual: {1})", this.Count, paramGroup.Count));
+          }
+          for (int i = 0; i < this.Count; ++i)
+          {
+            this[i].Value = paramGroup[i];
+          }
+        }
       }
     }
 
@@ -232,6 +251,14 @@ namespace DunGen.Algorithm
     /// values appear.
     /// </summary>
     public int Order { get; set; } = 0;
+
+    /// <summary>
+    /// If this attribute describes a member of a ParameterGroup, this is
+    /// the name that will be shown to the user. If this value is specified
+    /// on an AlgorithmParameterInfo not describing a member of a Parameter
+    /// Group, this value is ignored.
+    /// </summary>
+    public string GroupMemberName { get; set; } = string.Empty;
     /// <summary>
     /// The category of Parameter described by this AlgorithmParameterInfo
     /// object.
@@ -752,8 +779,8 @@ namespace DunGen.Algorithm
     public override bool TryApplyValue(IEditingAlgorithmParameter source, IAlgorithm destination)
     {
       PropertyInfo matchingProperty = destination.GetMatchingPropertyFor(source);
-      var sourceParamGroup = source.Value as AlgorithmParameterGroup;
-      if (null == sourceParamGroup || false == GroupTypesValid(sourceParamGroup)) return false;
+      var sourceParamGroup = source.Value as EditingAlgorithmParameterGroup;
+      if (null == sourceParamGroup) return false;
 
       var paramGroupInfos = matchingProperty.GetOrderedAlgParamInfos();
       if (null == paramGroupInfos || sourceParamGroup.Count != paramGroupInfos.Count)
@@ -765,7 +792,7 @@ namespace DunGen.Algorithm
       for (int i = 0; i < sourceParamGroup.Count; ++i)
       {
         object parsedVal;
-        if (false == paramGroupInfos[i].TryParseValue(sourceParamGroup[i], out parsedVal))
+        if (false == paramGroupInfos[i].TryParseValue(sourceParamGroup[i].Value, out parsedVal))
         {
           return false;
         }
@@ -785,12 +812,8 @@ namespace DunGen.Algorithm
     {
       if (!Supported) return null;
 
-      int subParamCounter = 0;
-      Func<string> generateSubParamName = new Func<string>(
-        () => { return String.Format("{0}_{1}", property.Name, subParamCounter++); });
-
       var apis = property.GetOrderedAlgParamInfos();
-      List<IEditingAlgorithmParameter> editables = apis.Select(api => api.ConvertToEditableParam(generateSubParamName.Invoke())).ToList();
+      List<IEditingAlgorithmParameter> editables = apis.Select(api => api.ConvertToEditableParam(api.GroupMemberName)).ToList();
       var editableGroup = new EditingAlgorithmParameterGroup(this)
       {
         Name = property.Name,

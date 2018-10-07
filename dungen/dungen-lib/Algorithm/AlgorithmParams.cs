@@ -41,6 +41,18 @@ namespace DunGen.Algorithm
                  .ToList();
     }
 
+    public static GroupAlgorithmParameterInfo GetGroupAlgParamInfo(this PropertyInfo prop)
+    {
+      var groupApis = prop.GetCustomAttributes<GroupAlgorithmParameterInfo>().ToList();
+
+      if (groupApis.Count == 0) return null; // Accepted use case
+      if (groupApis.Count > 1)
+      {
+        throw new Exception(String.Format("Too many GroupAlgorithmParameterInfo attributes on property {0}", prop.Name));
+      }
+      return groupApis.First();
+    }
+
     public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, IEditingAlgorithmParameter param)
     {
       IEnumerable<PropertyInfo> algProperties = instance.GetType().GetProperties();
@@ -71,15 +83,11 @@ namespace DunGen.Algorithm
         {
           // Check first if this is a composite parameter. If so, let user know if they
           // screwed up in configuration it
-          var groupApis = matchingProperty.GetCustomAttributes<GroupAlgorithmParameterInfo>().ToList();
-          if (groupApis.Count != 1)
-          {
-            throw new Exception(String.Format("Parameter {0} has {1} AlgorithmParameterInfo attributes," +
-              "and so must have exactly one GroupAlgorithmParameterInfo. Found {2}",
-              param.Name, apis.Count, groupApis.Count));
-          }
-
-          primaryParamInfo = groupApis.First();
+          GroupAlgorithmParameterInfo groupApi = matchingProperty.GetGroupAlgParamInfo();
+          primaryParamInfo = groupApi ?? throw new Exception(
+            String.Format("Parameter {0} has {1} AlgorithmParameterInfo attributes," +
+            "and so must have exactly one GroupAlgorithmParameterInfo. Found 0.",
+            param.Name, apis.Count));
         }
 
         if (!primaryParamInfo.TryApplyValue(param, algInstance))
@@ -103,16 +111,8 @@ namespace DunGen.Algorithm
 
         // We don't need as much reflection protection here, because the
         // IAlgorithm instance's property should be explicitly typed
-        param.Value = matchingProperty.GetValue(algorithm);
-
-        foreach (PropertyInfo pi in algorithm.GetType().GetProperties())
-        {
-          if (pi.Name == param.Name)
-          {
-            param.Value = pi.GetValue(algorithm);
-            continue;
-          }
-        }
+        object val = matchingProperty.GetValue(algorithm);
+        param.Value = val;
       }
       return algParams;
     }

@@ -222,6 +222,19 @@ namespace DunGen.TerrainGen
         action?.Invoke(d);
       }
     }
+
+    public override string ToString()
+    {
+      StringBuilder sb = new StringBuilder();
+
+      sb.AppendFormat("Algorithm \"{0}\" (behavior: {1} style: {2})\n", Name, Behavior, Style);
+      foreach (var param in Parameters.List)
+      {
+        sb.AppendLine(param.ToString());
+      }
+
+      return sb.ToString();
+    }
     #endregion
   }
 }
