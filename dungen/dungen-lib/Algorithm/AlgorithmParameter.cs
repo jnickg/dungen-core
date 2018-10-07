@@ -17,7 +17,8 @@ namespace DunGen.Algorithm
     Selection,            // Select from a pre-set list of options
     Boolean,              // On-off switch
     Algorithm,            // An algorithm with its own set of parameters
-    Group,                // A list of other parameters, grouped together
+    Group,                // Fixed-size list of other ordered parameters, grouped together
+    AlgorithmGroup,       // Variant-sized List of other ordered Algorithms, grouped together
   }
 
   public interface IEditingAlgorithmParameter : ICloneable
@@ -36,11 +37,12 @@ namespace DunGen.Algorithm
   [KnownType(typeof(EditingAlgorithmParameter))]
   public class EditingAlgorithmParameterGroup : List<IEditingAlgorithmParameter>, IEditingAlgorithmParameter
   {
-    public GroupAlgorithmParameterInfo ParamInfo
+    public AlgorithmParameterInfo ParamInfo
     {
       get;
       set;
     }
+
     public ParameterCategory Category => ParameterCategory.Group;
 
     [DataMember(IsRequired = true, Name = "name", Order = 0)]
@@ -129,6 +131,11 @@ namespace DunGen.Algorithm
     { }
 
     public EditingAlgorithmParameterGroup(GroupAlgorithmParameterInfo api)
+    {
+      this.ParamInfo = api;
+    }
+
+    public EditingAlgorithmParameterGroup(CompositeAlgorithmParameterInfo api)
     {
       this.ParamInfo = api;
     }
@@ -329,7 +336,7 @@ namespace DunGen.Algorithm
       return true;
     }
 
-    public abstract bool TryParseValue(object value, out object parsedValue);
+    public abstract bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue);
 
     public static IEnumerable<Type> GetKnownTypes()
     {
@@ -407,23 +414,34 @@ namespace DunGen.Algorithm
       };
     }
 
-    public override bool TryParseValue(object value, out object parsedValue)
+    public override bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
     {
+      Type valueType = value.GetType();
+      Type baseType = typeof(int);
+      Type typeToParse = typeof(ParsedType);
+
+      // Check if we won't be able to produce the requested type.
+      if (false == typeToParse.IsAssignableFrom(baseType))
+      {
+        throw new ArgumentException(String.Format("Can't parse type {0} from {1}", typeToParse, baseType));
+      }
+
       bool valueOk = false;
       int intValue = 0;
-      // See if we can simply cast it
-      if (value.GetType().IsPrimitive)
+
+      // See if we can simply cast it to an int
+      if (valueType.IsPrimitive && baseType.IsAssignableFrom(valueType))
       {
         intValue = (int)value;
         valueOk = (intValue >= Minimum && intValue <= Maximum);
       }
-      // Next try parsing it
+      // Next try parsing it from string
       if (int.TryParse(value.ToString(), out intValue))
       {
         valueOk = (intValue >= Minimum && intValue <= Maximum);
       }
 
-      parsedValue = intValue;
+      parsedValue = (ParsedType)Convert.ChangeType(intValue, typeToParse);
       return valueOk;
     }
   }
@@ -476,8 +494,18 @@ namespace DunGen.Algorithm
       };
     }
 
-    public override bool TryParseValue(object value, out object parsedValue)
+    public override bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
     {
+      Type valueType = value.GetType();
+      Type baseType = typeof(double);
+      Type typeToParse = typeof(ParsedType);
+
+      // Check if we won't be able to produce the requested type.
+      if (false == typeToParse.IsAssignableFrom(baseType))
+      {
+        throw new ArgumentException(String.Format("Can't parse type {0} from {1}", typeToParse, baseType));
+      }
+
       bool valueOk = false;
       double dblValue;
       // See if we can simply cast it
@@ -492,7 +520,7 @@ namespace DunGen.Algorithm
         valueOk = (dblValue >= Minimum && dblValue <= Maximum);
       }
 
-      parsedValue = dblValue;
+      parsedValue = (ParsedType)Convert.ChangeType(dblValue, typeToParse);
       return valueOk;
     }
   }
@@ -587,12 +615,22 @@ namespace DunGen.Algorithm
       };
     }
 
-    public override bool TryParseValue(object value, out object parsedValue)
+    public override bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
     {
+      Type valueType = value.GetType();
+      Type baseType = this.Selection;
+      Type typeToParse = typeof(ParsedType);
+
+      // Check if we won't be able to produce the requested type.
+      if (false == typeToParse.IsAssignableFrom(baseType))
+      {
+        throw new ArgumentException(String.Format("Can't parse type {0} from {1}", typeToParse, baseType));
+      }
+
       bool valueOk = false;
       object valueObj = null;
 
-      if (value is string || value.GetType().IsEnum)
+      if (value is string || valueType.IsEnum)
       {
         valueOk = Enum.TryParse(Selection, value.ToString(), out valueObj);
       }
@@ -602,7 +640,8 @@ namespace DunGen.Algorithm
         valueObj = Enum.ToObject(Selection, value);
       }
 
-      parsedValue = valueObj;
+      parsedValue = (ParsedType)Convert.ChangeType(valueObj, typeToParse);
+
       return valueOk;
     }
   }
@@ -636,8 +675,18 @@ namespace DunGen.Algorithm
       };
     }
 
-    public override bool TryParseValue(object value, out object parsedValue)
+    public override bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
     {
+      Type valueType = value.GetType();
+      Type baseType = typeof(bool);
+      Type typeToParse = typeof(ParsedType);
+
+      // Check if we won't be able to produce the requested type.
+      if (false == typeToParse.IsAssignableFrom(baseType))
+      {
+        throw new ArgumentException(String.Format("Can't parse type {0} from {1}", typeToParse, baseType));
+      }
+
       bool valueOk = false;
       bool valBool = false;
       if (value.GetType().IsPrimitive)
@@ -650,7 +699,8 @@ namespace DunGen.Algorithm
         valueOk = Boolean.TryParse(value.ToString(), out valBool);
       }
 
-      parsedValue = valBool;
+      parsedValue = (ParsedType)Convert.ChangeType(valBool, typeToParse);
+
       return valueOk;
     }
   }
@@ -670,10 +720,21 @@ namespace DunGen.Algorithm
       : base(ParameterCategory.Algorithm)
     { }
 
-    public override bool TryParseValue(object value, out object parsedValue)
+    public override bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
     {
+      Type valueType = value.GetType();
+      Type baseType = typeof(IAlgorithm);
+      Type typeToParse = typeof(ParsedType);
+
+      // Check if we won't be able to produce the requested type.
+      if (false == typeToParse.IsAssignableFrom(baseType))
+      {
+        throw new ArgumentException(String.Format("Can't parse type {0} from {1}", typeToParse, baseType));
+      }
+
       bool valueOk = false;
-      parsedValue = null; // Will return will if unsuccessful
+      parsedValue = default(ParsedType); // Will return will if unsuccessful
+      IAlgorithm algValue = null;
       Type typeOfIAlgorithm = typeof(IAlgorithm);
       Type typeOfValue = value.GetType();
 
@@ -692,7 +753,7 @@ namespace DunGen.Algorithm
         AlgorithmInfo infoVal = value as AlgorithmInfo;
         if (null != infoVal)
         {
-          parsedValue = infoVal.ToInstance();
+          algValue = infoVal.ToInstance();
           valueOk = true;
         }
       }
@@ -702,9 +763,11 @@ namespace DunGen.Algorithm
           AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
           !typeOfValue.IsAbstract)
       {
-        parsedValue = value;
+        algValue = value as IAlgorithm;
         valueOk = true;
       }
+
+      parsedValue = (ParsedType)Convert.ChangeType(algValue, typeToParse);
 
       return valueOk;
     }
@@ -828,7 +891,7 @@ namespace DunGen.Algorithm
       return true;
     }
 
-    public override bool TryParseValue(object value, out object parsedValue)
+    public override bool TryParseValue<ParamType>(object value, out ParamType parsedValue)
     {
       throw new NotSupportedException("Can't parse a value from a group of values");
     }
@@ -853,6 +916,137 @@ namespace DunGen.Algorithm
     internal override IEditingAlgorithmParameter ConvertToEditableParam(string property)
     {
       throw new NotSupportedException("Can't create EditableParam Group without PropertyInfo");
+    }
+  }
+
+  /// <summary>
+  /// Shim type to be used when creating groups of Algorithm Parameters
+  /// </summary>
+  /// <typeparam name="T">Any Type for which there exists an AlgorithmParameterInfo</typeparam>
+  [CollectionDataContract(Name = "paramAlgGroup", ItemName = "paramAlg")]
+  [KnownType("GetKnownTypes")]
+  public class AlgorithmParameterAlgGroup : List<IAlgorithm>
+  {
+    public AlgorithmParameterAlgGroup() { }
+
+    public AlgorithmParameterAlgGroup(IEnumerable<IAlgorithm> members)
+      : base(members)
+    { }
+
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      return AlgorithmBase.GetKnownTypes();
+    }
+  }
+
+  public class CompositeAlgorithmParameterInfo : AlgorithmParameterInfo
+  {
+    public Type AlgorithmBaseType { get; set; } = typeof(IAlgorithm);
+
+    public CompositeAlgorithmParameterInfo()
+      : base(ParameterCategory.AlgorithmGroup)
+    { }
+
+    public override bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
+    {
+      Type valueType = value.GetType();
+      Type baseType = typeof(IAlgorithm);
+      Type typeToParse = typeof(ParsedType);
+
+      // Check if we won't be able to produce the requested type.
+      if (false == typeToParse.IsAssignableFrom(baseType))
+      {
+        throw new ArgumentException(String.Format("Can't parse type {0} from {1}", typeToParse, baseType));
+      }
+
+      bool valueOk = false;
+      parsedValue = default(ParsedType); // Will return will if unsuccessful
+      IAlgorithm algValue = null;
+      Type typeOfIAlgorithm = typeof(IAlgorithm);
+      Type typeOfValue = value.GetType();
+
+      if (typeOfValue.IsPrimitive || typeOfValue.IsEnum)
+      {
+        throw new ArgumentException("Can't parse an Algorithm type from the given value");
+      }
+      if (value is string)
+      {
+        // Do we need to deserialize a string?
+      }
+
+      // If the value is an info for some reason, instantiate it
+      if (typeOfValue == typeof(AlgorithmInfo))
+      {
+        AlgorithmInfo infoVal = value as AlgorithmInfo;
+        if (null != infoVal)
+        {
+          algValue = infoVal.ToInstance();
+          valueOk = true;
+        }
+      }
+
+      // The new value passed is an actual Algorithm
+      if (typeOfIAlgorithm.IsAssignableFrom(typeOfValue) &&
+          AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
+          !typeOfValue.IsAbstract)
+      {
+        algValue = value as IAlgorithm;
+        valueOk = true;
+      }
+
+      parsedValue = (ParsedType)Convert.ChangeType(algValue, typeToParse);
+
+      return valueOk;
+    }
+
+    internal override IEditingAlgorithmParameter ConvertToEditableParam(string propertyName)
+    {
+      var editableAlgs = new EditingAlgorithmParameterGroup(this)
+      {
+        Name = propertyName,
+        Description = this.Description,
+        Default = new AlgorithmParameterAlgGroup(),
+      };
+
+      return editableAlgs;
+    }
+
+    public override IEditingAlgorithmParameter ToEditableParam(PropertyInfo property)
+    {
+      if (!Supported) return null;
+
+      var apis = property.GetOrderedAlgParamInfos();
+      List<IEditingAlgorithmParameter> editables = apis.Select(api => api.ConvertToEditableParam(api.GroupMemberName)).ToList();
+      var editableGroup = new EditingAlgorithmParameterGroup(this)
+      {
+        Name = property.Name,
+        Description = this.Description,
+      };
+
+      editableGroup.AddRange(editables);
+
+      return editableGroup;
+    }
+
+    public override bool TryApplyValue(IEditingAlgorithmParameter source, IAlgorithm destination)
+    {
+      PropertyInfo matchingProperty = destination.GetMatchingPropertyFor(source);
+      var sourceParamGroup = source.Value as EditingAlgorithmParameterGroup;
+      if (null == sourceParamGroup) return false;
+
+      AlgorithmParameterAlgGroup newValues = new AlgorithmParameterAlgGroup();
+      for (int i = 0; i < sourceParamGroup.Count; ++i)
+      {
+        IAlgorithm parsedVal;
+        if (false == TryParseValue(sourceParamGroup[i].Value, out parsedVal))
+        {
+          return false;
+        }
+        newValues.Add(parsedVal);
+      }
+
+      matchingProperty.SetValue(destination, newValues);
+      return true;
     }
   }
   #endregion
