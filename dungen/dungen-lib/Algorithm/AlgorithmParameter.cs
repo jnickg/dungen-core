@@ -736,6 +736,31 @@ namespace DunGen.Algorithm
       : base(members)
     { }
 
+    public void ParamAt<ElemType>(int index, out ElemType element)
+    {
+      element = ParamAt<ElemType>(index);
+    }
+
+    public ElemType ParamAt<ElemType> (int index)
+    {
+      return (ElemType)this[index];
+    }
+
+    public void ParamAt<ElemType, EnumType>(EnumType enumIndex, out ElemType element)
+    {
+      element = ParamAt<ElemType, EnumType>(enumIndex);
+    }
+
+    public ElemType ParamAt<ElemType, EnumType>(EnumType enumIndex)
+    {
+      if (false == typeof(int).IsAssignableFrom(Enum.GetUnderlyingType(typeof(EnumType))))
+      {
+        throw new ArgumentException("Enum used to retrieve element must be assignable to int");
+      }
+      int index = (int)Convert.ChangeType(enumIndex, Enum.GetUnderlyingType(typeof(EnumType)));
+      return ParamAt<ElemType>(index);
+    }
+
     public static IEnumerable<Type> GetKnownTypes()
     {
       return AlgorithmParameterInfo.GetKnownTypes();
