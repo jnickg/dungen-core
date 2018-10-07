@@ -227,6 +227,19 @@ namespace DunGen.Algorithm
       return algClone;
     }
 
+    public override string ToString()
+    {
+      StringBuilder sb = new StringBuilder();
+
+      sb.AppendFormat("Algorithm \"{0}\"\n", Name);
+      foreach (var param in Parameters.List)
+      {
+        sb.AppendLine(param.ToString());
+      }
+
+      return sb.ToString();
+    }
+
     public static IEnumerable<Type> GetKnownTypes()
     {
       // Reflect through every Algorithm type loaded, and just add them as potential candidates for

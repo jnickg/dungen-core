@@ -607,7 +607,7 @@ namespace DunGen.CLI
           Console.WriteLine("{0,2} - {1,-20}", counter++, run.Alg.Name);
           foreach (var p in run.Alg.Parameters.List)
           {
-            Console.WriteLine("\t{0,-20} - {1}", p.Name, p.Value);
+            Console.WriteLine(p);
           }
         }
         return 0;
@@ -671,10 +671,7 @@ namespace DunGen.CLI
           Console.WriteLine("Algorithm \"{0}\"", alg.Name);
           foreach (var param in alg.Parameters.List)
           {
-            Console.WriteLine("   {0,-20} {1,-15} - \"{2}\"",
-                String.Format("'{0}'", param.Name),
-                String.Format("({0})", param.Category),
-                param.Description);
+            Console.WriteLine(param);
           }
         }
         return 0;

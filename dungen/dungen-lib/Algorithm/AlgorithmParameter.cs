@@ -113,6 +113,19 @@ namespace DunGen.Algorithm
     {
       this.ParamInfo = api;
     }
+
+    public override string ToString()
+    {
+      StringBuilder sb = new StringBuilder();
+
+      sb.AppendLine(String.Format("Name: {0} ({1})\nValues:\n", this.Name, this.Description));
+      foreach (var editable in this)
+      {
+        sb.AppendLine("\t" + editable.ToString());
+      }
+
+      return sb.ToString();
+    }
   }
 
   [DataContract(Name = "param")]
@@ -191,6 +204,11 @@ namespace DunGen.Algorithm
     public static IEnumerable<Type> GetKnownTypes()
     {
       return AlgorithmParameterInfo.GetKnownTypes();
+    }
+
+    public override string ToString()
+    {
+      return String.Format("Name: {0} Value: {1} ({2})", this.Name, this.Value, this.Description);
     }
   }
 

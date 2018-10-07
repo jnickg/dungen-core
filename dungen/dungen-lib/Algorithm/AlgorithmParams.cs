@@ -46,7 +46,7 @@ namespace DunGen.Algorithm
       IEnumerable<PropertyInfo> algProperties = instance.GetType().GetProperties();
       var matchingProps = algProperties.Where(pi => pi.Name == param.Name);
       if (matchingProps.Count() != 1) throw new Exception(String.Format("Multiple Properties with name mathing param: {0}", param.Name));
-      return algProperties.First();
+      return matchingProps.First();
     }
 
     /// <summary>
@@ -97,13 +97,9 @@ namespace DunGen.Algorithm
     /// </summary>
     public static AlgorithmParams ApplyFrom(this AlgorithmParams algParams, IAlgorithm algorithm)
     {
-      IEnumerable<PropertyInfo> algProperties = algorithm.GetType().GetProperties();
       foreach (IEditingAlgorithmParameter param in algParams.List)
       {
-        var matchingProps = algProperties.Where(pi => pi.Name == param.Name);
-        if (matchingProps.Count() != 1) throw new Exception(String.Format("Multiple Properties with name mathing param: {0}", param.Name));
-
-        PropertyInfo matchingProperty = algProperties.First();
+        PropertyInfo matchingProperty = algorithm.GetMatchingPropertyFor(param);
 
         // We don't need as much reflection protection here, because the
         // IAlgorithm instance's property should be explicitly typed
