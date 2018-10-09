@@ -14,18 +14,18 @@ namespace DunGen.TerrainGen
       Random
     }
 
-    [SelectionAlgorithmParameterInfo(
-      "How this dead end filler prioritizes which dead ends to clean up next.",
-      typeof(CleanupStrategy),
-      CleanupStrategy.Random)]
+    [SelectionParameter(
+      Description = "How this dead end filler prioritizes which dead ends to clean up next.",
+      SelectionType = typeof(CleanupStrategy),
+      Default = CleanupStrategy.Random)]
     public CleanupStrategy Strategy { get; set; }
 
-    [DecimalAlgorithmParamInfo(
-      "0.0 to 1.0 percentage, representing what proportion of dead ends to remove",
-      0.7,
-      0.0,
-      1.0,
-      5)]
+    [DecimalParameter(
+      Description = "0.0 to 1.0 percentage, representing what proportion of dead ends to remove",
+      Default = 0.7,
+      Minimum = 0.0,
+      Maximum = 1.0,
+      PrecisionPoints = 5)]
     public double CleanupFactor { get; set; }
 
     public override TerrainModBehavior Behavior => TerrainModBehavior.Build;

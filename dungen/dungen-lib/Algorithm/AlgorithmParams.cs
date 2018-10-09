@@ -7,19 +7,116 @@ using System.Runtime.Serialization;
 
 namespace DunGen.Algorithm
 {
+  public interface IEditableParameter : ICloneable
+  {
+    Type ValueType { get; }
+    string ParamName { get; }
+    string Description { get; }
+    object Value { get; set; }
+    object Default { get; }
+  }
+
+  [DataContract(Name = "editableParam")]
+  [KnownType("GetKnownTypes")]
+  public class EditableParameterBase : IEditableParameter
+  {
+    private object _value = null;
+
+    public delegate bool ValueValidator(object v);
+
+    public ValueValidator Validator
+    {
+      get;
+      set;
+    }
+
+    public Type ValueType
+    {
+      get;
+      set;
+    }
+
+    [DataMember(IsRequired = true, Name = "name", Order = 0)]
+    public string ParamName
+    {
+      get;
+      set;
+    }
+
+    public string Description
+    {
+      get;
+      set;
+    }
+
+    [DataMember(IsRequired = true, Name = "val", Order = 2)]
+    public object Value
+    {
+      get => _value;
+      set
+      {
+        if (Validator != null && !Validator.Invoke(value))
+        {
+          throw new ArgumentException(String.Format("Invalid value for parameter {0}: {1}", ParamName, value));
+        }
+        _value = value;
+      }
+    }
+
+    [DataMember(IsRequired = true, Name = "dflt", Order = 1)]
+    public object Default
+    {
+      get;
+      set;
+    }
+
+    public object Clone()
+    {
+      return new EditableParameterBase()
+      {
+        ValueType = this.ValueType,
+        ParamName = this.ParamName,
+        Description = this.Description,
+        Value = this.Value,
+        Default = this.Default
+      };
+    }
+
+    public EditableParameterBase()
+    { }
+
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      return Parameter.GetKnownTypes();
+    }
+
+    public override string ToString()
+    {
+      return String.Format("Name: {0} Value: {1} ({2})", this.ParamName, this.Value, this.Description);
+    }
+
+    public override bool Equals(object obj)
+    {
+      EditableParameterBase other = obj as EditableParameterBase;
+      if (null == other) return false;
+      return this.ValueType == other.ValueType &&
+             this.ParamName == other.ParamName &&
+             this.Value == other.Value;
+    }
+  }
+
   [DataContract(Name = "algParams")]
-  [KnownType(typeof(EditingAlgorithmParameter))]
-  [KnownType(typeof(EditingAlgorithmParameterGroup))]
+  [KnownType(typeof(EditableParameterBase))]
   public class AlgorithmParams : ICloneable
   {
     [DataMember(IsRequired = true, Name = "list")]
-    public IList<IEditingAlgorithmParameter> List { get; set; } = new List<IEditingAlgorithmParameter>();
+    public IList<IEditableParameter> List { get; set; } = new List<IEditableParameter>();
 
-    public IEditingAlgorithmParameter this[string Name]
+    public IEditableParameter this[string Name]
     {
       get
       {
-        return List.Where(editable => editable.Name == Name).FirstOrDefault();
+        return List.Where(editable => editable.ParamName == Name).FirstOrDefault();
       }
     }
 
@@ -28,8 +125,8 @@ namespace DunGen.Algorithm
     {
       AlgorithmParams clone = new AlgorithmParams();
 
-      List<IEditingAlgorithmParameter> clonedParams = new List<IEditingAlgorithmParameter>();
-      clonedParams.AddRange(this.List.Select(p => (IEditingAlgorithmParameter)p.Clone()));
+      List<IEditableParameter> clonedParams = new List<IEditableParameter>();
+      clonedParams.AddRange(this.List.Select(p => (IEditableParameter)p.Clone()));
       clone.List = clonedParams;
 
       return clone;
@@ -55,34 +152,34 @@ namespace DunGen.Algorithm
     /// of GroupAlgorithmParameterInfo, and orders them by the AlgorithmParameterInfo.Order
     /// value, before returning that list.
     /// </summary>
-    public static List<AlgorithmParameterInfo> GetOrderedAlgParamInfos(this PropertyInfo prop)
+    public static List<Parameter> GetOrderedAlgParamInfos(this PropertyInfo prop)
     {
-      return prop.GetCustomAttributes<AlgorithmParameterInfo>()
-                 .Where(api => api.GetType() != typeof(GroupAlgorithmParameterInfo))
+      return prop.GetCustomAttributes<Parameter>()
+                 //.Where(api => api.GetType() != typeof(GroupAlgorithmParameterInfo))
                  .OrderBy(api => api.Order)
                  .ToList();
     }
 
-    public static GroupAlgorithmParameterInfo GetGroupAlgParamInfo(this PropertyInfo prop)
-    {
-      var groupApis = prop.GetCustomAttributes<GroupAlgorithmParameterInfo>().ToList();
+    //public static GroupAlgorithmParameterInfo GetGroupAlgParamInfo(this PropertyInfo prop)
+    //{
+    //  var groupApis = prop.GetCustomAttributes<GroupAlgorithmParameterInfo>().ToList();
 
-      if (groupApis.Count == 0) return null; // Accepted use case
-      if (groupApis.Count > 1)
-      {
-        throw new Exception(String.Format("Too many GroupAlgorithmParameterInfo attributes on property {0}", prop.Name));
-      }
-      return groupApis.First();
-    }
+    //  if (groupApis.Count == 0) return null; // Accepted use case
+    //  if (groupApis.Count > 1)
+    //  {
+    //    throw new Exception(String.Format("Too many GroupAlgorithmParameterInfo attributes on property {0}", prop.Name));
+    //  }
+    //  return groupApis.First();
+    //}
 
-    public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, IEditingAlgorithmParameter param)
+    public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, IEditableParameter param)
     {
       IEnumerable<PropertyInfo> algProperties = instance.GetType().GetProperties();
-      var matchingProps = algProperties.Where(pi => pi.Name == param.Name);
+      var matchingProps = algProperties.Where(pi => pi.Name == param.ParamName);
       if (matchingProps.Count() == 0) return null;
       if (matchingProps.Count() > 1)
       {
-        throw new Exception(String.Format("Multiple Properties with name matching param: {0}", param.Name));
+        throw new Exception(String.Format("Multiple Properties with name matching param: {0}", param.ParamName));
       }
       return matchingProps.First();
     }
@@ -94,7 +191,7 @@ namespace DunGen.Algorithm
     /// </summary>
     public static void ApplyTo(this AlgorithmParams algParams, IAlgorithm algInstance)
     {
-      foreach (IEditingAlgorithmParameter param in algParams.List)
+      foreach (IEditableParameter param in algParams.List)
       {
         PropertyInfo matchingProperty = algInstance.GetMatchingPropertyFor(param);
 
@@ -103,23 +200,7 @@ namespace DunGen.Algorithm
           continue;
         }
 
-        var apis = matchingProperty.GetOrderedAlgParamInfos();
-        if (apis.Count == 0) continue;
-
-        AlgorithmParameterInfo primaryParamInfo = apis.First();
-
-        // More than one API should mean this is a Parameter Group. We need to retrieve
-        // that explicitly before attempting to parse the value out from `param`
-        if (apis.Count > 1)
-        {
-          // Check first if this is a composite parameter. If so, let user know if they
-          // screwed up in configuration it
-          GroupAlgorithmParameterInfo groupApi = matchingProperty.GetGroupAlgParamInfo();
-          primaryParamInfo = groupApi ?? throw new Exception(
-            String.Format("Parameter {0} has {1} AlgorithmParameterInfo attributes," +
-            "and so must have exactly one GroupAlgorithmParameterInfo. Found 0.",
-            param.Name, apis.Count));
-        }
+        var primaryParamInfo = matchingProperty.GetParameter();
 
         if (!primaryParamInfo.TryApplyValue(param, algInstance))
         {
@@ -136,7 +217,7 @@ namespace DunGen.Algorithm
     /// </summary>
     public static AlgorithmParams ApplyFrom(this AlgorithmParams algParams, IAlgorithm algorithm)
     {
-      foreach (IEditingAlgorithmParameter param in algParams.List)
+      foreach (IEditableParameter param in algParams.List)
       {
         PropertyInfo matchingProperty = algorithm.GetMatchingPropertyFor(param);
 

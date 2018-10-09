@@ -29,10 +29,6 @@ namespace DunGen.Algorithm
     /// </summary>
     AlgorithmParams Parameters { get; set; }
     /// <summary>
-    /// Gets a prototype instance of this algorithm's parameters.
-    /// </summary>
-    AlgorithmParams GetParamsPrototype();
-    /// <summary>
     /// Runs the Algorithm with the specified context
     /// </summary>
     void Run(IAlgorithmContext context);
@@ -148,7 +144,7 @@ namespace DunGen.Algorithm
     {
       get
       {
-        return GetParamsPrototype().ApplyFrom(this);
+        return this.CurrentParameters();
       }
       set
       {
@@ -163,7 +159,7 @@ namespace DunGen.Algorithm
         bool containsParams = false;
         foreach (PropertyInfo propInfo in this.GetType().GetProperties())
         {
-          List<AlgorithmParameterInfo> infos = new List<AlgorithmParameterInfo>(propInfo.GetCustomAttributes<AlgorithmParameterInfo>());
+          List<Parameter> infos = new List<Parameter>(propInfo.GetCustomAttributes<Parameter>());
           if (infos.Count > 0)
           {
             containsParams = true;
@@ -176,44 +172,7 @@ namespace DunGen.Algorithm
 
     public AlgorithmBase()
     {
-      this.GetParamsPrototype().ApplyTo(this);
-    }
-
-    public AlgorithmParams GetParamsPrototype()
-    {
-      AlgorithmParams prototype = new AlgorithmParams()
-      {
-        List = new List<IEditingAlgorithmParameter>()
-      };
-
-      foreach (PropertyInfo propInfo in this.GetType().GetProperties())
-      {
-        var apis = propInfo.GetOrderedAlgParamInfos();
-        if (apis.Count == 0) continue;
-
-        AlgorithmParameterInfo primaryParamInfo = apis.First();
-
-        if (apis.Count > 1)
-        {
-          GroupAlgorithmParameterInfo groupApi = propInfo.GetGroupAlgParamInfo();
-          primaryParamInfo = groupApi ?? throw new Exception(
-            String.Format("Parameter {0} has {1} AlgorithmParameterInfo attributes," +
-            "and so must have exactly one GroupAlgorithmParameterInfo. Found 0.",
-            propInfo.Name, apis.Count));
-        }
-
-        if (!primaryParamInfo.Show) continue;
-        if (!primaryParamInfo.Supported) continue;
-
-        IEditingAlgorithmParameter newParam = primaryParamInfo.ToEditableParam(propInfo);
-
-        // TODO make it so it's system configurable whether to show unsupported params
-        if (null == newParam && primaryParamInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
-        // ... and add it to the list of parameters!
-        if (null != newParam) prototype.List.Add(newParam);
-      }
-
-      return prototype;
+      this.ParamsPrototype().ApplyTo(this);
     }
 
     /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>

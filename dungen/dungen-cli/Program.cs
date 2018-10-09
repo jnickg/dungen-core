@@ -511,10 +511,10 @@ namespace DunGen.CLI
         {
           algCmd.Description = String.Format("{0,-40} - ({1})", palletteItemName, algProto.Name);
           StringBuilder extendedHelp = new StringBuilder();
-          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.Name))));
+          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.ParamName))));
           foreach (var p in algProto.Parameters.List)
           {
-            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.Name, p.Description));
+            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.ParamName, p.Description));
             // TODO explain valid values for this parameter
           }
 
@@ -542,12 +542,12 @@ namespace DunGen.CLI
               {
                 // Should be sent in like this: "-p SomeOption=value"
                 string paramName = paramOptionInput.Split('=').First();
-                if (1 == nonDefaultParams.List.Where((p) => p.Name == paramName).Count())
+                if (1 == nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count())
                 {
                   string paramVal = paramOptionInput.Split('=').Last(); // Second
 
                   nonDefaultParams.List
-                           .Where((p) => p.Name == paramName)
+                           .Where((p) => p.ParamName == paramName)
                            .ToList()
                            .ForEach((p) => p.Value = paramVal);
                 }
@@ -896,10 +896,10 @@ namespace DunGen.CLI
         {
           algCmd.Description = String.Format("{0,-40} - ({1})", algProto.Name, algProto.GetType().FullName);
           StringBuilder extendedHelp = new StringBuilder();
-          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.Name))));
+          extendedHelp.AppendLine(String.Format("Parameters are: {0}", String.Join(", ", algProto.Parameters.List.Select((p) => p.ParamName))));
           foreach (var p in algProto.Parameters.List)
           {
-            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.Name, p.Description));
+            extendedHelp.AppendLine(String.Format("\t* {0} - '{1}'", p.ParamName, p.Description));
             // TODO explain valid values for this parameter
           }
 
@@ -934,12 +934,12 @@ namespace DunGen.CLI
               {
                 // Should be sent in like this: "-p SomeOption=value"
                 string paramName = paramOptionInput.Split('=').First();
-                if (1 == nonDefaultParams.List.Where((p) => p.Name == paramName).Count())
+                if (1 == nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count())
                 {
                   string paramVal = paramOptionInput.Split('=').Last(); // Second
 
                   nonDefaultParams.List
-                           .Where((p) => p.Name == paramName)
+                           .Where((p) => p.ParamName == paramName)
                            .ToList()
                            .ForEach((p) => p.Value = paramVal);
                 }

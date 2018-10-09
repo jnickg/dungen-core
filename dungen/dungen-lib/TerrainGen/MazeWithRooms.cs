@@ -15,22 +15,22 @@ namespace DunGen.TerrainGen
     public override TerrainModBehavior Behavior => TerrainModBehavior.Clobber;
     public override TerrainGenStyle Style => TerrainGenStyle.Bldg;
 
-    [AlgorithmAlgorithmParameterInfo(
+    [AlgorithmParameter(
       Description = "Run before maze generator",
       AlgorithmBaseType = typeof(ITerrainGenAlgorithm),
-      Default = typeof(MonteCarloRoomCarver))]
+      DefaultType = typeof(MonteCarloRoomCarver))]
     public ITerrainGenAlgorithm RoomBuilder { get; set; }
 
-    [AlgorithmAlgorithmParameterInfo(
+    [AlgorithmParameter(
       Description = "Run before dead-end cleaner",
       AlgorithmBaseType = typeof(ITerrainGenAlgorithm),
-      Default = typeof(RecursiveBacktracker))]
+      DefaultType = typeof(RecursiveBacktracker))]
     public ITerrainGenAlgorithm MazeCarver { get; set; }
 
-    [AlgorithmAlgorithmParameterInfo(
+    [AlgorithmParameter(
       Description = "Removes dead ends from algorithm",
       AlgorithmBaseType = typeof(ITerrainGenAlgorithm),
-      Default = typeof(NopTerrainGen))]
+      DefaultType = typeof(NopTerrainGen))]
     public ITerrainGenAlgorithm DeadEndFiller { get; set; }
 
     public override void Run(DungeonTiles d, bool[,] mask, Random r)

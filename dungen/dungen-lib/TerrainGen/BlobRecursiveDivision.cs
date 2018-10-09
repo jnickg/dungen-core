@@ -17,28 +17,34 @@ namespace DunGen.TerrainGen
       "The size at which subregions should no longer be divided. Set to " +
       "\'1\' to create only corridors. This is an Area measurement.";
 
-    [IntegerAlgorithmParamInfo(
-      _RoomSizeDescription,
-      1,
-      1,
-      int.MaxValue)]
+    private const string _GapCountDescription =
+      "How many gaps to leave in new boundaries. Algorithm uses the lesser of " +
+      "this value and the the total length of the wall times MaxGapProportion";
+
+    private const string _MaxGapProportionDescription =
+      "The maximum proportion of a total boundary generated that can be open " +
+      "gaps. Algorithm uses the lesser of this percentage, and GapCount gaps";
+
+    [IntegerParameter(
+      Description = _RoomSizeDescription,
+      Default = 1,
+      Minimum = 1,
+      Maximum = int.MaxValue)]
     public int RoomSize { get; set; }
 
-    [IntegerAlgorithmParamInfo(
-      "How many gaps to leave in new boundaries. Algorithm uses the lesser of " +
-      "this value and the the total length of the wall times MaxGapProportion",
-      1,
-      1,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = _GapCountDescription,
+      Default = 1,
+      Minimum = 1,
+      Maximum = int.MaxValue)]
     public int GapCount { get; set; }
 
-    [DecimalAlgorithmParamInfo(
-      "The maximum proportion of a total boundary generated that can be open " +
-      "gaps. Algorithm uses the lesser of this percentage, and GapCount gaps",
-      0.05,
-      0.01,
-      0.99,
-      2)]
+    [DecimalParameter(
+      Description = _MaxGapProportionDescription,
+      Default = 0.05,
+      Minimum = 0.01,
+      Maximum = 0.99,
+      PrecisionPoints = 2)]
     public double MaxGapProportion { get; set; }
 
     private class Subregion

@@ -8,64 +8,64 @@ namespace DunGen.TerrainGen
 {
   public class MonteCarloRoomCarver : TerrainGenAlgorithmBase
   {
-    [IntegerAlgorithmParamInfo(
-      "Minimum width of the generated rooms",
-      5,
-      2,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "Minimum width of the generated rooms",
+      Default = 5,
+      Minimum = 2,
+      Maximum = int.MaxValue)]
     public int RoomWidthMin { get; set; }
 
-    [IntegerAlgorithmParamInfo(
-      "Maximum width of the generated rooms",
-      5,
-      2,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "Maximum width of the generated rooms",
+      Default = 5,
+      Minimum = 2,
+      Maximum = int.MaxValue)]
     public int RoomWidthMax { get; set; }
 
-    [IntegerAlgorithmParamInfo(
-      "Minimum height of the generated rooms",
-      5,
-      2,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "Minimum height of the generated rooms",
+      Default = 5,
+      Minimum = 2,
+      Maximum = int.MaxValue)]
     public int RoomHeightMin { get; set; }
 
-    [IntegerAlgorithmParamInfo(
-      "Maximum height of the generated rooms",
-      5,
-      2,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "Maximum height of the generated rooms",
+      Default = 5,
+      Minimum = 2,
+      Maximum = int.MaxValue)]
     public int RoomHeightMax { get; set; }
 
-    [BooleanAlgorithmParameterInfo(
-      "If true, room carver will avoid already-open tiles when attempting to build rooms",
-      true)]
+    [BooleanParameter(
+      Description = "If true, room carver will avoid already-open tiles when attempting to build rooms",
+      Default = true)]
     public bool AvoidOpen { get; set; }
 
-    [BooleanAlgorithmParameterInfo(
-      "If true, room carver will turn all tiles in the mask to walls, before building rooms",
-      false)]
+    [BooleanParameter(
+      Description = "If true, room carver will turn all tiles in the mask to walls, before building rooms",
+      Default = false)]
     public bool ClearArea { get; set; }
 
-    [IntegerAlgorithmParamInfo(
-      "The number of random room-creation attempts to make. Will short-circuit if it reaches the desired number of rooms first",
-      500,
-      0,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "The number of random room-creation attempts to make. Will short-circuit if it reaches the desired number of rooms first",
+      Default = 500,
+      Minimum = 0,
+      Maximum = int.MaxValue)]
     public int Attempts { get; set; }
 
     // TODO make room width height honor this too
-    [IntegerAlgorithmParamInfo(
-      "If using tiles as walls, how many tiles to pad the outside of the algorithm's mask",
-      1,
-      0,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "If using tiles as walls, how many tiles to pad the outside of the algorithm's mask",
+      Default = 1,
+      Minimum = 0,
+      Maximum = int.MaxValue)]
     public int BorderPadding { get; set; }
 
-    [IntegerAlgorithmParamInfo(
-      "The target number of rooms to generate. Will short-circuit if it runs out of attempts before reaching this value",
-      15,
-      1,
-      int.MaxValue)]
+    [IntegerParameter(
+      Description = "The target number of rooms to generate. Will short-circuit if it runs out of attempts before reaching this value",
+      Default = 15,
+      Minimum = 1,
+      Maximum = int.MaxValue)]
     public int TargetRoomCount { get; set; }
 
     public override TerrainModBehavior Behavior => ClearArea ? TerrainModBehavior.Clobber : TerrainModBehavior.Carve;
