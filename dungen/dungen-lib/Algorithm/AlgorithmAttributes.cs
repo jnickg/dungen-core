@@ -30,7 +30,7 @@ namespace DunGen.Algorithm
     /// <summary>
     /// The type of Parameter connected to this Parameter
     /// </summary>
-    public Type ParamType { get; protected set; } = null;
+    public Type BaseType { get; protected set; } = null;
 
     /// <summary>
     /// The relative ordering of this Attribute, relative to others, when
@@ -70,18 +70,19 @@ namespace DunGen.Algorithm
 
     public Parameter(Type paramType)
     {
-      this.ParamType = paramType;
+      this.BaseType = paramType;
     }
 
     public abstract object GetDefault();
 
     /// <summary>
-    /// Creates an Editable Parameter object from this Parameter's descriptor
+    /// Creates an Editable Parameter object from this Parameter's descriptor. The editable
+    /// parameter will be set to this Parameter's default value
     /// </summary>
-    /// <param name="PropertyName">The name of the property to show.</param>
-    /// <returns>An object implementing IAlgorithmParameter, or NULL
-    /// of none could be generated.</returns>
-    public virtual IEditableParameter ToEditableParam(IAlgorithm instance, PropertyInfo property)
+    /// <param name="property"></param>
+    /// <param name="instance">If non-null, the instance from which to pull the current value.</param>
+    /// <returns></returns>
+    public virtual IEditableParameter ToEditableParam(PropertyInfo property, IAlgorithm instance = null)
     {
       // TODO make it so it's system configurable whether to show unsupported params
       if (!Supported) return null;
@@ -92,19 +93,26 @@ namespace DunGen.Algorithm
         valToAssign = property.GetValue(instance);
       }
 
+      return ToEditableParam(property.Name, valToAssign);
+    }
+
+    public IEditableParameter ToEditableParam(string propertyName, object currentValue)
+    {
       return new EditableParameterBase()
       {
-        ParamName = property.Name,
+        ParamName = propertyName,
         Description = this.Description,
         Default = this.GetDefault(),
-        ValueType = this.ParamType,
-        Value = valToAssign,
+        ValueType = this.BaseType,
+        Value = currentValue,
         Validator = (val) => { object parsed; return this.TryParseValue(val, out parsed); },
       };
     }
 
     public virtual bool TryApplyValue(IEditableParameter source, IAlgorithm destination)
     {
+      if (null == destination || null == source) throw new ArgumentNullException();
+
       PropertyInfo matchingProperty = destination.GetMatchingPropertyFor(source);
       object parsedValue;
       if (false == TryParseValue(source.Value, out parsedValue))
@@ -116,10 +124,27 @@ namespace DunGen.Algorithm
       return true;
     }
 
+    public virtual bool TryParseValue<ParsedType>(IAlgorithm source, string propertyName, out ParsedType parsedValue)
+    {
+      PropertyInfo prop = source.GetMatchingPropertyFor(propertyName);
+      return TryParseValue(source, prop, out parsedValue);
+    }
+
+    public bool TryParseValue<ParsedType>(IAlgorithm source, PropertyInfo prop, out ParsedType parsedValue)
+    {
+      object sourceVal = prop.GetValue(source);
+      return TryParseValue(sourceVal, out parsedValue);
+    }
+
+    public bool TryParseValue<ParsedType>(IEditableParameter source, out ParsedType parsedValue)
+    {
+      return TryParseValue(source.Value, out parsedValue);
+    }
+
     public virtual bool TryParseValue<ParsedType>(object value, out ParsedType parsedValue)
     {
       Type valueType = value.GetType();
-      Type baseType = ParamType;
+      Type baseType = BaseType;
       Type typeToParse = typeof(ParsedType);
 
       parsedValue = default(ParsedType);
@@ -132,6 +157,20 @@ namespace DunGen.Algorithm
       }
 
       return false;
+    }
+
+    public static IEnumerable<Type> GetParamTypes()
+    {
+      List<Type> paramTypes = new List<Type>()
+      {
+        typeof(int),
+        typeof(double),
+        typeof(bool),
+        typeof(IAlgorithm),
+        typeof(Enum)
+      };
+
+      return paramTypes;
     }
 
     public static IEnumerable<Type> GetKnownTypes()
@@ -203,7 +242,7 @@ namespace DunGen.Algorithm
       if (valueOk) return true;
 
       // See if we can simply cast it to an int
-      if (valueType.IsPrimitive && ParamType.IsAssignableFrom(valueType))
+      if (valueType.IsPrimitive && BaseType.IsAssignableFrom(valueType))
       {
         intValue = (int)value;
         valueOk = (intValue >= Minimum && intValue <= Maximum);
@@ -278,13 +317,14 @@ namespace DunGen.Algorithm
   public class SelectionParameter : Parameter
   {
     private object _default = null;
+    private Type _selectionType = null;
 
     /// <summary>
     /// The Enumerated type of this Selection Parameter. NULL if unspecified.
     /// </summary>
     public Type SelectionType
     {
-      get => base.ParamType;
+      get => _selectionType;
       set
       {
         if (null != value && false == value.IsEnum)
@@ -297,7 +337,7 @@ namespace DunGen.Algorithm
           _default = null;
         }
 
-        base.ParamType = value;
+        _selectionType = value;
       }
     }
 
@@ -414,6 +454,10 @@ namespace DunGen.Algorithm
 
   public class AlgorithmParameter : Parameter
   {
+    /// <summary>
+    /// A more specific base type for the Algorithms allowed by this parameter. Any
+    /// type inheriting from IAlgorithm is valid.
+    /// </summary>
     public Type AlgorithmBaseType { get; set; } = typeof(IAlgorithm);
 
     /// <summary>
@@ -453,7 +497,7 @@ namespace DunGen.Algorithm
       }
 
       // The new value passed is an actual Algorithm
-      if (ParamType.IsAssignableFrom(typeOfValue) &&
+      if (BaseType.IsAssignableFrom(typeOfValue) &&
           AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
           !typeOfValue.IsAbstract)
       {
@@ -511,21 +555,7 @@ namespace DunGen.Algorithm
       // TODO make it so it's system configurable whether to show unsupported params
       if (!primaryParamInfo.Supported) return null;
 
-      object valToAssign = primaryParamInfo.GetDefault();
-      if (null != instance)
-      {
-        valToAssign = prop.GetValue(instance);
-      }
-
-      return new EditableParameterBase()
-      {
-        ParamName = prop.Name,
-        Description = primaryParamInfo.Description,
-        Default = primaryParamInfo.GetDefault(),
-        ValueType = primaryParamInfo.ParamType,
-        Value = valToAssign,
-        Validator = (val) => { object parsed; return primaryParamInfo.TryParseValue(val, out parsed); },
-      };
+      return primaryParamInfo.ToEditableParam(prop, instance);
     }
 
     public static AlgorithmParams ParamsPrototype(this IAlgorithm instance)

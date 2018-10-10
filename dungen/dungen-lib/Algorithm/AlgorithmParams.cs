@@ -174,12 +174,17 @@ namespace DunGen.Algorithm
 
     public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, IEditableParameter param)
     {
+      return instance.GetMatchingPropertyFor(param.ParamName);
+    }
+
+    public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, string paramName)
+    {
       IEnumerable<PropertyInfo> algProperties = instance.GetType().GetProperties();
-      var matchingProps = algProperties.Where(pi => pi.Name == param.ParamName);
+      var matchingProps = algProperties.Where(pi => pi.Name == paramName);
       if (matchingProps.Count() == 0) return null;
       if (matchingProps.Count() > 1)
       {
-        throw new Exception(String.Format("Multiple Properties with name matching param: {0}", param.ParamName));
+        throw new Exception(String.Format("Multiple Properties with name matching param: {0}", paramName));
       }
       return matchingProps.First();
     }
@@ -221,9 +226,17 @@ namespace DunGen.Algorithm
       {
         PropertyInfo matchingProperty = algorithm.GetMatchingPropertyFor(param);
 
-        // We don't need as much reflection protection here, because the
-        // IAlgorithm instance's property should be explicitly typed
-        object val = matchingProperty.GetValue(algorithm);
+        if (matchingProperty == null)
+        {
+          continue;
+        }
+
+        var primaryParamInfo = matchingProperty.GetParameter();
+
+        if (!primaryParamInfo.TryApplyValue(param, algInstance))
+        {
+          throw new Exception("Failed to apply IEditingAlgorithmParameter to matching instance property");
+        }
         param.Value = val;
       }
       return algParams;
