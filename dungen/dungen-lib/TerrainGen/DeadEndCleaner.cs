@@ -25,7 +25,7 @@ namespace DunGen.TerrainGen
       Default = 0.7,
       Minimum = 0.0,
       Maximum = 1.0,
-      PrecisionPoints = 5)]
+      Precision = 5)]
     public double CleanupFactor { get; set; }
 
     public override TerrainModBehavior Behavior => TerrainModBehavior.Build;

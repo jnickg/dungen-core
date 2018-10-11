@@ -9,7 +9,7 @@ namespace DunGen.Algorithm
 {
   public interface IEditableParameter : ICloneable
   {
-    Type ValueType { get; }
+    SerializableType ValueType { get; }
     string ParamName { get; }
     string Description { get; }
     object Value { get; set; }
@@ -22,40 +22,45 @@ namespace DunGen.Algorithm
   {
     private object _value = null;
 
-    public delegate bool ValueValidator(object v);
+    /// <summary>
+    /// If non-null, the Parameter from an IAlgorithm from which this Editable
+    /// Parameter was created. If set, this Parameter can be used to retrieve
+    /// editing information (such as limits and ranges), and will be used
+    /// internally to check values that are set.
+    /// </summary>
+    public Parameter AssociatedParam { get; set; } = null;
 
-    public ValueValidator Validator
-    {
-      get;
-      set;
-    }
+    /// <summary>
+    /// The type of value contained by this Editable Parameter. This can be
+    /// used as a key to determine how to edit the Value, and what type of
+    /// AssociatedParam is stored in this object (if any).
+    /// </summary>
+    [DataMember(IsRequired = true, Name = "type", Order = 1)]
+    public SerializableType ValueType { get; set; } = null;
 
-    public Type ValueType
-    {
-      get;
-      set;
-    }
-
+    /// <summary>
+    /// The name of this Editable Parameter. This corresponds to the name
+    /// of the property in the associated IAlgorithm Type from which this
+    /// Editable Parameter was created, and to which it can be applied.
+    /// </summary>
     [DataMember(IsRequired = true, Name = "name", Order = 0)]
-    public string ParamName
-    {
-      get;
-      set;
-    }
+    public string ParamName { get; set; } = string.Empty;
 
-    public string Description
-    {
-      get;
-      set;
-    }
+    /// <summary>
+    /// A human-readable description of this Parameter, and its purpose.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
 
-    [DataMember(IsRequired = true, Name = "val", Order = 2)]
+    /// <summary>
+    /// The current value of this Parameter.
+    /// </summary>
+    [DataMember(IsRequired = true, Name = "val", Order = 3)]
     public object Value
     {
       get => _value;
       set
       {
-        if (Validator != null && !Validator.Invoke(value))
+        if (AssociatedParam != null && !AssociatedParam.TryParseValue(value, out _value))
         {
           throw new ArgumentException(String.Format("Invalid value for parameter {0}: {1}", ParamName, value));
         }
@@ -63,13 +68,15 @@ namespace DunGen.Algorithm
       }
     }
 
-    [DataMember(IsRequired = true, Name = "dflt", Order = 1)]
-    public object Default
-    {
-      get;
-      set;
-    }
+    /// <summary>
+    /// The default value of this Parameter.
+    /// </summary>
+    [DataMember(IsRequired = true, Name = "dflt", Order = 2)]
+    public object Default { get; set; } = null;
 
+    /// <summary>
+    /// <see cref="ICloneable.Clone"/>
+    /// </summary>
     public object Clone()
     {
       return new EditableParameterBase()
@@ -95,6 +102,9 @@ namespace DunGen.Algorithm
       return String.Format("Name: {0} Value: {1} ({2})", this.ParamName, this.Value, this.Description);
     }
 
+    /// <summary>
+    /// <see cref="object.Equals(object)"/>
+    /// </summary>
     public override bool Equals(object obj)
     {
       EditableParameterBase other = obj as EditableParameterBase;
@@ -106,7 +116,7 @@ namespace DunGen.Algorithm
   }
 
   [DataContract(Name = "algParams")]
-  [KnownType(typeof(EditableParameterBase))]
+  [KnownType("GetKnownTypes")]
   public class AlgorithmParams : ICloneable
   {
     [DataMember(IsRequired = true, Name = "list")]
@@ -120,7 +130,9 @@ namespace DunGen.Algorithm
       }
     }
 
-
+    /// <summary>
+    /// <see cref="ICloneable.Clone"/>
+    /// </summary>
     public object Clone()
     {
       AlgorithmParams clone = new AlgorithmParams();
@@ -132,6 +144,9 @@ namespace DunGen.Algorithm
       return clone;
     }
 
+    /// <summary>
+    /// <see cref="object.Equals(object)"/>
+    /// </summary>
     public override bool Equals(object obj)
     {
       AlgorithmParams other = obj as AlgorithmParams;
@@ -142,6 +157,24 @@ namespace DunGen.Algorithm
         if (false == this.List[i].Equals(other.List[i])) return false;
       }
       return true;
+    }
+
+    /// <summary>
+    /// Gets a list of all types that must be known by AlgorithmParams, for the purpose
+    /// of serialization.
+    /// </summary>
+    public static IEnumerable<Type> GetKnownTypes()
+    {
+      List<Type> knownTypes = new List<Type>();
+
+      foreach (var assy in AppDomain.CurrentDomain.GetAssemblies())
+      {
+        Type[] types = assy.GetTypes();
+        types = types.Where(t => typeof(EditableParameterBase).IsAssignableFrom(t)).ToArray();
+        knownTypes.AddRange(types);
+      }
+
+      return knownTypes;
     }
   }
 
@@ -155,32 +188,36 @@ namespace DunGen.Algorithm
     public static List<Parameter> GetOrderedAlgParamInfos(this PropertyInfo prop)
     {
       return prop.GetCustomAttributes<Parameter>()
-                 //.Where(api => api.GetType() != typeof(GroupAlgorithmParameterInfo))
                  .OrderBy(api => api.Order)
                  .ToList();
     }
 
-    //public static GroupAlgorithmParameterInfo GetGroupAlgParamInfo(this PropertyInfo prop)
-    //{
-    //  var groupApis = prop.GetCustomAttributes<GroupAlgorithmParameterInfo>().ToList();
-
-    //  if (groupApis.Count == 0) return null; // Accepted use case
-    //  if (groupApis.Count > 1)
-    //  {
-    //    throw new Exception(String.Format("Too many GroupAlgorithmParameterInfo attributes on property {0}", prop.Name));
-    //  }
-    //  return groupApis.First();
-    //}
-
+    /// <summary>
+    /// Attempts to find the PropertyInfo in this IAlgorithm instance, that matches the specified 
+    /// IEditableParameter.
+    /// </summary>
     public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, IEditableParameter param)
     {
       return instance.GetMatchingPropertyFor(param.ParamName);
     }
 
+    /// <summary>
+    /// Attempts to find the PropertyInfo in this IAlgorithm instance, that matches the specified
+    /// Parameter name. Returns null on failure.
+    /// </summary>
     public static PropertyInfo GetMatchingPropertyFor(this IAlgorithm instance, string paramName)
     {
-      IEnumerable<PropertyInfo> algProperties = instance.GetType().GetProperties();
-      var matchingProps = algProperties.Where(pi => pi.Name == paramName);
+      return instance.GetType().GetMatchingPropertyFor(paramName);
+    }
+
+    /// <summary>
+    /// Attempts to find the PropertyInfo in this Type , that matches the specified
+    /// Parameter name. Returns null on failure.
+    /// </summary>
+    public static PropertyInfo GetMatchingPropertyFor(this Type type, string paramName)
+    {
+      IEnumerable<PropertyInfo> properties = type.GetProperties();
+      var matchingProps = properties.Where(pi => pi.Name == paramName);
       if (matchingProps.Count() == 0) return null;
       if (matchingProps.Count() > 1)
       {
@@ -209,7 +246,7 @@ namespace DunGen.Algorithm
 
         if (!primaryParamInfo.TryApplyValue(param, algInstance))
         {
-          throw new Exception("Failed to apply IEditingAlgorithmParameter to matching instance property");
+          throw new Exception("Failed to apply IEditableParameter to matching instance property");
         }
       }
     }
@@ -233,11 +270,12 @@ namespace DunGen.Algorithm
 
         var primaryParamInfo = matchingProperty.GetParameter();
 
-        if (!primaryParamInfo.TryApplyValue(param, algInstance))
+        object currentVal = null;
+        if (!primaryParamInfo.TryParseValue(algorithm, matchingProperty, out currentVal))
         {
-          throw new Exception("Failed to apply IEditingAlgorithmParameter to matching instance property");
+          throw new Exception("Failed to apply matching instance property to IEditableParameter.");
         }
-        param.Value = val;
+        param.Value = currentVal;
       }
       return algParams;
     }

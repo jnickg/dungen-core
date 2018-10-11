@@ -53,7 +53,7 @@ namespace DunGen.TerrainGen
       Default = 1.0,
       Minimum = 0.0,
       Maximum = 1.0,
-      PrecisionPoints = 5)]
+      Precision = 5)]
     public double Variability { get; set; }
 
     public override void Run(DungeonTiles d, bool[,] mask, Random r)

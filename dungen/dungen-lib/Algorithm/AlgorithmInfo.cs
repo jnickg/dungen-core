@@ -19,7 +19,7 @@ namespace DunGen.Algorithm
   public class AlgorithmInfo : ICloneable
   {
     [DataMember(Name = "type", Order = 1, IsRequired = true)]
-    public AlgorithmType Type { get; set; } = null;
+    public SerializableType Type { get; set; } = null;
 
     [DataMember(Name = "params", Order = 2, IsRequired = true)]
     public AlgorithmParams Parameters { get; set; } = new AlgorithmParams();
@@ -28,7 +28,7 @@ namespace DunGen.Algorithm
     {
       return new AlgorithmInfo()
       {
-        Type = new AlgorithmType(this.Type.ConvertToType(false)),
+        Type = new SerializableType(this.Type.ConvertToType(false)),
         Parameters = (AlgorithmParams)this.Parameters.Clone()
       };
     }
@@ -66,7 +66,7 @@ namespace DunGen.Algorithm
     {
       return new AlgorithmInfo()
       {
-        Type = new AlgorithmType(alg.GetType()),
+        Type = new SerializableType(alg.GetType()),
         Parameters = alg.TakesParameters ? alg.Parameters : new AlgorithmParams()
       };
     }

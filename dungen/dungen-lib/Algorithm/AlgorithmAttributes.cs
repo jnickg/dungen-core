@@ -66,20 +66,27 @@ namespace DunGen.Algorithm
     /// </summary>
     public bool Show { get; set; } = true;
 
-    public Parameter() { }
-
+    /// <summary>
+    /// Creates this Parameter with the specified Type. The type is used by clients
+    /// to determine which interface to provide, when editing the parameter.
+    /// </summary>
+    /// <param name="paramType">The elementary type of this Parameter.</param>
     public Parameter(Type paramType)
     {
       this.BaseType = paramType;
     }
 
+    /// <summary>
+    /// Gets the appropriate default value for this Parameter. This can be a primitive
+    /// value or an instance of an object, depending on the Parameter's type.
+    /// </summary>
     public abstract object GetDefault();
 
     /// <summary>
     /// Creates an Editable Parameter object from this Parameter's descriptor. The editable
     /// parameter will be set to this Parameter's default value
     /// </summary>
-    /// <param name="property"></param>
+    /// <param name="property">The PropertyInfo</param>
     /// <param name="instance">If non-null, the instance from which to pull the current value.</param>
     /// <returns></returns>
     public virtual IEditableParameter ToEditableParam(PropertyInfo property, IAlgorithm instance = null)
@@ -105,7 +112,7 @@ namespace DunGen.Algorithm
         Default = this.GetDefault(),
         ValueType = this.BaseType,
         Value = currentValue,
-        Validator = (val) => { object parsed; return this.TryParseValue(val, out parsed); },
+        AssociatedParam = this
       };
     }
 
@@ -159,6 +166,10 @@ namespace DunGen.Algorithm
       return false;
     }
 
+    /// <summary>
+    /// Gets a collection of all supported Parameter Types, which the client should
+    /// be able to handle editing.
+    /// </summary>
     public static IEnumerable<Type> GetParamTypes()
     {
       List<Type> paramTypes = new List<Type>()
@@ -173,6 +184,10 @@ namespace DunGen.Algorithm
       return paramTypes;
     }
 
+    /// <summary>
+    /// Gets a collection of all known types that have Parameter tags associated
+    /// with them, for the purposes of serialization.
+    /// </summary>
     public static IEnumerable<Type> GetKnownTypes()
     {
       List<Type> knownTypes = new List<Type>()
@@ -180,7 +195,7 @@ namespace DunGen.Algorithm
         typeof(int),                      // IntegerAlgorithmParamInfo
         typeof(double),                   // DecimalAlgorithmParamInfo
         typeof(bool),                     // BooleanAlgorithmParamInfo
-        typeof(AlgorithmType),            // AlgorithmAlgorithmParamInfo
+        typeof(SerializableType),         // AlgorithmAlgorithmParamInfo
       };
 
       // Reflect through every Algorithm type loaded, to identify all
@@ -276,10 +291,10 @@ namespace DunGen.Algorithm
     public double Default { get; set; } = 0.0;
 
     /// <summary>
-    /// The minimum number of precision points the algorithm agrres to honor
+    /// The minimum number of precision points the algorithm agrees to honor
     /// when the algorithm runs. If "0", the value is unspecified.
     /// </summary>
-    public int PrecisionPoints { get; set; } = 0;
+    public int Precision { get; set; } = 0;
 
     public DecimalParameter()
       : base(typeof(double))
@@ -382,7 +397,7 @@ namespace DunGen.Algorithm
     }
 
     public SelectionParameter()
-      : base()
+      : base(typeof(Enum))
     { }
 
     public override object GetDefault()

@@ -10,20 +10,20 @@ namespace DunGen.Algorithm
   /// assembly. Lazily attempts to retrieve the actual Type value.
   /// </summary>
   [DataContract(Name = "type")]
-  public class AlgorithmType
+  public class SerializableType
   {
     [DataMember(Name = "assyQualName", IsRequired = true)]
     public string AssemblyQualifiedName { get; set; } = string.Empty;
 
-    public AlgorithmType()
+    public SerializableType()
     { }
 
-    public AlgorithmType(Type t)
+    public SerializableType(Type t)
     {
       this.AssemblyQualifiedName = t.AssemblyQualifiedName;
     }
 
-    public AlgorithmType(string assemblyQualifiedName)
+    public SerializableType(string assemblyQualifiedName)
     {
       this.AssemblyQualifiedName = assemblyQualifiedName;
     }
@@ -38,16 +38,16 @@ namespace DunGen.Algorithm
       return null != ConvertToType();
     }
 
-    static public implicit operator Type(AlgorithmType thisAlgType)
+    static public implicit operator Type(SerializableType thisAlgType)
     {
       return thisAlgType.ConvertToType(false);
     }
-    static public implicit operator AlgorithmType(Type t)
+    static public implicit operator SerializableType(Type t)
     {
-      return new AlgorithmType(t);
+      return new SerializableType(t);
     }
 
-    public static bool operator ==(AlgorithmType a, AlgorithmType b)
+    public static bool operator ==(SerializableType a, SerializableType b)
     {
       // If both are null, or both are same instance, return true.
       if (System.Object.ReferenceEquals(a, b))
@@ -63,7 +63,7 @@ namespace DunGen.Algorithm
       // Return true if the fields match:
       return a.AssemblyQualifiedName == b.AssemblyQualifiedName;
     }
-    public static bool operator !=(AlgorithmType a, AlgorithmType b)
+    public static bool operator !=(SerializableType a, SerializableType b)
     {
       return !(a == b);
     }
@@ -95,7 +95,7 @@ namespace DunGen.Algorithm
         return this.AssemblyQualifiedName == typeObj.AssemblyQualifiedName;
       }
 
-      AlgorithmType p = obj as AlgorithmType;
+      SerializableType p = obj as SerializableType;
       if (null == (System.Object)p)
       {
         return false;
@@ -103,7 +103,7 @@ namespace DunGen.Algorithm
 
       return (AssemblyQualifiedName == p.AssemblyQualifiedName);
     }
-    public bool Equals(AlgorithmType p)
+    public bool Equals(SerializableType p)
     {
       if ((object)p == null)
       {

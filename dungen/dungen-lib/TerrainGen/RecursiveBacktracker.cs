@@ -29,7 +29,7 @@ namespace DunGen.TerrainGen
       Default = 0.33,
       Minimum = 0.01,
       Maximum = 0.95,
-      PrecisionPoints = 2)]
+      Precision = 2)]
     public double Momentum { get; set; }
 
     [SelectionParameter(
