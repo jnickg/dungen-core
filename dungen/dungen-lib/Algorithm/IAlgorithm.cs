@@ -186,7 +186,7 @@ namespace DunGen.Algorithm
     /// An instance of IAlgorithm identical to the type of the object on
     /// which the call was made.
     /// </returns>
-    public object Clone()
+    public virtual object Clone()
     {
       Type algT = this.GetType();
       if (algT.IsAbstract) return null;

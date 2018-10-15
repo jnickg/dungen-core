@@ -201,7 +201,7 @@ namespace DunGen.CLI
       _currentPalette = AlgorithmPalette.DefaultPalette(
         AlgorithmPluginEnumerator.GetAllLoadedAlgorithms());
 
-      _currentPalette.Add("Test1", new CompositeAlgorithm() { Algorithms = new AlgorithmParameterAlgGroup() { new NopTerrainGen(), new MonteCarloRoomCarver() } }.ToPaletteItem());
+      _currentPalette.Add("Test1", new CompositeAlgorithm() { Algorithms = new AlgorithmList() { new NopTerrainGen(), new MonteCarloRoomCarver() } }.ToPaletteItem());
 
       // Configure and run interactive program
       // Reference: https://github.com/anthonyreilly/ConsoleArgs/blob/master/Program.cs

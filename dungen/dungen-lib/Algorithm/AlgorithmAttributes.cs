@@ -20,6 +20,46 @@ namespace DunGen.Algorithm
     /// </summary>
     public string Description { get; set; } = string.Empty;
   }
+
+  /// <summary>
+  /// A serializable reference to an Algorithm type's property
+  /// </summary>
+  [DataContract(Name = "algPropRef")]
+  public class AlgorithmPropertyReference
+  {
+    private SerializableType _algorithmType = null;
+    private string _propertyName = string.Empty;  
+
+    [DataMember(Name = "algType", IsRequired = true, Order = 0)]
+    public SerializableType AlgorithmType
+    {
+      get => _algorithmType;
+      set => _algorithmType = value;
+    }
+
+    [DataMember(Name = "propName", IsRequired = true, Order = 1)]
+    public string PropertyName
+    {
+      get => _propertyName;
+      set => _propertyName = value;
+    }
+
+    public PropertyInfo Info
+    {
+      get => AlgorithmType.ConvertToType(true).GetMatchingPropertyFor(PropertyName);
+    }
+
+    public bool IsParam
+    {
+      get => Info.GetParameter() != null;
+    }
+
+    public Parameter Param
+    {
+      get => Info.GetParameter();
+    }
+  }
+
   /// <summary>
   /// An attribute tag used to mark which properties of an IAlgorithmParameter instance
   /// are to be considered modifiable parameters of the algorithm.
@@ -82,40 +122,6 @@ namespace DunGen.Algorithm
     /// </summary>
     public abstract object GetDefault();
 
-    /// <summary>
-    /// Creates an Editable Parameter object from this Parameter's descriptor. The editable
-    /// parameter will be set to this Parameter's default value
-    /// </summary>
-    /// <param name="property">The PropertyInfo</param>
-    /// <param name="instance">If non-null, the instance from which to pull the current value.</param>
-    /// <returns></returns>
-    public virtual IEditableParameter ToEditableParam(PropertyInfo property, IAlgorithm instance = null)
-    {
-      // TODO make it so it's system configurable whether to show unsupported params
-      if (!Supported) return null;
-
-      object valToAssign = this.GetDefault();
-      if (null != instance && null != property)
-      {
-        valToAssign = property.GetValue(instance);
-      }
-
-      return ToEditableParam(property.Name, valToAssign);
-    }
-
-    public IEditableParameter ToEditableParam(string propertyName, object currentValue)
-    {
-      return new EditableParameterBase()
-      {
-        ParamName = propertyName,
-        Description = this.Description,
-        Default = this.GetDefault(),
-        ValueType = this.BaseType,
-        Value = currentValue,
-        AssociatedParam = this
-      };
-    }
-
     public virtual bool TryApplyValue(IEditableParameter source, IAlgorithm destination)
     {
       if (null == destination || null == source) throw new ArgumentNullException();
@@ -159,7 +165,7 @@ namespace DunGen.Algorithm
       // Check if we won't be able to produce the requested type.
       if (typeToParse.IsAssignableFrom(baseType))
       {
-        object parsed = (ParsedType)value;
+        parsedValue = (ParsedType)value;
         return true;
       }
 
@@ -529,23 +535,16 @@ namespace DunGen.Algorithm
 
   public static partial class Extensions
   {
-    public static IEditableParameter AsEditable(this IAlgorithm alg)
-    {
-      return new EditableParameterBase()
-      {
-        ParamName = alg.Name,
-        Description = "No description available",
-        Default = default(IAlgorithm),
-        ValueType = alg.GetType(),
-        Value = alg
-      };
-    }
-
     public static Parameter GetParameter(this PropertyInfo prop)
     {
       return prop.GetCustomAttributes<Parameter>()
            .OrderBy(api => api.Order)
            .FirstOrDefault();
+    }
+
+    public static AlgorithmUsage GetUsage(this IAlgorithm alg)
+    {
+      return alg.GetType().GetCustomAttributes<AlgorithmUsage>().FirstOrDefault();
     }
 
     public static bool TakesParameters(this Type algType)
@@ -567,10 +566,35 @@ namespace DunGen.Algorithm
       var primaryParamInfo = prop.GetParameter();
       if (null == primaryParamInfo) return null;
 
-      // TODO make it so it's system configurable whether to show unsupported params
       if (!primaryParamInfo.Supported) return null;
 
-      return primaryParamInfo.ToEditableParam(prop, instance);
+
+      if (null != instance && prop.DeclaringType != instance.GetType())
+      {
+        throw new ArgumentException("Specified instance must declare the specified property");
+      }
+
+      object valToAssign = primaryParamInfo.GetDefault();
+      if (null != instance && null != prop)
+      {
+        valToAssign = prop.GetValue(instance);
+      }
+
+      var propRef = new AlgorithmPropertyReference()
+      {
+        AlgorithmType = prop.DeclaringType,
+        PropertyName = prop.Name
+      };
+
+      return new EditableParameterBase()
+      {
+        ParamName = propRef.PropertyName,
+        Description = primaryParamInfo.Description,
+        Default = primaryParamInfo.GetDefault(),
+        ValueType = primaryParamInfo.BaseType,
+        Value = valToAssign,
+        Property = propRef
+      };
     }
 
     public static AlgorithmParams ParamsPrototype(this IAlgorithm instance)

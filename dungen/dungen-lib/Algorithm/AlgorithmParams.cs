@@ -23,12 +23,11 @@ namespace DunGen.Algorithm
     private object _value = null;
 
     /// <summary>
-    /// If non-null, the Parameter from an IAlgorithm from which this Editable
-    /// Parameter was created. If set, this Parameter can be used to retrieve
-    /// editing information (such as limits and ranges), and will be used
-    /// internally to check values that are set.
+    /// If non-null, the corresponding Property to which this Editable
+    /// parameter applies.
     /// </summary>
-    public Parameter AssociatedParam { get; set; } = null;
+    [DataMember(IsRequired = true, Name = "algProp", Order = 0)]
+    public AlgorithmPropertyReference Property { get; set; } = null;
 
     /// <summary>
     /// The type of value contained by this Editable Parameter. This can be
@@ -49,6 +48,7 @@ namespace DunGen.Algorithm
     /// <summary>
     /// A human-readable description of this Parameter, and its purpose.
     /// </summary>
+    [DataMember(IsRequired = true, Name = "desc", Order = 4)]
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
@@ -60,7 +60,7 @@ namespace DunGen.Algorithm
       get => _value;
       set
       {
-        if (AssociatedParam != null && !AssociatedParam.TryParseValue(value, out _value))
+        if (Property != null && !Property.Param.TryParseValue(value, out _value))
         {
           throw new ArgumentException(String.Format("Invalid value for parameter {0}: {1}", ParamName, value));
         }
@@ -85,7 +85,8 @@ namespace DunGen.Algorithm
         ParamName = this.ParamName,
         Description = this.Description,
         Value = this.Value,
-        Default = this.Default
+        Default = this.Default,
+        Property = this.Property,
       };
     }
 
