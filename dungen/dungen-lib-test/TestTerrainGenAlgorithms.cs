@@ -53,6 +53,7 @@ namespace DunGen.Lib.Test
     }
 
     [TestMethod]
+    [ExpectedException(typeof(System.NotImplementedException))]
     public void RunWithDefaultParams()
     {
       foreach (var algProto in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
@@ -84,6 +85,7 @@ namespace DunGen.Lib.Test
     // TODO use answer at this link to devise a reflective way to create individual tests for each algorithm in a huge dungeon
     // https://stackoverflow.com/questions/44789698/is-there-a-better-way-to-pass-dynamic-inputs-in-line-to-a-datatestmethod-i-e-h
     [TestMethod]
+    [ExpectedException(typeof(System.NotImplementedException))]
     public void RunHugeDungeon()
     {
       const int hugeSize = 37;

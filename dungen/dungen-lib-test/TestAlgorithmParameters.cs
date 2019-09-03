@@ -25,6 +25,8 @@ namespace DunGen.Lib.Test
       CompositeAlgorithm alg = new CompositeAlgorithm();
       Assert.IsNotNull(alg.Algorithms);
       Assert.AreEqual(alg.Algorithms.Count, 0);
+      Assert.IsFalse(alg.TakesParameters);
+      Assert.IsTrue(alg.Parameters == null || alg.Parameters.List.Count == 0);
 
       var newAlgs = new List<IAlgorithm>()
       {
@@ -32,6 +34,7 @@ namespace DunGen.Lib.Test
         new MonteCarloRoomCarver(),
         new NopTerrainGen(),
       };
+
       alg.Algorithms.AddRange(newAlgs);
       Assert.AreEqual(alg.Algorithms.Count, newAlgs.Count);
 
@@ -41,28 +44,31 @@ namespace DunGen.Lib.Test
 
       var paletteItem = alg.ToPaletteItem();
       Assert.IsNotNull(paletteItem);
+      Assert.IsNotNull(paletteItem.Info);
 
       IAlgorithm algFromPalette = paletteItem.CreateInstance();
       Assert.AreEqual(algFromPalette.GetType(), alg.GetType());
       Assert.IsNotNull(algFromPalette);
-      Assert.IsTrue(algFromPalette.TakesParameters);
-      Assert.IsNotNull(algFromPalette.Parameters);
-      Assert.IsTrue(algFromPalette.Parameters.List.Count > 0);
+      Assert.IsFalse(algFromPalette.TakesParameters);
+      Assert.IsTrue(algFromPalette.Parameters == null || algFromPalette.Parameters.List.Count == 0);
 
       IAlgorithm algFromInfo = algInfo.CreateInstance();
       Assert.AreEqual(algFromInfo.GetType(), alg.GetType());
       Assert.IsNotNull(algFromInfo);
-      Assert.IsTrue(algFromInfo.TakesParameters);
-      Assert.IsNotNull(algFromInfo.Parameters);
-      Assert.IsTrue(algFromInfo.Parameters.List.Count > 0);
+      Assert.IsFalse(algFromInfo.TakesParameters);
+      Assert.IsTrue(algFromInfo.Parameters == null || algFromInfo.Parameters.List.Count == 0);
 
-      Assert.AreEqual(alg.Parameters.List.Count, algFromPalette.Parameters.List.Count);
-      Assert.AreEqual(alg.Parameters.List.Count, algFromInfo.Parameters.List.Count);
-      for (int i = 0; i < alg.Parameters.List.Count; ++i)
-      {
-        Assert.AreEqual(alg.Parameters.List[i].Value, algFromPalette.Parameters.List[i].Value);
-        Assert.AreEqual(alg.Parameters.List[i].Value, algFromInfo.Parameters.List[i].Value);
-      }
+      CompositeAlgorithm compositeFromPalette = algFromPalette as CompositeAlgorithm;
+      Assert.IsNotNull(compositeFromPalette);
+      Assert.IsTrue(alg.Algorithms.Count == compositeFromPalette.Algorithms.Count);
+      Assert.AreEqual(alg.Name, compositeFromPalette.Name);
+
+      CompositeAlgorithm compositeFromInfo = algFromInfo as CompositeAlgorithm;
+      Assert.IsNotNull(compositeFromInfo);
+      Assert.IsTrue(alg.Algorithms.Count == compositeFromInfo.Algorithms.Count);
+      Assert.AreEqual(alg.Name, compositeFromInfo.Name);
+
+      // TODO test that the constituent algorithms are ALSO all equal
     }
   }
 }

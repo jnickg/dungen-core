@@ -152,7 +152,7 @@ namespace DunGen.Algorithm
       }
     }
 
-    public bool TakesParameters
+    public virtual bool TakesParameters
     {
       get
       {
