@@ -33,6 +33,8 @@ namespace DunGen.Algorithm
 
     public override string Name => CompositeName;
 
+    public override bool TakesParameters => false;
+
     public override void Run(IAlgorithmContext context)
     {
       foreach (IAlgorithm alg in Algorithms)
@@ -78,5 +80,6 @@ namespace DunGen.Algorithm
 
       return info;
     }
+
   }
 }

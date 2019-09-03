@@ -40,7 +40,7 @@ namespace DunGen.Generator
       /// <summary>
       /// List of algorithm runs to use with this set of options
       /// </summary>
-      public IList<AlgorithmRun> TerrainGenAlgRuns { get; set; } = new List<AlgorithmRun>();
+      public IList<AlgorithmRun> AlgRuns { get; set; } = new List<AlgorithmRun>();
       /// <summary>
       /// Callbacks to run while generating.
       /// </summary>
@@ -72,7 +72,7 @@ namespace DunGen.Generator
 
     public static Dungeon Generate(DungeonGeneratorOptions options, Dungeon starterDungeon = null)
     {
-      List<AlgorithmRun> terrainAlgRuns = new List<AlgorithmRun>();
+      List<AlgorithmRun> algRuns = new List<AlgorithmRun>();
       AlgorithmRandom r = AlgorithmRandom.RandomInstance();
 
       if (null != options)
@@ -82,12 +82,12 @@ namespace DunGen.Generator
           throw new ArgumentException("Neither Width nor Height can be 0");
         }
 
-        terrainAlgRuns.AddRange(options.TerrainGenAlgRuns);
+        algRuns.AddRange(options.AlgRuns);
       }
 
       // Input validation
 
-      if (null == terrainAlgRuns)
+      if (null == algRuns)
       {
         throw new ArgumentNullException();
       }
@@ -96,15 +96,14 @@ namespace DunGen.Generator
 
       Dungeon workingDungeon = PrepareWorkingDungeon(options, starterDungeon);
       // Prepare algorithm runs to work on the dungeon
-      foreach (var run in terrainAlgRuns)
+      foreach (var run in algRuns)
       {
         run.PrepareFor(workingDungeon);
-        if (run.Context.R == null) run.Context.R = r;
       }
 
       // Generate terrain
       DungeonTiles tiles = workingDungeon.Tiles;
-      for (int i = 0; i < terrainAlgRuns.Count; ++i)
+      for (int i = 0; i < algRuns.Count; ++i)
       {
         bool canSkip = true;
         ISet<Tile> algTiles = new HashSet<Tile>();
@@ -112,7 +111,7 @@ namespace DunGen.Generator
         {
           for (int x = 0; x < tiles.Width; ++x)
           {
-            if (terrainAlgRuns[i].Context.Mask[y, x])
+            if (algRuns[i].Context.Mask[y, x])
             {
               algTiles.Add(tiles[y, x]);
               canSkip = false;
@@ -127,15 +126,15 @@ namespace DunGen.Generator
         {
           foreach (var cb in options.TerrainGenCallbacks)
           {
-            ITerrainGenAlgorithm tgAlg = terrainAlgRuns[i].Alg as ITerrainGenAlgorithm;
+            ITerrainGenAlgorithm tgAlg = algRuns[i].Alg as ITerrainGenAlgorithm;
             if (null != tgAlg)
             {
               tgAlg.AttachCallback(cb);
             }
           }
         }
-        terrainAlgRuns[i].RunAlgorithm();
-        workingDungeon.Runs.Add(terrainAlgRuns[i].ToInfo());
+        algRuns[i].RunAlgorithm();
+        workingDungeon.Runs.Add(algRuns[i].ToInfo());
       }
 
       // TODO Generate infestations

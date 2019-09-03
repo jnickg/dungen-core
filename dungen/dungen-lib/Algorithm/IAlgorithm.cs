@@ -80,7 +80,21 @@ namespace DunGen.Algorithm
   /// </summary>
   public class AlgorithmRun
   {
-    public IAlgorithm Alg { get; set; }
+    private IAlgorithm _alg;
+
+    public IAlgorithm Alg
+    {
+      get => _alg;
+      set
+      {
+        _alg = (IAlgorithm)value.Clone();
+        if (_alg.TakesParameters)
+        {
+          _alg.Parameters = value.ParamsPrototype();
+          _alg.Parameters = value.Parameters;
+        }
+      }
+    }
     public IAlgorithmContext Context { get; set; }
 
     public void RunAlgorithm()
@@ -91,9 +105,10 @@ namespace DunGen.Algorithm
       }
     }
 
-    public void PrepareFor(Dungeon d)
+    public void PrepareFor(Dungeon d, AlgorithmRandom r = null)
     {
       if (null == d) throw new ArgumentNullException();
+      if (null == r) r = AlgorithmRandom.RandomInstance();
       if (null == Context) Context = new AlgorithmContextBase();
 
       Context.D = d;
@@ -108,6 +123,8 @@ namespace DunGen.Algorithm
         throw new Exception("Invalid mask for algorithm run; can't be " +
           "used with given Dungeon");
       }
+
+      if (null == Context.R) Context.R = r;
     }
   }
 
@@ -152,7 +169,7 @@ namespace DunGen.Algorithm
       }
     }
 
-    public bool TakesParameters
+    public virtual bool TakesParameters
     {
       get
       {

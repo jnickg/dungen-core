@@ -28,7 +28,7 @@ namespace DunGen.Serialization
         writer.WriteLine(";");
         foreach (var paletteItem in p)
         {
-          writer.WriteLine(String.Format("; Color for palette item name {0} (type {1}", paletteItem.Key, paletteItem.Value.Info.Type.AssemblyQualifiedName));
+          writer.WriteLine(String.Format("; Color for palette item name {0} (type {1})", paletteItem.Key, paletteItem.Value.Info.Type.AssemblyQualifiedName));
           writer.WriteLine(String.Format("{0:X}", paletteItem.Value.PaletteColor.ToArgb()));
         }
       }
