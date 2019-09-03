@@ -12,7 +12,9 @@ namespace DunGen.Algorithm
   {
     public static IEnumerable<Type> GetKnownTypes()
     {
-      return AlgorithmBase.GetKnownTypes();
+      IEnumerable<Type> knownTypes = AlgorithmBase.GetKnownTypes();
+      knownTypes.Concat(CompositeAlgorithm.GetKnownTypes());
+      return knownTypes;
     }
   }
 
@@ -60,6 +62,21 @@ namespace DunGen.Algorithm
       }
 
       return sb.ToString();
+    }
+
+    public override AlgorithmInfo ToInfo()
+    {
+      CompositeAlgorithmInfo info = new CompositeAlgorithmInfo()
+      {
+        Type = new SerializableType(this.GetType()),
+        Parameters = this.TakesParameters ? this.Parameters : new AlgorithmParams(),
+        CompositeName = this.CompositeName,
+        Algorithms = new AlgorithmInfoList()
+      };
+
+      info.Algorithms.AddRange(this.Algorithms.Select(alg => alg.ToInfo()));
+
+      return info;
     }
   }
 }

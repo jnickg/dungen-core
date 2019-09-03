@@ -201,7 +201,27 @@ namespace DunGen.CLI
       _currentPalette = AlgorithmPalette.DefaultPalette(
         AlgorithmPluginEnumerator.GetAllLoadedAlgorithms());
 
-      _currentPalette.Add("Test1", new CompositeAlgorithm() { Algorithms = new AlgorithmList() { new NopTerrainGen(), new MonteCarloRoomCarver() } }.ToPaletteItem());
+      _currentPalette.Add("Test1", new CompositeAlgorithm()
+      {
+        Algorithms = new AlgorithmList()
+        {
+          new RecursiveBacktracker()
+          {
+            WallStrategy = TerrainGenAlgorithmBase.WallFormation.Tiles,
+          },
+          new MonteCarloRoomCarver()
+          {
+            GroupRooms = true,
+            AvoidOpen = false,
+            RoomHeightMin = 3,
+            RoomWidthMin = 3,
+            RoomHeightMax = 10,
+            RoomWidthMax = 10,
+            TargetRoomCount = 15,
+          }
+        },
+        CompositeName = "ComposoteTest1"
+      }.ToPaletteItem());
 
       // Configure and run interactive program
       // Reference: https://github.com/anthonyreilly/ConsoleArgs/blob/master/Program.cs
@@ -530,7 +550,7 @@ namespace DunGen.CLI
 
           algCmd.OnExecute(() =>
           {
-            ITerrainGenAlgorithm alg = algProto.Clone() as ITerrainGenAlgorithm;
+            IAlgorithm alg = algProto.Clone() as IAlgorithm;
             if (null == alg) throw new Exception("Can't clone Algorithm prototype for addition to run list.");
 
             // Apply non-default parameter values

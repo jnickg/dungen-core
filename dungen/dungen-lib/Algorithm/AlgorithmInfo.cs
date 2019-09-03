@@ -24,7 +24,7 @@ namespace DunGen.Algorithm
     [DataMember(Name = "params", Order = 2, IsRequired = true)]
     public AlgorithmParams Parameters { get; set; } = new AlgorithmParams();
 
-    public object Clone()
+    public virtual object Clone()
     {
       return new AlgorithmInfo()
       {
@@ -33,7 +33,7 @@ namespace DunGen.Algorithm
       };
     }
 
-    public IAlgorithm CreateInstance()
+    public virtual IAlgorithm CreateInstance()
     {
       IAlgorithm alg = AlgorithmPluginEnumerator.GetAlgorithm(Type.ConvertToType(true));
 
@@ -55,6 +55,49 @@ namespace DunGen.Algorithm
     }
   }
 
+  [CollectionDataContract(Name = "algorithmList", ItemName = "algorithm")]
+  public class AlgorithmInfoList : List<AlgorithmInfo>
+  {
+
+  }
+
+  [DataContract(Name = "compositeAlgInfo")]
+  public class CompositeAlgorithmInfo : AlgorithmInfo
+  {
+    [DataMember(Name = "algInfos", IsRequired = true, Order = 1)]
+    public AlgorithmInfoList Algorithms { get; set; } = new AlgorithmInfoList();
+
+    [DataMember(Name = "name", IsRequired = true, Order = 0)]
+    public string CompositeName { get; set; } = string.Empty;
+
+    public override object Clone()
+    {
+      return null;
+    }
+
+    public override IAlgorithm CreateInstance()
+    {
+      CompositeAlgorithm alg = AlgorithmPluginEnumerator.GetAlgorithm(Type.ConvertToType(true)) as CompositeAlgorithm;
+
+      if (null == alg)
+      {
+        throw new Exception("Failed to create composite algorithm from composite algorithm info");
+      }
+
+      alg.Algorithms = new AlgorithmList();
+      alg.Algorithms.AddRange(this.Algorithms.Select(info => info.ToInstance()));
+
+      alg.CompositeName = this.CompositeName;
+
+      return alg;
+    }
+
+    public override bool Equals(object obj)
+    {
+      return base.Equals(obj);
+    }
+  }
+
   public static partial class Extensions
   {
     public static IAlgorithm ToInstance(this AlgorithmInfo info)
@@ -64,11 +107,18 @@ namespace DunGen.Algorithm
 
     public static AlgorithmInfo ToInfo(this IAlgorithm alg)
     {
-      return new AlgorithmInfo()
+      CompositeAlgorithm composite = alg as CompositeAlgorithm;
+      if (composite != null)
       {
-        Type = new SerializableType(alg.GetType()),
-        Parameters = alg.TakesParameters ? alg.Parameters : new AlgorithmParams()
-      };
+        return composite.ToInfo();
+      }
+
+      AlgorithmBase algBase = alg as AlgorithmBase;
+      if (algBase == null)
+      {
+        throw new Exception("Failed to derive Base implementation for IAlgorithm");
+      }
+      return algBase.ToInfo();
     }
   }
 }

@@ -627,5 +627,19 @@ namespace DunGen.Algorithm
     {
       return instance.ParamsPrototype().ApplyFrom(instance);
     }
+
+    public static IEditableParameter AsEditable(this IAlgorithm alg)
+    {
+      return new EditableParameterBase()
+      {
+        ParamName = alg.Name,
+        Description = "TODO Add description attributes to algorithms",
+        // TODO Should be same as AlgorithmParameter::GetDefault()
+        Default = AlgorithmPluginEnumerator.GetAlgorithm(alg.GetType()),
+        ValueType = typeof(IAlgorithm),
+        Value = alg,
+        Property = null
+      };
+    }
   }
 }

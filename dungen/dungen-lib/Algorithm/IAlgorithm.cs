@@ -228,12 +228,23 @@ namespace DunGen.Algorithm
       {
         Type[] types = assy.GetTypes();
 
-        types = types.Where(t => typeof(IAlgorithm).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+        Type[] iAlgTypes = types.Where(t => typeof(IAlgorithm).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
+        Type[] algInfoTypes = types.Where(t => typeof(AlgorithmInfo).IsAssignableFrom(t) && !t.IsAbstract).ToArray();
 
-        knownTypes.AddRange(types);
+        knownTypes.AddRange(iAlgTypes);
+        knownTypes.AddRange(algInfoTypes);
       }
 
       return knownTypes;
+    }
+
+    public virtual AlgorithmInfo ToInfo()
+    {
+      return new AlgorithmInfo()
+      {
+        Type = new SerializableType(this.GetType()),
+        Parameters = this.TakesParameters ? this.Parameters : new AlgorithmParams()
+      };
     }
   }
 }

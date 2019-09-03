@@ -81,7 +81,8 @@ namespace DunGen.Algorithm
 
     public IAlgorithm CreateInstance()
     {
-      IAlgorithm alg = AlgorithmPluginEnumerator.GetAlgorithm(this.Info.Type.ConvertToType(true));
+      //IAlgorithm alg = AlgorithmPluginEnumerator.GetAlgorithm(this.Info.Type.ConvertToType(true));
+      IAlgorithm alg = this.Info.ToInstance();
 
       if (alg.TakesParameters)
       {
