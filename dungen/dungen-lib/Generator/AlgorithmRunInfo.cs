@@ -16,6 +16,11 @@ namespace DunGen.Generator
     {
       return AlgorithmBase.GetKnownTypes();
     }
+
+    public IList<AlgorithmRun> ReconstructRuns()
+    {
+      return new List<AlgorithmRun>(this.Select(r => r.ReconstructRun()));
+    }
   }
 
   [DataContract(Name = "algRunInfo")]

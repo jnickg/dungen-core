@@ -384,7 +384,7 @@ namespace DunGen.CLI
 
         int clearedCount = _runs.Count;
         _runs.Clear();
-        _runs.AddRange(loadedDungeon.Runs.Select(r => r.ReconstructRun()));
+        _runs.AddRange(loadedDungeon.Runs.ReconstructRuns());
 
         Console.WriteLine("Cleared {0} runs and added {1} runs from loaded dungeon", clearedCount, _runs.Count);
         return 0;

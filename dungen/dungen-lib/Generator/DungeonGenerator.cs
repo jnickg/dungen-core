@@ -99,7 +99,6 @@ namespace DunGen.Generator
       foreach (var run in terrainAlgRuns)
       {
         run.PrepareFor(workingDungeon);
-        if (run.Context.R == null) run.Context.R = r;
       }
 
       // Generate terrain

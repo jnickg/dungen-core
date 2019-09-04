@@ -36,6 +36,8 @@ namespace DunGen.Algorithm
       }
     }
 
+    public UInt64 UseCount { get; private set; } = 0;
+
     // Only used for deserialization
     private AlgorithmRandom()
       : base()
@@ -60,6 +62,42 @@ namespace DunGen.Algorithm
     public static AlgorithmRandom RandomInstance()
     {
       return new AlgorithmRandom(new Random().Next());
+    }
+
+    public override int Next()
+    {
+      ++UseCount;
+      return base.Next();
+    }
+
+    public override int Next(int maxValue)
+    {
+      ++UseCount;
+      return base.Next(maxValue);
+    }
+
+    public override int Next(int minValue, int maxValue)
+    {
+      ++UseCount;
+      return base.Next(minValue, maxValue);
+    }
+
+    public override void NextBytes(byte[] buffer)
+    {
+      ++UseCount;
+      base.NextBytes(buffer);
+    }
+
+    public override void NextBytes(Span<byte> buffer)
+    {
+      ++UseCount;
+      base.NextBytes(buffer);
+    }
+
+    public override double NextDouble()
+    {
+      ++UseCount;
+      return base.NextDouble();
     }
   }
 }
