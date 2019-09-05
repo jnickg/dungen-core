@@ -19,95 +19,14 @@ namespace DunGen.Lib.Test
   [TestClass]
   public class TestDungeon
   {
-    private DungeonGenerator GetTestDungeonGenerator()
-    {
-      AlgorithmRandom r = new AlgorithmRandom(1337);
+    
 
-      int width = 51;
-      int height = 51;
 
-      DungeonGenerator generator = new DungeonGenerator();
-      generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
-      {
-        DoReset = true,
-        EgressConnections = null,
-        Width = width,
-        Height = height,
-        TerrainGenAlgRuns = new List<AlgorithmRun>
-        {
-          new AlgorithmRun()
-          {
-            Alg = new MonteCarloRoomCarver()
-            {
-              GroupForDebug = false,
-              WallStrategy = TerrainGenAlgorithmBase.WallFormation.Boundaries,
-              RoomWidthMin = 4,
-              RoomWidthMax = 10,
-              RoomHeightMin = 4,
-              RoomHeightMax = 10,
-              Attempts = 500,
-              TargetRoomCount = 6
-            },
-            Context = new AlgorithmContextBase()
-            {
-              R = r
-            }
-          },
-          new AlgorithmRun()
-          {
-            Alg = new RecursiveBacktracker()
-            {
-              BorderPadding = 0,
-              Momentum = 0.25,
-              OpenTilesStrategy = RecursiveBacktracker.OpenTilesHandling.ConnectToRooms,
-              WallStrategy = TerrainGenAlgorithmBase.WallFormation.Boundaries
-            },
-            Context = new AlgorithmContextBase()
-            {
-              R = r
-            }
-          },
-        },
-      };
-      return generator;
-    }
-
-    [TestMethod]
-    public void SaveAndLoad()
-    {
-      DungeonGenerator generator = GetTestDungeonGenerator();
-
-      Dungeon d = generator.Generate();
-
-      string tmpFilePath = System.IO.Path.GetTempFileName();
-
-      DungeonSerializer serializer = new DungeonSerializer();
-      serializer.Save(d, tmpFilePath, FileMode.Create);
-
-      Assert.IsTrue(File.Exists(tmpFilePath));
-
-      Dungeon d2;
-      d2 = serializer.Load(tmpFilePath);
-
-      Assert.IsNotNull(d2);
-
-      Assert.IsTrue(d.Tiles.Width == d2.Tiles.Width &&
-                    d.Tiles.Height == d2.Tiles.Height);
-
-      foreach (Tile t in d.Tiles.Tiles_Set)
-      {
-        Assert.IsTrue(t.Physics == d2.Tiles[t.Location.Y, t.Location.X].Physics);
-      }
-
-      // TODO test more than just physics... when there is more to test.
-
-      File.Delete(tmpFilePath);
-    }
 
     [TestMethod]
     public void AlgorithmRunInfo_ExactReproduction()
     {
-      DungeonGenerator g1 = GetTestDungeonGenerator();
+      DungeonGenerator g1 = TestHelpers.GetTestDungeonGenerator();
 
       Dungeon d1 = g1.Generate();
 
@@ -126,6 +45,7 @@ namespace DunGen.Lib.Test
 
       Dungeon d2 = g2.Generate();
 
+#if RENDER_OUTPUT
       DungeonSerializer saver = new DungeonSerializer();
       DungeonTileRenderer renderer = new DungeonTileRenderer();
       try
@@ -142,8 +62,8 @@ namespace DunGen.Lib.Test
         }
       }
       catch (Exception) { }
+#endif
 
-      // AHHH TODO this is failing!
       for (int y = 0; y < d1.Tiles.Height; ++y)
       {
         for (int x = 0; x < d1.Tiles.Width; ++x)

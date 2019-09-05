@@ -112,7 +112,8 @@ namespace DunGen.Algorithm
       if (null == other) return false;
       return this.ValueType == other.ValueType &&
              this.ParamName == other.ParamName &&
-             this.Value == other.Value;
+             // .Equals because Value is an object so == returns false
+             this.Value.Equals(other.Value);
     }
   }
 
