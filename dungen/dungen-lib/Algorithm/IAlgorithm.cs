@@ -80,7 +80,21 @@ namespace DunGen.Algorithm
   /// </summary>
   public class AlgorithmRun
   {
-    public IAlgorithm Alg { get; set; }
+    private IAlgorithm _alg;
+
+    public IAlgorithm Alg
+    {
+      get => _alg;
+      set
+      {
+        _alg = (IAlgorithm)value.Clone();
+        if (_alg.TakesParameters)
+        {
+          _alg.Parameters = value.ParamsPrototype();
+          _alg.Parameters = value.Parameters;
+        }
+      }
+    }
     public IAlgorithmContext Context { get; set; }
 
     public void RunAlgorithm()

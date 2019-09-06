@@ -248,7 +248,7 @@ namespace DunGen.Algorithm
 
         if (!primaryParamInfo.TryApplyValue(param, algInstance))
         {
-          throw new Exception("Failed to apply IEditableParameter to matching instance property");
+          throw new ArgumentException("Failed to apply IEditableParameter to matching instance property");
         }
       }
     }
@@ -275,7 +275,7 @@ namespace DunGen.Algorithm
         object currentVal = null;
         if (!primaryParamInfo.TryParseValue(algorithm, matchingProperty, out currentVal))
         {
-          throw new Exception("Failed to apply matching instance property to IEditableParameter.");
+          throw new ArgumentException("Failed to apply matching instance property to IEditableParameter.");
         }
         param.Value = currentVal;
       }

@@ -47,7 +47,7 @@ namespace DunGen.Lib.Test
         EgressConnections = null,
         Width = _dungeonWidth_default,
         Height = _dungeonHeight_default,
-        TerrainGenAlgRuns = runs,
+        AlgRuns = runs,
       };
       return generator;
     }

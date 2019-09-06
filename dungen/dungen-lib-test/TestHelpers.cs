@@ -23,7 +23,7 @@ namespace DunGen.Lib.Test
         EgressConnections = null,
         Width = width,
         Height = height,
-        TerrainGenAlgRuns = new List<AlgorithmRun>
+        AlgRuns = new List<AlgorithmRun>
         {
           new AlgorithmRun()
           {
@@ -60,6 +60,23 @@ namespace DunGen.Lib.Test
         },
       };
       return generator;
+    }
+
+    public static Dungeon GenerateWith(IAlgorithm alg)
+    {
+      return DungeonGenerator.Generate(new DungeonGenerator.DungeonGeneratorOptions()
+      {
+        DoReset = true,
+        Height = 50,
+        Width = 50,
+        AlgRuns = new List<AlgorithmRun>()
+        {
+          new AlgorithmRun()
+          {
+            Alg = alg
+          }
+        }
+      });
     }
   }
 }

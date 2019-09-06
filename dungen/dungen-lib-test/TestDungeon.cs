@@ -39,7 +39,7 @@ namespace DunGen.Lib.Test
           Height = d1.Tiles.Height,
           Width = d1.Tiles.Width,
           // Here's what we're actually testing: that reconstructing the run gives exact results
-          TerrainGenAlgRuns = d1.Runs.ReconstructRuns(),
+          AlgRuns = d1.Runs.ReconstructRuns(),
         }
       };
 

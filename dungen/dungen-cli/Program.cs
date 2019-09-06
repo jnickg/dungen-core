@@ -499,11 +499,11 @@ namespace DunGen.CLI
         {
           DoReset = resetOption.HasValue(),
           EgressConnections = null,
-          TerrainGenAlgRuns = _runs,
+          AlgRuns = _runs,
           Width = loadedDungeon.Tiles.Width,
           Height = loadedDungeon.Tiles.Height,
         };
-        Console.WriteLine("Running {0} algorithms on dungeon...", generator.Options.TerrainGenAlgRuns.Count);
+        Console.WriteLine("Running {0} algorithms on dungeon...", generator.Options.AlgRuns.Count);
         loadedDungeon = generator.Generate();
         loadedDungeon_fileName = "UNSAVED";
 

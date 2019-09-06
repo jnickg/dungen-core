@@ -260,7 +260,7 @@ namespace DunGen.Algorithm
       int intValue = 0;
 
       bool valueOk = base.TryParseValue(value, out parsedValue);
-      if (valueOk) return true;
+      if (!valueOk) return false;
 
       // See if we can simply cast it to an int
       if (valueType.IsPrimitive && BaseType.IsAssignableFrom(valueType))
@@ -316,7 +316,7 @@ namespace DunGen.Algorithm
       double dblValue = 0.0;
 
       bool valueOk = base.TryParseValue(value, out parsedValue);
-      if (valueOk) return true;
+      if (!valueOk) return false;
 
       // See if we can simply cast it
       if (value.GetType().IsPrimitive)
@@ -394,9 +394,9 @@ namespace DunGen.Algorithm
       get
       {
         List<string> choices = new List<string>();
-        foreach (var v in Enum.GetValues(SelectionType.GetType()))
+        foreach (var v in Enum.GetValues(SelectionType))
         {
-          Choices.Add(v.ToString());
+          choices.Add(v.ToString());
         }
         return choices;
       }
@@ -416,10 +416,12 @@ namespace DunGen.Algorithm
       object valueObj = null;
 
       bool valueOk = base.TryParseValue(value, out parsedValue);
-      if (valueOk) return true;
+      if (!valueOk) return false;
 
       if (value is string || value.GetType().IsEnum)
       {
+        valueOk = Choices.Contains(value.ToString());
+        if (!valueOk) return false;
         valueOk = Enum.TryParse(SelectionType, value.ToString(), out valueObj);
       }
       if (value.GetType().IsPrimitive)
@@ -504,7 +506,7 @@ namespace DunGen.Algorithm
       Type typeOfValue = value.GetType();
 
       bool valueOk = base.TryParseValue(value, out parsedValue);
-      if (valueOk) return true;
+      if (!valueOk) return false;
 
       // If the value is an info for some reason, instantiate it
       if (typeOfValue == typeof(AlgorithmInfo))
@@ -518,12 +520,13 @@ namespace DunGen.Algorithm
       }
 
       // The new value passed is an actual Algorithm
-      if (BaseType.IsAssignableFrom(typeOfValue) &&
-          AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
-          !typeOfValue.IsAbstract)
+      if (typeof(IAlgorithm).IsAssignableFrom(typeOfValue))
       {
+        valueOk = BaseType.IsAssignableFrom(typeOfValue) &&
+          AlgorithmBaseType.IsAssignableFrom(typeOfValue) &&
+          !typeOfValue.IsAbstract;
+        if (!valueOk) return false;
         algValue = value as IAlgorithm;
-        valueOk = true;
       }
 
       parsedValue = (ParsedType)algValue;
