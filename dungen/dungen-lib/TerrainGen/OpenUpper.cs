@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DunGen.Algorithm;
+using DunGen.Tiles;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
@@ -16,9 +18,9 @@ namespace DunGen.TerrainGen
       // no op
     }
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
-      d.SetAllToo(Tile.MoveType.Open_HORIZ, mask);
+      context.D.Tiles.SetAllToo(Tile.MoveType.Open_HORIZ, context.Mask);
     }
   }
 }

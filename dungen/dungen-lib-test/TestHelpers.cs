@@ -1,14 +1,26 @@
 ﻿using DunGen.Algorithm;
 using DunGen.Generator;
 using DunGen.TerrainGen;
+using DunGen.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using DunGen.Infestation;
 
 namespace DunGen.Lib.Test
 {
   internal static class TestHelpers
   {
+    public const string testCxnString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\repos\jnickg-dungen-core\dungen\dungen-lib\samples\libraries\onions_and_flagons\onions_and_flagons.mdf;Integrated Security=True";
+    public const int testLibraryId = 1;
+
+    public static Library GetTestLibrary()
+    {
+      InfestationLibrarySqlSerializer libGetter = new InfestationLibrarySqlSerializer(testCxnString);
+      return libGetter.GetLibrary(testLibraryId);
+    }
+
+
     public static DungeonGenerator GetTestDungeonGenerator()
     {
       AlgorithmRandom r = new AlgorithmRandom(1337);
@@ -23,6 +35,7 @@ namespace DunGen.Lib.Test
         EgressConnections = null,
         Width = width,
         Height = height,
+        InfestationLibrary = TestHelpers.GetTestLibrary(),
         AlgRuns = new List<AlgorithmRun>
         {
           new AlgorithmRun()
@@ -57,6 +70,14 @@ namespace DunGen.Lib.Test
               R = r
             }
           },
+          new AlgorithmRun()
+          {
+            Alg = new BasicInfester(),
+            Context = new AlgorithmContextBase()
+            {
+              R = r
+            }
+          }
         },
       };
       return generator;
@@ -69,6 +90,7 @@ namespace DunGen.Lib.Test
         DoReset = true,
         Height = 50,
         Width = 50,
+        InfestationLibrary = TestHelpers.GetTestLibrary(),
         AlgRuns = new List<AlgorithmRun>()
         {
           new AlgorithmRun()

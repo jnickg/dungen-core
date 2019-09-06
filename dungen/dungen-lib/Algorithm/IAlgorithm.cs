@@ -32,100 +32,14 @@ namespace DunGen.Algorithm
     /// Runs the Algorithm with the specified context
     /// </summary>
     void Run(IAlgorithmContext context);
-  }
-
-  /// <summary>
-  /// A context in which an Algorithm can be run.
-  /// </summary>
-  public interface IAlgorithmContext
-  {
     /// <summary>
-    /// The dungeon on which the Algorithm should run
+    /// Attaches the given callback to this algorithm, to be called at
+    /// various points of a call to this instance's
+    /// <seealso cref="Run(IAlgorithmContext)"/>.
     /// </summary>
-    Dungeon D { get; set; }
-    /// <summary>
-    /// The mask which the Algorithm should use when operating on
-    /// the Context's dungeon
-    /// </summary>
-    bool[,] Mask { get; set; }
-    /// <summary>
-    /// If not NULL, A user-specified Random object to be used by the
-    /// Algorithm.
-    /// </summary>
-    AlgorithmRandom R { get; set; }
-  }
-
-  /// <summary>
-  /// A general context for an Algorithm, with zero frills.
-  /// </summary>
-  public class AlgorithmContextBase : IAlgorithmContext
-  {
-    /// <summary>
-    /// The Dungeon on which to operate in this context.
-    /// </summary>
-    public Dungeon D { get; set; }
-    /// <summary>
-    /// The mask with which to operate on the dungeon.
-    /// </summary>
-    public bool[,] Mask { get; set; }
-    /// <summary>
-    /// If non-null the Random instance to use when generating.
-    /// </summary>
-    public AlgorithmRandom R { get; set; }
-  }
-
-  /// <summary>
-  /// A pairing of an algorithm with its appropriate context. Also
-  /// handles some basic logic of actually running the algorithm.
-  /// </summary>
-  public class AlgorithmRun
-  {
-    private IAlgorithm _alg;
-
-    public IAlgorithm Alg
-    {
-      get => _alg;
-      set
-      {
-        _alg = (IAlgorithm)value.Clone();
-        if (_alg.TakesParameters)
-        {
-          _alg.Parameters = value.ParamsPrototype();
-          _alg.Parameters = value.Parameters;
-        }
-      }
-    }
-    public IAlgorithmContext Context { get; set; }
-
-    public void RunAlgorithm()
-    {
-      if (null != Alg)
-      {
-        Alg.Run(Context);
-      }
-    }
-
-    public void PrepareFor(Dungeon d, AlgorithmRandom r = null)
-    {
-      if (null == d) throw new ArgumentNullException();
-      if (null == r) r = AlgorithmRandom.RandomInstance();
-      if (null == Context) Context = new AlgorithmContextBase();
-
-      Context.D = d;
-
-      if (Context.Mask == null && Context.D != null)
-      {
-        Context.Mask = Context.D.Tiles.DefaultMask;
-      }
-      if (Context.Mask.GetLength(0) != Context.D.Tiles.Height ||
-          Context.Mask.GetLength(1) != Context.D.Tiles.Width)
-      {
-        throw new Exception("Invalid mask for algorithm run; can't be " +
-          "used with given Dungeon");
-      }
-
-      if (null == Context.R) Context.R = r;
-    }
+    /// <param name="callback">The callback to perform, which has access
+    /// to the Dungeon's current state (but should NOT alter it)</param>
+    void AttachCallback(Action<IAlgorithmContext> callback);
   }
 
   /// <summary>
@@ -193,7 +107,20 @@ namespace DunGen.Algorithm
     }
 
     /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>
-    public abstract void Run(IAlgorithmContext context);
+    public void Run(IAlgorithmContext context)
+    {
+      if (context == null) throw new ArgumentNullException("Can't run algorithm without any context!");
+      if (context.D == null) throw new ArgumentNullException("Can't run algorithm on nothing!");
+      if (context.Mask == null) context.Mask = context.D.Tiles.DefaultMask;
+
+      _runInternal(context);
+    }
+
+    /// <summary>
+    /// Calls the internal implementation to run this algorithm
+    /// </summary>
+    /// <param name="context">The context with which to run</param>
+    protected abstract void _runInternal(IAlgorithmContext context);
 
     /// <summary>
     /// Full clone of this Algorithm object, including current parameter
@@ -262,6 +189,30 @@ namespace DunGen.Algorithm
         Type = new SerializableType(this.GetType()),
         Parameters = this.TakesParameters ? this.Parameters : new AlgorithmParams()
       };
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    protected List<Action<IAlgorithmContext>> Callbacks { get; set; } = new List<Action<IAlgorithmContext>>();
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="callback"></param>
+    public void AttachCallback(Action<IAlgorithmContext> callback)
+    {
+      if (null == callback) return;
+      this.Callbacks.Add(callback);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="context"></param>
+    protected void RunCallbacks(IAlgorithmContext context)
+    {
+      Callbacks.ForEach(a => a?.Invoke(context));
     }
   }
 }

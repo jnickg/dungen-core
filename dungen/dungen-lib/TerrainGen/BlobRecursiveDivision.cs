@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -64,20 +65,21 @@ namespace DunGen.TerrainGen
       B    = 2
     }
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
+      DungeonTiles workingTiles = context.D.Tiles;
+
       // Implemented via http://weblog.jamisbuck.org/2015/1/15/better-recursive-division-algorithm
 
       if (this.WallStrategy != WallFormation.Boundaries) throw new NotImplementedException();
-      if (null == r) r = new Random();
 
       // CLOBBER!
-      d.SetAllToo(Tile.MoveType.Open_HORIZ, mask);
+      workingTiles.SetAllToo(Tile.MoveType.Open_HORIZ, context.Mask);
 
       Stack<Subregion> subregions = new Stack<Subregion>();
 
       // 1. Collect all the cells in the maze into a single region.
-      Subregion topRegion = new Subregion(d.GetAllIn(mask));
+      Subregion topRegion = new Subregion(workingTiles.GetTilesIn(context.Mask));
       subregions.Push(topRegion);
 
       while (subregions.Count > 0)
@@ -88,10 +90,9 @@ namespace DunGen.TerrainGen
         {
           if (RoomSize > 1)
           {
-            d.Categorize(parentRegion.Tiles.ToHashSet(), DungeonTiles.Category.Room);
             if (this.GroupRooms)
             {
-              d.CreateGroup(parentRegion.Tiles.ToHashSet());
+              workingTiles.Parent.CreateGroup(parentRegion.Tiles.ToHashSet(), TileCategory.Room);
             }
           }
           continue;
@@ -108,11 +109,11 @@ namespace DunGen.TerrainGen
         //   2.1  Choose two cells from the region at random as “seeds”.
         //        Identify one as subregion A and one as subregion B.
         //        Then put them into a set S.
-        Tile randomSeed_A = parentRegion.Tiles.PickRandomly(r);
+        Tile randomSeed_A = parentRegion.Tiles.PickRandomly(context.R);
         Tile randomSeed_B = randomSeed_A; // Shouldn't be equal when we're done
         while (randomSeed_A == randomSeed_B)
         {
-          randomSeed_B = parentRegion.Tiles.PickRandomly(r);
+          randomSeed_B = parentRegion.Tiles.PickRandomly(context.R);
         }
         tileSubregions[randomSeed_A] = Subregion_Split.A;
         tileSubregions[randomSeed_B] = Subregion_Split.B;
@@ -122,7 +123,7 @@ namespace DunGen.TerrainGen
         while (S.Count > 0)
         {
           //   2.2  Choose a cell at random from S. Remove it from the set.
-          Tile currentTile = S.PullRandomly(r);
+          Tile currentTile = S.PullRandomly(context.R);
           
           //   2.3  For each of that cell’s neighbors, if the neighbor
           //        is not already associated with a subregion, add it to S,
@@ -162,12 +163,12 @@ namespace DunGen.TerrainGen
           (int)Math.Ceiling(wallBoundaries.Count * MaxGapProportion));
         for (int i = 0; i < maxGaps; ++i)
         {
-          wallBoundaries.PullRandomly(r);
+          wallBoundaries.PullRandomly(context.R);
         }
 
         foreach (Tuple<Tile, Tile> pair in wallBoundaries)
         {
-          Tile.MoveType touchingBoundary = d.GetCardinality(pair.Item1, pair.Item2);
+          Tile.MoveType touchingBoundary = workingTiles.GetCardinality(pair.Item1, pair.Item2);
           pair.Item1.Physics = pair.Item1.Physics.CloseOff(touchingBoundary);
         }
 
@@ -176,11 +177,11 @@ namespace DunGen.TerrainGen
 
         if (this.GroupForDebug)
         {
-          d.CreateGroup(subregion_A);
-          d.CreateGroup(subregion_B);
+          workingTiles.Parent.CreateGroup(subregion_A);
+          workingTiles.Parent.CreateGroup(subregion_B);
         }
 
-        this.RunCallbacks(d);
+        this.RunCallbacks(context);
 
         // Push new subregions to the stack
         subregions.Push(new Subregion(subregion_A));

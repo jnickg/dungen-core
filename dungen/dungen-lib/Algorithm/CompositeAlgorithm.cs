@@ -35,7 +35,7 @@ namespace DunGen.Algorithm
 
     public override bool TakesParameters => false;
 
-    public override void Run(IAlgorithmContext context)
+    protected override void _runInternal(IAlgorithmContext context)
     {
       foreach (IAlgorithm alg in Algorithms)
       {

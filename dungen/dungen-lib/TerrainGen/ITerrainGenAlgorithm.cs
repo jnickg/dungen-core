@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -53,18 +54,6 @@ namespace DunGen.TerrainGen
     /// The style of this algorithm.
     /// </summary>
     TerrainGenStyle Style { get; }
-
-    /// <summary>
-    /// Attaches a new callback to this ITerrainGenAlgorithm instance,
-    /// to be called at various points in a call to Run()
-    /// </summary>
-    void AttachCallback(Action<DungeonTiles> callback);
-
-    /// <summary>
-    /// Run the algorithm with the current TerrainGenAlgorithmParams,
-    /// and on the specified input parameters.
-    /// </summary>
-    void Run(DungeonTiles d, bool[,] mask, Random r);
   }
 
   /// <summary>
@@ -197,30 +186,15 @@ namespace DunGen.TerrainGen
     /// <param name="mask">The masked subregion of the specified DungeonTiles,
     /// on which this algorithm will operate.</param>
     /// <param name="r">An optional Randomness provider.</param>
-    public abstract void Run(DungeonTiles d, bool[,] mask, Random r);
+    // TODO update this to just use IAlgorithmContext rather than d, mask, r
+    protected abstract void _runAlgorithm(IAlgorithmContext context);
 
-    /// <see cref="IAlgorithm.Run(IAlgorithmContext)"/>
-    public override void Run(IAlgorithmContext context)
+    /// <see cref="AlgorithmBase._runInternal(IAlgorithmContext)"/>
+    protected override void _runInternal(IAlgorithmContext context)
     {
-      // TODO get rid of the old version of Run and just use this
-      Run(context.D.Tiles, context.Mask, context.R);
-    }
+      // TODO any terrain-gen specific context checking
 
-    /// <see cref="ITerrainGenAlgorithm.AttachCallback(Action{DungeonTiles})"/>
-    public void AttachCallback(Action<DungeonTiles> callback)
-    {
-      if (null == callback) return;
-      this.algRunCallbacks.Add(callback);
-    }
-
-    protected List<Action<DungeonTiles>> algRunCallbacks = new List<Action<DungeonTiles>>();
-
-    protected void RunCallbacks(DungeonTiles d)
-    {
-      foreach (var action in algRunCallbacks)
-      {
-        action?.Invoke(d);
-      }
+      _runAlgorithm(context);
     }
 
     public override string ToString()

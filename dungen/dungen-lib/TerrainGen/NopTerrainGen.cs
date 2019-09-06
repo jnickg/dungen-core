@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DunGen.Algorithm;
+using DunGen.Tiles;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,7 +12,7 @@ namespace DunGen.TerrainGen
 
     public override TerrainGenStyle Style => TerrainGenStyle.Uncategorized;
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
       return;
     }

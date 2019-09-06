@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -55,15 +56,14 @@ namespace DunGen.TerrainGen
       get => TerrainGenStyle.Cave;
     }
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
-      if (null == r) r = new Random();
-      List<bool[,]> masks = mask.SplitByAdjacency();
+      List<bool[,]> masks = context.Mask.SplitByAdjacency();
       foreach (var m in masks)
       {
-        this.Generate_Priv(d, m, r);
+        this.Generate_Priv(context.D.Tiles, m, context.R);
         // Add the generated tiles to a group
-        if (GroupForDebug) d.CreateGroup(m);
+        context.D.CreateGroup(m, TileCategory.Room);
       }
     }
 

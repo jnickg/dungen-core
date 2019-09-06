@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using DunGen.Algorithm;
+using DunGen.Tiles;
 
 namespace DunGen.TerrainGen
 {
@@ -33,12 +34,13 @@ namespace DunGen.TerrainGen
       DefaultType = typeof(NopTerrainGen))]
     public ITerrainGenAlgorithm DeadEndFiller { get; set; }
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
-      d.SetAllToo(Tile.MoveType.Wall, mask);
-      RoomBuilder?.Run(d, mask, r);
-      MazeCarver?.Run(d, mask, r);
-      DeadEndFiller?.Run(d, mask, r);
+      context.D.Tiles.SetAllToo(Tile.MoveType.Wall, context.Mask);
+
+      RoomBuilder?.Run(context);
+      MazeCarver?.Run(context);
+      DeadEndFiller?.Run(context);
     }
   }
 }

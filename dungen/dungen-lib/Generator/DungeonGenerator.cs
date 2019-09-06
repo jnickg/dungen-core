@@ -1,5 +1,7 @@
 ﻿using DunGen.Algorithm;
 using DunGen.TerrainGen;
+using DunGen.Infestation;
+using DunGen.Tiles; 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -32,6 +34,10 @@ namespace DunGen.Generator
       /// </summary>
       public int Height { get; set; } = 0;
       /// <summary>
+      /// The library to be used in adding infestations to the generated dungeon.
+      /// </summary>
+      public Library InfestationLibrary { get; set; } = null;
+      /// <summary>
       /// A list of egress connections. If populated prior to generation, algorithms
       /// must connect to these points. After generating, this contains the dungeon's
       /// egress connections.
@@ -44,7 +50,7 @@ namespace DunGen.Generator
       /// <summary>
       /// Callbacks to run while generating.
       /// </summary>
-      public IList<Action<DungeonTiles>> TerrainGenCallbacks { get; set; } = new List<Action<DungeonTiles>>();
+      public IList<Action<IAlgorithmContext>> Callbacks { get; set; } = new List<Action<IAlgorithmContext>>();
     }
     #endregion
 
@@ -66,6 +72,8 @@ namespace DunGen.Generator
       {
         d.Tiles.ResetTiles(options.Width, options.Height);
       }
+
+      d.InfestationLibrary = options.InfestationLibrary;
 
       return d;
     }
@@ -122,15 +130,11 @@ namespace DunGen.Generator
         // If this algorithm is totally masked out, don't bother running it
         if (canSkip) continue;
 
-        if (null != options.TerrainGenCallbacks && options.TerrainGenCallbacks.Count > 0)
+        if (null != options.Callbacks && options.Callbacks.Count > 0)
         {
-          foreach (var cb in options.TerrainGenCallbacks)
+          foreach (var cb in options.Callbacks)
           {
-            ITerrainGenAlgorithm tgAlg = algRuns[i].Alg as ITerrainGenAlgorithm;
-            if (null != tgAlg)
-            {
-              tgAlg.AttachCallback(cb);
-            }
+            algRuns[i].Alg.AttachCallback(cb);
           }
         }
         algRuns[i].RunAlgorithm();

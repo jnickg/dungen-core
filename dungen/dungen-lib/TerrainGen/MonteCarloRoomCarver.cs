@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -72,32 +73,33 @@ namespace DunGen.TerrainGen
 
     public override TerrainGenStyle Style => TerrainGenStyle.Bldg_Rooms;
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
+      DungeonTiles workingTiles = context.D.Tiles;
+      bool[,] algMask = context.Mask;
+
       if (this.ClearArea)
       {
-        d.SetAllToo(Tile.MoveType.Wall, mask);
+        workingTiles.SetAllToo(Tile.MoveType.Wall, algMask);
       }
-      
-      if (null == r) r = new Random();
 
-      bool[,] isExplored = (bool[,])mask.Clone();
-      for (int y = 0; y < d.Height; ++y)
+      bool[,] isExplored = (bool[,])algMask.Clone();
+      for (int y = 0; y < workingTiles.Height; ++y)
       {
-        for (int x = 0; x < d.Width; ++x)
+        for (int x = 0; x < workingTiles.Width; ++x)
         {
-          isExplored[y, x] = !mask[y, x];
+          isExplored[y, x] = !algMask[y, x];
         }
       }
 
       // If appropriate, mask out already-opened tiles
       if (!this.ClearArea && this.AvoidOpen)
       {
-        for (int y = 0; y < d.Height; ++y)
+        for (int y = 0; y < workingTiles.Height; ++y)
         {
-          for (int x = 0; x < d.Width; ++x)
+          for (int x = 0; x < workingTiles.Width; ++x)
           {
-            if (mask[y, x] && d[y, x].Physics != Tile.MoveType.Wall)
+            if (algMask[y, x] && workingTiles[y, x].Physics != Tile.MoveType.Wall)
             {
               isExplored[y, x] = true;
             }
@@ -129,22 +131,22 @@ namespace DunGen.TerrainGen
       
       while (++currentAttempt <= this.Attempts && currentRooms < this.TargetRoomCount)
       {
-        int originIdx = r.Next(originPool.Count);
+        int originIdx = context.R.Next(originPool.Count);
         Point nextOrigin = originPool[originIdx];
 
         int y = nextOrigin.Y;
         int x = nextOrigin.X;
-        int w = r.Next(this.RoomWidthMin, this.RoomWidthMax) - 1 | 0x1;
-        int h = r.Next(this.RoomHeightMin, this.RoomHeightMax) - 1 | 0x1;
+        int w = context.R.Next(this.RoomWidthMin, this.RoomWidthMax) - 1 | 0x1;
+        int h = context.R.Next(this.RoomHeightMin, this.RoomHeightMax) - 1 | 0x1;
 
-        if (!d.TileIsValid(x, y) || !d.TileIsValid(x, y + h) || !d.TileIsValid(x + w, y) || !d.TileIsValid(x + w, y + h)) continue;
+        if (!workingTiles.TileIsValid(x, y) || !workingTiles.TileIsValid(x, y + h) || !workingTiles.TileIsValid(x + w, y) || !workingTiles.TileIsValid(x + w, y + h)) continue;
 
         bool overlapsOrAdjacent = false;
         for (int nuY = y - 1; nuY < y + h + 1; ++nuY)
         {
           for (int nuX = x - 1; nuX < x + w + 1; ++nuX)
           {
-            if (!d.TileIsValid(nuX, nuY) || isExplored[nuY, nuX])
+            if (!workingTiles.TileIsValid(nuX, nuY) || isExplored[nuY, nuX])
             {
               overlapsOrAdjacent = true;
               break;
@@ -160,9 +162,9 @@ namespace DunGen.TerrainGen
           for (int nuX = x; nuX < x+w; ++nuX)
           {
             isExplored[nuY, nuX] = true;
-            d[nuY, nuX].Physics = d[nuY, nuX].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
-            originPool.Remove(d[nuY, nuX].Location);
-            newRoom.Add(d[nuY, nuX]);
+            workingTiles[nuY, nuX].Physics = workingTiles[nuY, nuX].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
+            originPool.Remove(workingTiles[nuY, nuX].Location);
+            newRoom.Add(workingTiles[nuY, nuX]);
           }
         }
         // Close off boundaries if appropriate
@@ -172,19 +174,18 @@ namespace DunGen.TerrainGen
           {
             for (int nuX = x; nuX < x + w; ++nuX)
             {
-              if (nuY == y) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_NORTH);
-              if (nuX == x) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_WEST);
-              if (nuY == y+h-1) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_SOUTH);
-              if (nuX == x+w-1) d[nuY, nuX].Physics = d[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_EAST);
+              if (nuY == y) workingTiles[nuY, nuX].Physics = workingTiles[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_NORTH);
+              if (nuX == x) workingTiles[nuY, nuX].Physics = workingTiles[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_WEST);
+              if (nuY == y+h-1) workingTiles[nuY, nuX].Physics = workingTiles[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_SOUTH);
+              if (nuX == x+w-1) workingTiles[nuY, nuX].Physics = workingTiles[nuY, nuX].Physics.CloseOff(Tile.MoveType.Open_EAST);
             }
           }
         }
 
         // Rooms should not be orphaned!
-        d.Categorize(newRoom, DungeonTiles.Category.Room);
-        if (this.GroupForDebug) d.CreateGroup(newRoom);
+        workingTiles.Parent.CreateGroup(newRoom, TileCategory.Room);
 
-        this.RunCallbacks(d);
+        this.RunCallbacks(context);
 
         ++currentRooms;
       }
