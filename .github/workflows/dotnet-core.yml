@@ -18,10 +18,11 @@ jobs:
       with:
         dotnet-version: 3.1.301
     - name: Install dependencies
+      working-directory: dungen
       run: dotnet restore
     - name: Build
       working-directory: dungen
-      run: cd dungeon && dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore
     - name: Test
       working-directory: dungen
-      run: cd dungen && dotnet test --no-restore --verbosity normal
+      run: dotnet test --no-restore --verbosity normal
