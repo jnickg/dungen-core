@@ -17,11 +17,11 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
-    - name: Change Directory
-      run: cd dungen
     - name: Install dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      working-directory: dungen
+      run: cd dungeon && dotnet build --configuration Release --no-restore
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      working-directory: dungen
+      run: cd dungen && dotnet test --no-restore --verbosity normal
