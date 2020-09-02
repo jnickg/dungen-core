@@ -52,13 +52,15 @@ namespace DunGen.Infestation
     public string URI { get; set; } = string.Empty;
 
     /// <summary>
-    /// 
+    /// DO NOT WRITE DIRECTLY
     /// </summary>
     [DataMember(Name = "labels", Order = 3)]
     public ISet<Label> Labels { get; private set; } = new HashSet<Label>();
 
     /// <summary>
     /// A single collection containing all infestations in the library.
+    /// 
+    /// DO NOT WRITE DIRECTLY
     /// </summary>
     [DataMember(Name = "infestations", Order = 4)]
     public InfestationList AllInfestations
@@ -115,6 +117,8 @@ namespace DunGen.Infestation
         l.Parent = this;
         Labels.Add(l);
       }
+
+      _allInfestations.Add(newInfestation);
     }
 
     public void Add(IEnumerable<InfestationInfo> newInfestations)

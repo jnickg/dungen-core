@@ -26,8 +26,8 @@ namespace DunGen.Lib.Test
       Library library = TestHelpers.GetTestLibrary();
 
       Assert.IsNotNull(library);
-      Assert.AreEqual(library.AllInfestations.Count, 1000);
-      Assert.AreEqual(library.Labels.Count, 7);
+      Assert.IsTrue(library.AllInfestations.Count > 0);
+      Assert.IsTrue(library.Labels.Count > 0);
 
       // TODO Test the loaded library a little more thoroughly :-)
     }

@@ -16,10 +16,40 @@ namespace DunGen.Lib.Test
 
     public static Library GetTestLibrary()
     {
-      var samplesDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples", "libraries");
-      string cxnStr = baseConnectionString.Replace(@"%SAMPLESDIR%", samplesDir);
-      InfestationLibrarySqlSerializer libGetter = new InfestationLibrarySqlSerializer(cxnStr);
-      return libGetter.GetLibrary(testLibraryId);
+      // TODO this does not work on non-Windows systems
+      //var samplesDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples", "libraries");
+      //string cxnStr = baseConnectionString.Replace(@"%SAMPLESDIR%", samplesDir);
+      //InfestationLibrarySqlSerializer libGetter = new InfestationLibrarySqlSerializer(cxnStr);
+      //return libGetter.GetLibrary(testLibraryId);
+      var lib = new Library()
+      {
+        Name = "TestLibrary",
+        Brief = "A very small library for testing purposes",
+        URI = "https://github.com/jnickg/dungen-core",
+      };
+      lib.Add(new InfestationInfo()
+      {
+        Name = "YourButt",
+        Brief = "Not as big as your mother's butt",
+        OccurrenceFactor = 1.0,
+        Category = InfestationType.Hazard,
+        Overview = "TBD",
+        URI = "",
+        Labels = new Dictionary<Label, double>()
+        {
+          {
+            new Label()
+            {
+              Name = "Magical Items",
+              Description = "Things that are mystical, especially jiggly",
+              URI = ""
+            },
+            1.0
+          }
+        }
+      });
+
+      return lib;
     }
 
 
