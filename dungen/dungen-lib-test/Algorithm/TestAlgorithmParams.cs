@@ -69,7 +69,8 @@ namespace DunGen.Lib.Test
         AlgorithmBaseType = typeof(ITerrainGenAlgorithm),
         DefaultType = typeof(NopTerrainGen))]
       public IAlgorithm AlgorithmParam { get; set; }
-      public override void Run(IAlgorithmContext context)
+
+      protected override void _runInternal(IAlgorithmContext context)
       {
         // nop
       }
@@ -91,7 +92,7 @@ namespace DunGen.Lib.Test
       Assert.IsNotNull(d);
       Assert.AreEqual(d.Runs.Count, 1);
 
-      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == "SelectableParam");
+      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == nameof(alg.SelectableParam));
       Assert.IsNotNull(matchingParam);
       Assert.IsNotNull(matchingParam.Value);
       Assert.AreEqual(matchingParam.Value, alg.SelectableParam);
@@ -118,7 +119,7 @@ namespace DunGen.Lib.Test
       Assert.IsNotNull(d);
       Assert.AreEqual(d.Runs.Count, 1);
 
-      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == "DecimalParam");
+      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == nameof(alg.DecimalParam));
       Assert.IsNotNull(matchingParam);
       Assert.IsNotNull(matchingParam.Value);
       Assert.AreEqual(matchingParam.Value, alg.DecimalParam);
@@ -146,7 +147,7 @@ namespace DunGen.Lib.Test
       Assert.IsNotNull(d);
       Assert.AreEqual(d.Runs.Count, 1);
 
-      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == "IntegerParam");
+      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == nameof(alg.IntegerParam));
       Assert.IsNotNull(matchingParam);
       Assert.IsNotNull(matchingParam.Value);
       Assert.AreEqual(matchingParam.Value, alg.IntegerParam);
@@ -168,7 +169,7 @@ namespace DunGen.Lib.Test
       Assert.IsNotNull(d);
       Assert.AreEqual(d.Runs.Count, 1);
 
-      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == "BoolParam");
+      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == nameof(alg.BoolParam));
       Assert.IsNotNull(matchingParam);
       Assert.IsNotNull(matchingParam.Value);
       Assert.AreEqual(matchingParam.Value, alg.BoolParam);
@@ -199,7 +200,7 @@ namespace DunGen.Lib.Test
       Assert.IsNotNull(d);
       Assert.AreEqual(d.Runs.Count, 1);
 
-      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == "AlgorithmParam");
+      IEditableParameter matchingParam = d.Runs.First().Info.Parameters.List.First(p => p.ParamName == nameof(alg.AlgorithmParam));
       Assert.IsNotNull(matchingParam);
       Assert.IsNotNull(matchingParam.Value);
       Assert.AreEqual(matchingParam.Value, alg.AlgorithmParam);

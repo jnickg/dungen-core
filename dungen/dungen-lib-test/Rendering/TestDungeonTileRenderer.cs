@@ -11,6 +11,7 @@ using System.Drawing.Imaging;
 using DunGen.Algorithm;
 using DunGen.Plugins;
 using DunGen.Generator;
+using DunGen.Tiles;
 
 namespace DunGen.Lib.Test
 {

@@ -17,6 +17,7 @@ using DunGen.Plugins;
 using DunGen.Algorithm;
 using DunGen.Serialization;
 using DunGen.Generator;
+using DunGen.Tiles;
 
 namespace DunGen.CLI
 {

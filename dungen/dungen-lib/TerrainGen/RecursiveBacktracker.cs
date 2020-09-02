@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -48,15 +49,19 @@ namespace DunGen.TerrainGen
       get => TerrainGenStyle.Bldg_Halls;
     }
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    private IAlgorithmContext _ctx { get; set; } = null;
+
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
-      List<bool[,]> masks = mask.SplitByAdjacency();
+      _ctx = context;
+      List<bool[,]> masks = context.Mask.SplitByAdjacency();
       foreach (var m in masks)
       {
-        this.Generate_Priv(d, m, r);
+        this.Generate_Priv(context.D.Tiles, m, context.R);
         // Add the generated tiles to a group
-        d.CreateGroup(m);
+        context.D.CreateGroup(m);
       }
+      _ctx = null;
     }
 
     private void Generate_Priv(DungeonTiles d, bool[,] mask, Random r)
@@ -246,13 +251,20 @@ namespace DunGen.TerrainGen
         if (d[y2, x2].Physics != Tile.MoveType.Wall &&
           this.OpenTilesStrategy == OpenTilesHandling.ConnectToRooms)
         {
-          if (d.GetCategoriesFor(x2, y2).Contains(DungeonTiles.Category.Room))
+          if (d.Parent.GetCategoriesFor(x2, y2).Contains(TileCategory.Room))
           {
             explored[y2, x2] = true;
             d[currentPoint.Y, currentPoint.X].Physics = d[currentPoint.Y, currentPoint.X].Physics.OpenUp(GetMoveFor(dir));
             d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(GetMoveFor(dir).GetOpposite());
-            // That tile's group has been connected, so remove it from dependant
-            d.DeCategorizeAll(x2, y2, DungeonTiles.Category.Room);
+            // That tile's group has been connected, so remove it from dependent groups
+            // TODO is this what should really happen here???
+            foreach (var group in d.Parent.Groups.Where(grp => grp.Category == TileCategory.Room))
+            {
+              if (group.Tiles.Contains(x2, y2))
+              {
+                group.Category = TileCategory.Normal;
+              }
+            }
           }
           points.Push(currentPointTracker);
           continue;
@@ -264,7 +276,7 @@ namespace DunGen.TerrainGen
         d[currentPoint.Y, currentPoint.X].Physics = d[currentPoint.Y, currentPoint.X].Physics.OpenUp(GetMoveFor(dir));
         d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(GetMoveFor(dir).GetOpposite());
 
-        this.RunCallbacks(d);
+        this.RunCallbacks(_ctx);
 
         lastDirection = dir;
         // R E C U R S E !
@@ -376,14 +388,21 @@ namespace DunGen.TerrainGen
         if (d[y3, x3].Physics != Tile.MoveType.Wall &&
           this.OpenTilesStrategy == OpenTilesHandling.ConnectToRooms)
         {
-          if (d.GetCategoriesFor(x3, y3).Contains(DungeonTiles.Category.Room))
+          if (d.Parent.GetCategoriesFor(x3, y3).Contains(TileCategory.Room))
           {
             explored[y2, x2] = true;
             d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
             explored[y3, x3] = true;
             d[y3, x3].Physics = d[y3, x3].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
-            // That tile's group has been connected, so remove it from dependant
-            d.DeCategorizeAll(x3, y3, DungeonTiles.Category.Room);
+            // That tile's group has been connected, so remove it from dependent groups
+            // TODO is this what should really happen here???
+            foreach (var group in d.Parent.Groups.Where(grp => grp.Category == TileCategory.Room))
+            {
+              if (group.Tiles.Contains(x3, y3))
+              {
+                group.Category = TileCategory.Normal;
+              }
+            }
           }
           points.Push(currentPointTracker);
           continue;
@@ -394,7 +413,7 @@ namespace DunGen.TerrainGen
         explored[y2, x2] = true;
         d[y2, x2].Physics = d[y2, x2].Physics.OpenUp(Tile.MoveType.Open_HORIZ);
 
-        this.RunCallbacks(d);
+        this.RunCallbacks(_ctx);
 
         lastDirection = dir;
         // R E C U R S E !

@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -56,18 +57,23 @@ namespace DunGen.TerrainGen
       Precision = 5)]
     public double Variability { get; set; }
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    private IAlgorithmContext _ctx { get; set; } = null;
+
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
+      DungeonTiles workingTiles = context.D.Tiles;
+      bool[,] algMask = context.Mask;
+      _ctx = context;
+
       if (this.WallStrategy == WallFormation.Tiles) throw new NotImplementedException();
-      if (null == r) r = new Random();
 
-      bool[,] existingDataMask = new bool[d.Height, d.Width];
+      bool[,] existingDataMask = new bool[workingTiles.Height, workingTiles.Width];
 
-      for (int y = 0; y < d.Height; ++y)
+      for (int y = 0; y < workingTiles.Height; ++y)
       {
-        for (int x = 0; x < d.Width; ++x)
+        for (int x = 0; x < workingTiles.Width; ++x)
         {
-          existingDataMask[y, x] = mask[y, x] && (d[y, x].Physics == Tile.MoveType.Wall);
+          existingDataMask[y, x] = algMask[y, x] && (workingTiles[y, x].Physics == Tile.MoveType.Wall);
         }
       }
 
@@ -77,10 +83,10 @@ namespace DunGen.TerrainGen
       {
         case ExistingDataHandling.Ignore:
         case ExistingDataHandling.Avoid:
-          d.SetAllToo(Tile.MoveType.Open_HORIZ, existingDataMask);
+          workingTiles.SetAllToo(Tile.MoveType.Open_HORIZ, existingDataMask);
           break;
         case ExistingDataHandling.Overwrite:
-          d.SetAllToo(Tile.MoveType.Open_HORIZ, mask);
+          workingTiles.SetAllToo(Tile.MoveType.Open_HORIZ, algMask);
           break;
         default:
           throw new NotImplementedException();
@@ -88,19 +94,21 @@ namespace DunGen.TerrainGen
 
       // Run algorithm with the appropriate mask
       // ... "Ignore" SHOULD build walls over existing data
-      Rectangle startRegion = new Rectangle(0, 0, d.Width, d.Height);
+      Rectangle startRegion = new Rectangle(0, 0, workingTiles.Width, workingTiles.Height);
       switch (BuildStrategy)
       {
         case ExistingDataHandling.Avoid:
-          this.Divide(d, startRegion, existingDataMask, mask, r);
+          this.Divide(workingTiles, startRegion, existingDataMask, algMask, context.R);
           break;
         case ExistingDataHandling.Ignore:
         case ExistingDataHandling.Overwrite:
-          this.Divide(d, startRegion, mask, mask, r);
+          this.Divide(workingTiles, startRegion, algMask, algMask, context.R);
           break;
         default:
           throw new NotImplementedException();
       }
+
+      _ctx = null;
     }
 
     /// <summary>
@@ -145,11 +153,7 @@ namespace DunGen.TerrainGen
         if (currentRegion.Width == 1 || currentRegion.Height == 1) continue;
         if (currentRegion.Width * currentRegion.Height <= this.RoomSize)
         {
-          d.Categorize(currentRegion, DungeonTiles.Category.Room);
-          if (this.GroupRooms)
-          {
-            d.CreateGroup(currentRegion);
-          }
+          d.Parent.CreateGroup(currentRegion, TileCategory.Room);
           continue;
         }
 
@@ -223,11 +227,11 @@ namespace DunGen.TerrainGen
 
         if (this.GroupForDebug)
         {
-          d.CreateGroup(subregion1);
-          d.CreateGroup(subregion2);
+          d.Parent.CreateGroup(subregion1);
+          d.Parent.CreateGroup(subregion2);
         }
 
-        this.RunCallbacks(d);
+        this.RunCallbacks(_ctx);
       }
     }
 

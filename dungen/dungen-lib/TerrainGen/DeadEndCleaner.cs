@@ -1,4 +1,5 @@
 ﻿using DunGen.Algorithm;
+using DunGen.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -32,7 +33,7 @@ namespace DunGen.TerrainGen
 
     public override TerrainGenStyle Style => TerrainGenStyle.Uncategorized;
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
       // Find all dead ends and do a depth-first search for the first tile
       // that has greater than two openings, and build a weighted list of

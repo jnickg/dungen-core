@@ -11,6 +11,7 @@ using System.Drawing.Imaging;
 using DunGen.Algorithm;
 using DunGen.Plugins;
 using DunGen.Generator;
+using DunGen.Tiles;
 
 namespace DunGen.Lib.Test
 {
@@ -43,6 +44,7 @@ namespace DunGen.Lib.Test
       };
       generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
       {
+        InfestationLibrary = TestHelpers.GetTestLibrary(),
         DoReset = false,
         EgressConnections = null,
         Width = _dungeonWidth_default,
@@ -53,10 +55,10 @@ namespace DunGen.Lib.Test
     }
 
     [TestMethod]
-    [ExpectedException(typeof(System.NotImplementedException))]
     public void RunWithDefaultParams()
     {
-      foreach (var algProto in AlgorithmPluginEnumerator.GetAllLoadedAlgorithms())
+      IEnumerable<IAlgorithm> allAlgs = AlgorithmPluginEnumerator.GetAllLoadedAlgorithms();
+      foreach (var algProto in allAlgs)
       {
         IList<AlgorithmRun> runs = new List<AlgorithmRun>()
         {
@@ -71,14 +73,22 @@ namespace DunGen.Lib.Test
           },
         };
         var generator = CreateDefaultTestGenerator(runs);
-        Dungeon d = generator.Generate();
-#if RENDER_OUTPUT
-        DungeonTileRenderer renderer = new DungeonTileRenderer();
-        using (Image renderedDungeon = renderer.Render(d))
+        try
         {
-          renderedDungeon.Save(String.Format("dungeon_{0}.bmp", algProto.Name), ImageFormat.Bmp);
-        }
+          Dungeon d = generator.Generate();
+#if RENDER_OUTPUT
+          DungeonTileRenderer renderer = new DungeonTileRenderer();
+          using (Image renderedDungeon = renderer.Render(d))
+          {
+            renderedDungeon.Save(String.Format("dungeon_{0}.bmp", algProto.Name), ImageFormat.Bmp);
+          }
 #endif
+        }
+        catch (NotImplementedException e)
+        {
+          Console.WriteLine("Skipping {0} as it is not implemented", algProto.Name);
+          continue;
+        }
       }
     }
 

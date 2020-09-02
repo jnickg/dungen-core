@@ -6,7 +6,7 @@ namespace DunGen.Algorithm
 {
   public class NopAlgorithm : AlgorithmBase
   {
-    public override void Run(IAlgorithmContext context)
+    protected override void _runInternal(IAlgorithmContext context)
     {
       return;
     }

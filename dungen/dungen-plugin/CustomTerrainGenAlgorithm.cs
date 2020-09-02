@@ -2,6 +2,7 @@
 using DunGen;
 using DunGen.Algorithm;
 using DunGen.TerrainGen;
+using DunGen.Tiles;
 
 namespace DunGenPlugin
 {
@@ -18,9 +19,9 @@ namespace DunGenPlugin
 
     public override TerrainGenStyle Style => TerrainGenStyle.Uncategorized;
 
-    public override void Run(DungeonTiles d, bool[,] mask, Random r)
+    protected override void _runAlgorithm(IAlgorithmContext context)
     {
-      return;
+      throw new NotImplementedException();
     }
   }
 }

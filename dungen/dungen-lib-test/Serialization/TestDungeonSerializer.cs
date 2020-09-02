@@ -13,6 +13,7 @@ using System.Linq;
 using DunGen.Generator;
 using DunGen.Algorithm;
 using DunGen.Serialization;
+using DunGen.Tiles;
 
 namespace DunGen.Lib.Test
 {
