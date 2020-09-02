@@ -15,4 +15,10 @@
     <PackageReference Include="System.Drawing.Common" Version="4.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="samples\libraries\onions_and_flagons\onions_and_flagons.mdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

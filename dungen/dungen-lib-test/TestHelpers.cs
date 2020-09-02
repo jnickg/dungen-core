@@ -11,12 +11,14 @@ namespace DunGen.Lib.Test
 {
   internal static class TestHelpers
   {
-    public const string testCxnString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\repos\jnickg-dungen-core\dungen\dungen-lib\samples\libraries\onions_and_flagons\onions_and_flagons.mdf;Integrated Security=True";
+    public const string baseConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=%SAMPLESDIR%\onions_and_flagons\onions_and_flagons.mdf;Integrated Security=True";
     public const int testLibraryId = 1;
 
     public static Library GetTestLibrary()
     {
-      InfestationLibrarySqlSerializer libGetter = new InfestationLibrarySqlSerializer(testCxnString);
+      var samplesDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "samples", "libraries");
+      string cxnStr = baseConnectionString.Replace(@"%SAMPLESDIR%", samplesDir);
+      InfestationLibrarySqlSerializer libGetter = new InfestationLibrarySqlSerializer(cxnStr);
       return libGetter.GetLibrary(testLibraryId);
     }
 
