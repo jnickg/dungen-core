@@ -282,7 +282,7 @@ namespace DunGen.CLI
           loadedDungeon_fileName = filenameArg.Value;
           Console.WriteLine("Loaded dungeon from file: {0}", loadedDungeon_fileName);
         }
-        catch (FileNotFoundException ex)
+        catch (FileNotFoundException)
         {
           Console.WriteLine("File not found: {0}", filenameArg.Value);
           return 1;

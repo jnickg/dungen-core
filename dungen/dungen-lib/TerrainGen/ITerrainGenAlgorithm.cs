@@ -181,12 +181,7 @@ namespace DunGen.TerrainGen
     /// <summary>
     /// Runs this algorithm on the specified tiles, with the specified mask.
     /// </summary>
-    /// <param name="d">A collection of tiles on which this algorithm will
-    /// operate.</param>
-    /// <param name="mask">The masked subregion of the specified DungeonTiles,
-    /// on which this algorithm will operate.</param>
-    /// <param name="r">An optional Randomness provider.</param>
-    // TODO update this to just use IAlgorithmContext rather than d, mask, r
+    /// <param name="context">The context in which this algorithm will be run.</param>
     protected abstract void _runAlgorithm(IAlgorithmContext context);
 
     /// <see cref="AlgorithmBase._runInternal(IAlgorithmContext)"/>

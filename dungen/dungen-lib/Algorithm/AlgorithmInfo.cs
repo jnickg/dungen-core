@@ -12,7 +12,7 @@ namespace DunGen.Algorithm
   /// Stores information about an Algorithm in a way that can be loaded/saved without
   /// needing the assembly immediately. This allows users to pass information about
   /// groups of Algorithms, not all of which may be loaded, without special care for
-  /// handling errors. Only if the user attempts to actually instantiate & run an
+  /// handling errors. Only if the user attempts to actually instantiate and run an
   /// un-loaded Algorithm will failures occur.
   /// </summary>
   [DataContract(Name = "algInfo")]

@@ -84,7 +84,7 @@ namespace DunGen.Lib.Test
           }
 #endif
         }
-        catch (NotImplementedException e)
+        catch (NotImplementedException)
         {
           Console.WriteLine("Skipping {0} as it is not implemented", algProto.Name);
           continue;

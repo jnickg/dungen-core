@@ -116,6 +116,7 @@ namespace DunGen.Algorithm
     /// <summary>
     /// Creates an AlgorithmPaletteItem based on this IAlgorithm's current state.
     /// </summary>
+    /// <param name="alg">The algorithm to convert to a palette item.</param>
     /// <param name="defaultParams">Whether to use the Algorithm's default
     /// parameter settings, instead of the instance's current settings.</param>
     /// <returns>A new AlgorithmPaletteItem instance.</returns>
