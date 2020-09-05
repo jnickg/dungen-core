@@ -3,9 +3,18 @@ This document gives guidance and instruction to those looking to contribute to t
 
 # Development
 ## Environment
+### All
 * Visual Studio 2019 Community is recommended. We plan to support VS Code and other IDEs eventually, but today we do not.
-* We use .NET Core 2.1 as our target framework
-* We rely on NuGet to integrate third-party packages
+  * We use .NET Core 3.1 as our target framework
+  * We rely on NuGet to integrate third-party packages
+### Web App
+* [node.js](https://nodejs.org/) is required for local debugging of the ASP.NET webapp. We recommend the [latest Active LTS version](https://nodejs.org/en/about/releases/).
+  * During installation, check "Automatically install necessary tools." If you missed this, go to the [`node-gyp Github repo`](https://github.com/nodejs/node-gyp#on-windows) and install manually.
+  * Chocolatey is recommended too. Install it through the `node.js` installer. Using the above checkbox, or install independently.
+  * Angular is also needed. After installing node: `npm install -g ng-cli`
+* We deploy with Docker and Heroku.
+  * The [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) is useful for testing/debugging deployment locally. Not required for standard development, though.
+  * Same goes for [Docker](https://docs.docker.com/get-docker/).
 ## Building
 In the solution folder, run the commands below:
 ```

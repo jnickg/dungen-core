@@ -1,0 +1,12 @@
+setup:
+  config:
+    FOO2: bar1
+build:
+  docker:
+    web: ./dungen/Dockerfile
+  config:
+    FOO: bar
+release:
+    image: web
+    command:
+    - echo "Deploying DunGen!"
