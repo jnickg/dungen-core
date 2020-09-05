@@ -13,7 +13,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dungen-plugin", "dungen-plu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7233C400-50D6-47D5-860B-2CABE597DFB7}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
+		Dockerfile = Dockerfile
+		..\heroku.yml = ..\heroku.yml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dungen-site", "dungen-site\dungen-site.csproj", "{547572CD-5C2F-4CAE-8FA2-2595F360757E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{4B5ACF77-2EBE-4821-B4E9-CF91107F82E2}"
+	ProjectSection(SolutionItems) = preProject
+		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
+		..\LICENSE.md = ..\LICENSE.md
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Global
@@ -38,9 +50,16 @@ Global
 		{4F5FCCC6-756F-4969-96EB-944F64644F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F5FCCC6-756F-4969-96EB-944F64644F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F5FCCC6-756F-4969-96EB-944F64644F7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{547572CD-5C2F-4CAE-8FA2-2595F360757E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{547572CD-5C2F-4CAE-8FA2-2595F360757E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{547572CD-5C2F-4CAE-8FA2-2595F360757E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{547572CD-5C2F-4CAE-8FA2-2595F360757E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4B5ACF77-2EBE-4821-B4E9-CF91107F82E2} = {7233C400-50D6-47D5-860B-2CABE597DFB7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3F890F7-53F4-439B-B73B-95E32936D063}
