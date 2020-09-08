@@ -1,9 +1,14 @@
 # DunGen Core
 > _The .NET Core implementation of DunGen_
 
+DunGen is framework powering the world's best random dungeon generator. Designed to be both easy-to-use, and highly customizable, and portable to any game system (both tabletop and desktop), it's the last dungeon generator you'll ever need.
+## App Status
 _NOTE: This is currently a work in progress. See our test site [here](https://dungen-core.herokuapp.com/)_
 
-DunGen is framework powering the world's best random dungeon generator. Designed to be both easy-to-use, and highly customizable, and portable to any game system (both tabletop and desktop), it's the last dungeon generator you'll ever need.
+| Branch  | Build / UT  | Deployment |
+|---|---|---|
+| `master` | ![BuildAndUT](https://github.com/jnickg/dungen-core/workflows/Build%20and%20Unit%20Test/badge.svg) | ![Heroku](https://pyheroku-badge.herokuapp.com/?app=dungen-core&style=flat) |
+
 # About the Framework
 The DunGen framework consists of multiple components:
 
