@@ -52,3 +52,7 @@ The latest commit in a PR will automatically be validated using _Github workflow
 PR description should explicitly call out which Issues are closed by that PR, if any.
 ## Coding Style
 We "use" the canonical [CoreFX C# Coding Style](https://github.com/dotnet/runtime/blob/master/docs/coding-guidelines/coding-style.md) guide for coding convention. The word "use" is in quotes because it's not enforced at this point. That said, messy and inconsistently styled code will likely not make it past code review.
+
+# Code of Conduct
+> _We use the [Contributor Covenant](https://www.contributor-covenant.org/) v2.0._  
+> _See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for more information._

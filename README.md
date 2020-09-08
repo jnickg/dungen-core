@@ -22,8 +22,13 @@ The DunGen framework consists of multiple components:
 # Building & Developing
 > _See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information._
 
+# Code of Conduct
+> _We use the [Contributor Covenant](https://www.contributor-covenant.org/) v2.0._  
+> _See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for more information._
+
 # License
-> _We use the GNU General Public License, version 2. See [LICENSE.md](./LICENSE.md) for the full text._
+> _We use the GNU General Public License, version 2._  
+> _See [LICENSE.md](./LICENSE.md) for the full text._
 
 # Support
 > _Contact [jnickg](https://github.com/jnickg/) with questions, or to join the team._
