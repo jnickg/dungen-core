@@ -5,9 +5,9 @@ DunGen is framework powering the world's best random dungeon generator. Designed
 ## App Status
 _NOTE: This is currently a work in progress. See our test site [here](https://dungen-core.herokuapp.com/)_
 
-| Branch  | Build / UT  | Deployment |
-|---|---|---|
-| `master` | ![BuildAndUT](https://github.com/jnickg/dungen-core/workflows/Build%20and%20Unit%20Test/badge.svg) | ![Heroku](https://pyheroku-badge.herokuapp.com/?app=dungen-core&style=flat) |
+| Branch  | Build / UT  | Deployment | Code Quality | Documentation |
+|---|:-:|:-:|:-:|:-:|
+| `master` | ![BuildAndUT](https://github.com/jnickg/dungen-core/workflows/Build%20and%20Unit%20Test/badge.svg) | ![Heroku](https://pyheroku-badge.herokuapp.com/?app=dungen-core&style=flat) | [![CodeFactor](https://www.codefactor.io/repository/github/jnickg/dungen-core/badge)](https://www.codefactor.io/repository/github/jnickg/dungen-core) | TODO |
 
 # About the Framework
 The DunGen framework consists of multiple components:
@@ -19,14 +19,16 @@ The DunGen framework consists of multiple components:
 * Powerful serialization, including the ability to dynamically reproduce an entire dungeon through its _algorithm runs_. This also means you can load a dungeon's _runs_, modify their parameters, and make a slightly _different_ dungeon (or the same one, with a different random seed).
 * An ORM layer to interface with any major relational database (MySQL, Postgres, etc.), allowing you to create and share your own systems.
 
-# Building & Developing
-> _See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information._
+# Building, Developing, and Contributing
+> _See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to build, develop, and act as part of the team_
 
-# Code of Conduct
+## Code of Conduct
+![conduct](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-green.svg?style=flat-square)
 > _We use the [Contributor Covenant](https://www.contributor-covenant.org/) v2.0._  
 > _See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for more information._
 
 # License
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 > _We use the GNU General Public License, version 2._  
 > _See [LICENSE.md](./LICENSE.md) for the full text._
 
