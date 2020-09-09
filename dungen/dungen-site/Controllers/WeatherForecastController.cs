@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace dungen_site.Controllers
+namespace DunGen.Site.Controllers
 {
     [ApiController]
     [Route("[controller]")]

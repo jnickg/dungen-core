@@ -1,0 +1,6 @@
+<div>
+  <input type="button" value="Get {{clickedEver ? 'Another' : 'A'}} Dungeon" (click)="getNewDungeon()" /> <br />
+  <p *ngIf="clickedEver && !randomDungeonBase64"><em>Loading...</em></p>
+  <img *ngIf="randomDungeonBase64" [src]='this.randomDungeonBase64' alt="A randomly-generated dungeon!" /> <br />
+  <small><em>This is still a work in progress, so some algorithms won't show much. Keep clicking until you find an interesting one!</em></small>
+</div>

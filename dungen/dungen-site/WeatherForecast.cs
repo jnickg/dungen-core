@@ -1,6 +1,6 @@
 using System;
 
-namespace dungen_site
+namespace DunGen.Site
 {
     public class WeatherForecast
     {
