@@ -109,7 +109,7 @@ namespace DunGen.Algorithm
     public override bool Equals(object obj)
     {
       EditableParameterBase other = obj as EditableParameterBase;
-      if (null == other) return false;
+      if (other == null) return false;
       return this.ValueType == other.ValueType &&
              this.ParamName == other.ParamName &&
              // .Equals because Value is an object so == returns false
@@ -152,11 +152,11 @@ namespace DunGen.Algorithm
     public override bool Equals(object obj)
     {
       AlgorithmParams other = obj as AlgorithmParams;
-      if (null == other) return false;
+      if (other == null) return false;
       if (this.List.Count != other.List.Count) return false;
       for (int i = 0; i < this.List.Count; ++i)
       {
-        if (false == this.List[i].Equals(other.List[i])) return false;
+        if (!this.List[i].Equals(other.List[i])) return false;
       }
       return true;
     }

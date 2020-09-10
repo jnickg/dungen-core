@@ -377,7 +377,7 @@ namespace DunGen.CLI
     {
       cmd.OnExecute(() =>
       {
-        if (null == loadedDungeon)
+        if (loadedDungeon == null)
         {
           Console.WriteLine("Error: No dungeon loaded");
           return 1;
@@ -415,14 +415,14 @@ namespace DunGen.CLI
         int height = default_dungeon_height;
         if (null != widthArg.Value)
         {
-          if (false == int.TryParse(widthArg.Value, out width))
+          if (!int.TryParse(widthArg.Value, out width))
           {
             width = default_dungeon_width;
           }
         }
-        if (null != heightArg.Value)
+        if (heightArg.Value != null)
         {
-          if (false == int.TryParse(heightArg.Value, out height))
+          if (!int.TryParse(heightArg.Value, out height))
           {
             height = default_dungeon_height;
           }
@@ -489,7 +489,7 @@ namespace DunGen.CLI
 
       cmd.OnExecute(() =>
       {
-        if (null == loadedDungeon)
+        if (loadedDungeon == null)
         {
           Console.WriteLine("Error: no dungeon loaded.");
           return 0;
@@ -552,18 +552,19 @@ namespace DunGen.CLI
           algCmd.OnExecute(() =>
           {
             IAlgorithm alg = algProto.Clone() as IAlgorithm;
-            if (null == alg) throw new Exception("Can't clone Algorithm prototype for addition to run list.");
+            if (alg == null) throw new Exception("Can't clone Algorithm prototype for addition to run list.");
 
             // Apply non-default parameter values
             if (paramOptions.HasValue())
             {
-              if (false == alg.TakesParameters) throw new ArgumentException("This algorithm doesn't take parameters");
+              if (alg.TakesParameters == false) throw new ArgumentException("This algorithm doesn't take parameters");
               AlgorithmParams nonDefaultParams = alg.Parameters;
               foreach (var paramOptionInput in paramOptions.Values)
               {
                 // Should be sent in like this: "-p SomeOption=value"
                 string paramName = paramOptionInput.Split('=').First();
-                if (1 == nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count())
+                var matches = nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count();
+                if (matches == 1)
                 {
                   string paramVal = paramOptionInput.Split('=').Last(); // Second
 
@@ -648,7 +649,7 @@ namespace DunGen.CLI
 
       cmd.OnExecute(() =>
       {
-        if (null == _currentPalette)
+        if (_currentPalette == null)
         {
           throw new Exception("Must have an algorithm palette loaded to read image");
         }
@@ -944,18 +945,19 @@ namespace DunGen.CLI
           algCmd.OnExecute(() =>
           {
             IAlgorithm alg = algProto.Clone() as IAlgorithm;
-            if (null == alg) throw new Exception("Can't clone Algorithm prototype for addition to palette.");
+            if (alg == null) throw new Exception("Can't clone Algorithm prototype for addition to palette.");
 
             // Apply non-default parameter values
             if (paramOptions.HasValue())
             {
-              if (false == alg.TakesParameters) throw new ArgumentException("This algorithm doesn't take parameters");
+              if (alg.TakesParameters == false) throw new ArgumentException("This algorithm doesn't take parameters");
               AlgorithmParams nonDefaultParams = alg.Parameters;
               foreach (var paramOptionInput in paramOptions.Values)
               {
                 // Should be sent in like this: "-p SomeOption=value"
                 string paramName = paramOptionInput.Split('=').First();
-                if (1 == nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count())
+                var matches = nonDefaultParams.List.Where((p) => p.ParamName == paramName).Count();
+                if (matches == 1)
                 {
                   string paramVal = paramOptionInput.Split('=').Last(); // Second
 

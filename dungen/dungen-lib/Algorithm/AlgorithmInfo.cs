@@ -48,7 +48,7 @@ namespace DunGen.Algorithm
     public override bool Equals(object obj)
     {
       AlgorithmInfo other = obj as AlgorithmInfo;
-      if (null == other) return false;
+      if (other == null) return false;
 
       return this.Type == other.Type && 
              this.Parameters.Equals(other.Parameters);
@@ -79,7 +79,7 @@ namespace DunGen.Algorithm
     {
       CompositeAlgorithm alg = AlgorithmPluginEnumerator.GetAlgorithm(Type.ConvertToType(true)) as CompositeAlgorithm;
 
-      if (null == alg)
+      if (alg == null)
       {
         throw new Exception("Failed to create composite algorithm from composite algorithm info");
       }

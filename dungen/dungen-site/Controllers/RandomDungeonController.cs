@@ -13,6 +13,8 @@ using System.Drawing;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Net.Mime;
+using System.Drawing.Imaging;
+using Newtonsoft.Json;
 
 namespace DunGen.Site.Controllers
 {
@@ -30,7 +32,6 @@ namespace DunGen.Site.Controllers
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [Produces("image/bmp")]
     public IActionResult Get(int id, [FromQuery] int width = 25, [FromQuery] int height = 25)
     {
       Random r = new Random(id);
@@ -65,9 +66,20 @@ namespace DunGen.Site.Controllers
         var renderer = new DungeonTileRenderer();
         var image = renderer.Render(dungeon);
 
-        var converter = new ImageConverter();
-        var imageBytes = (byte[])converter.ConvertTo(image, typeof(byte[]));
-        return Ok(new MemoryStream(imageBytes));
+        var ms = new MemoryStream();
+        image.Save(ms, ImageFormat.Png);
+        ms.Seek(0, SeekOrigin.Begin);
+
+        var jsonObj = new
+        {
+          alt = "A DunGenImage",
+          algorithm = alg.GetType().Name,
+          imageBytes = ms.GetBuffer()
+        };
+
+        var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObj);
+
+        return Ok(jsonObj);
       }
       catch (Exception e)
       {
