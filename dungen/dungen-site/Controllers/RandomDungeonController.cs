@@ -78,9 +78,13 @@ namespace DunGen.Site.Controllers
 
         return Ok(jsonObj);
       }
+      catch (NotImplementedException)
+      {
+        return NotFound(String.Format("{0} is not implemented.", alg.GetType().Name));
+      }
       catch (Exception e)
       {
-        return UnprocessableEntity(e);
+        return NotFound(String.Format("Something went wrong:\n{0}", e.Message));
       }
     }
   }

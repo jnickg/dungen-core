@@ -1,20 +1,19 @@
 import { Component, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { RandomDungeon } from './RandomDungeon';
 
 @Component({
   selector: 'app-random-dungeon',
   templateUrl: './random-dungeon.component.html',
 })
 export class RandomDungeonComponent {
-  private http: HttpClient;
   public randomDungeonBase64: string;
   public randomDungeonAlgorithm: string;
   public randomDungeonAlt: string;
   public randId: number;
   public clickedEver: boolean = false;
 
-  constructor(http: HttpClient) {
-    this.http = http;
+  constructor(private http: HttpClient) {
   }
 
   getNewDungeon() {
@@ -24,7 +23,7 @@ export class RandomDungeonComponent {
     console.log("Nabbing " + randoDungeonUrl);
     this.http.get<RandomDungeon>(randoDungeonUrl)
       .subscribe(result => this.updateDungeon(result),
-        error => console.log("Un-implemented algorithm was randomly selected, or something else went wrong."));
+        err => console.log("Un-implemented algorithm was randomly selected, or something else went wrong. (Error: " + err.error + ")"));
   }
 
   updateDungeon(newImage: RandomDungeon) {
@@ -34,8 +33,3 @@ export class RandomDungeonComponent {
   }
 }
 
-interface RandomDungeon {
-  alt: string;
-  algorithm: string;
-  imageBytes: ArrayBuffer;
-}
