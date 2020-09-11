@@ -19,6 +19,7 @@ namespace DunGen.Site.Controllers
 {
   [Route("api/[controller]")]
   [ApiController]
+  [Produces("application/json")]
   public class RandomDungeonController : ControllerBase
   {
     private readonly ILogger<RandomDungeonController> _logger;
@@ -30,7 +31,7 @@ namespace DunGen.Site.Controllers
 
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult Get(int id, [FromQuery] int width = 25, [FromQuery] int height = 25)
     {
       Random r = new Random(id);
