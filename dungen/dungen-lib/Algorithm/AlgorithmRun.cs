@@ -37,11 +37,11 @@ namespace DunGen.Algorithm
 
     public void PrepareFor(Dungeon d, AlgorithmRandom r = null)
     {
-      if (null == d)
+      if (d == null)
         throw new ArgumentNullException();
-      if (null == r)
+      if (r == null)
         r = AlgorithmRandom.RandomInstance();
-      if (null == Context)
+      if (Context == null)
         Context = new AlgorithmContextBase();
 
       Context.D = d;
@@ -58,7 +58,7 @@ namespace DunGen.Algorithm
           "used with given Dungeon");
       }
 
-      if (null == Context.R)
+      if (Context.R == null)
         Context.R = r;
     }
   }

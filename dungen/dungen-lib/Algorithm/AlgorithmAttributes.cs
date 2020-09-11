@@ -124,11 +124,11 @@ namespace DunGen.Algorithm
 
     public virtual bool TryApplyValue(IEditableParameter source, IAlgorithm destination)
     {
-      if (null == destination || null == source) throw new ArgumentNullException();
+      if (destination == null || source == null) throw new ArgumentNullException();
 
       PropertyInfo matchingProperty = destination.GetMatchingPropertyFor(source);
       object parsedValue;
-      if (false == TryParseValue(source.Value, out parsedValue))
+      if (!TryParseValue(source.Value, out parsedValue))
       {
         return false;
       }
@@ -348,7 +348,7 @@ namespace DunGen.Algorithm
       get => _selectionType;
       set
       {
-        if (null != value && false == value.IsEnum)
+        if (value != null && value.IsEnum == false)
         {
           throw new ArgumentException("Provided \"selection\" must be an Enumeration");
         }
@@ -567,18 +567,18 @@ namespace DunGen.Algorithm
     public static IEditableParameter AsEditable(this PropertyInfo prop, IAlgorithm instance = null)
     {
       var primaryParamInfo = prop.GetParameter();
-      if (null == primaryParamInfo) return null;
+      if (primaryParamInfo == null) return null;
 
       if (!primaryParamInfo.Supported) return null;
 
 
-      if (null != instance && prop.DeclaringType != instance.GetType())
+      if (instance != null && prop.DeclaringType != instance.GetType())
       {
         throw new ArgumentException("Specified instance must declare the specified property");
       }
 
       object valToAssign = primaryParamInfo.GetDefault();
-      if (null != instance && null != prop)
+      if (instance != null && prop != null)
       {
         valToAssign = prop.GetValue(instance);
       }
@@ -610,7 +610,7 @@ namespace DunGen.Algorithm
       foreach (PropertyInfo currentProperty in instance.GetType().GetProperties())
       {
         var primaryParamInfo = currentProperty.GetParameter();
-        if (null == primaryParamInfo) continue;
+        if (primaryParamInfo == null) continue;
 
         if (!primaryParamInfo.Show) continue;
         if (!primaryParamInfo.Supported) continue;
@@ -618,7 +618,7 @@ namespace DunGen.Algorithm
         IEditableParameter newParam = currentProperty.AsEditable();
 
         // TODO make it so it's system configurable whether to show unsupported params
-        if (null == newParam && primaryParamInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
+        if (newParam == null && primaryParamInfo.Supported) throw new Exception("Unable to determine Algorithm Parameter Type. Do you need to apply an AlgorithmParameterInfo tag?");
         // ... and add it to the list of parameters!
         if (null != newParam) prototype.List.Add(newParam);
       }

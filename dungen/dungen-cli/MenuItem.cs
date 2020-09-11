@@ -62,7 +62,7 @@ namespace DunGen.CLI
         int statusVal = 0;
         bool quitInteractive = false;
 
-        while (false == quitInteractive)
+        while (quitInteractive == false)
         {
           CommandLineApplication interactiveEditor = new CommandLineApplication();
 
@@ -188,8 +188,8 @@ namespace DunGen.CLI
     internal static void PrintPretty(this MenuItem printRoot, TextWriter writer, string indent, bool last, MenuItem me = null, MenuItem realRoot = null)
     {
       string toWrite = indent;
-      bool isMe = (null != me && printRoot == me);
-      bool isRoot = (null != realRoot && printRoot == realRoot);
+      bool isMe = (me != null && printRoot == me);
+      bool isRoot = (realRoot != null && printRoot == realRoot);
       if (last)
       {
         toWrite += @"└─";

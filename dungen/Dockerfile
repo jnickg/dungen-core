@@ -25,8 +25,10 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine AS runtime
 WORKDIR /app
 # Install Heroku requisites
 RUN apk add --no-cache curl
+# Install .NET Core requisites
+RUN apk add libgdiplus --update-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ --allow-untrusted # System.Drawing
 # Copy artifacts into published runtime fs
 COPY --from=build /out .
 COPY --from=nodebuild /src/dist /app/ClientApp/dist
 ENV ASPNETCORE_URLS=http://*:$PORT
-CMD [ "/app/dungen-site" ]
+CMD [ "/app/DunGen.Site" ]

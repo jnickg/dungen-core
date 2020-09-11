@@ -48,10 +48,15 @@ namespace DunGen.Algorithm
     public override bool Equals(object obj)
     {
       AlgorithmInfo other = obj as AlgorithmInfo;
-      if (null == other) return false;
+      if (other == null) return false;
 
       return this.Type == other.Type && 
              this.Parameters.Equals(other.Parameters);
+    }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(this.Type, this.Parameters);
     }
   }
 
@@ -79,7 +84,7 @@ namespace DunGen.Algorithm
     {
       CompositeAlgorithm alg = AlgorithmPluginEnumerator.GetAlgorithm(Type.ConvertToType(true)) as CompositeAlgorithm;
 
-      if (null == alg)
+      if (alg == null)
       {
         throw new Exception("Failed to create composite algorithm from composite algorithm info");
       }
@@ -95,6 +100,11 @@ namespace DunGen.Algorithm
     public override bool Equals(object obj)
     {
       return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(base.GetHashCode(), this.Type, this.Parameters, this.Algorithms, this.CompositeName);
     }
   }
 

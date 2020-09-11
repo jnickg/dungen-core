@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace dungen_site
+namespace DunGen.Site
 {
     public class Program
     {
@@ -22,7 +22,8 @@ namespace dungen_site
                 {
                   var port = Environment.GetEnvironmentVariable("PORT");
                   webBuilder.UseStartup<Startup>()
-                            .UseUrls("http://*:" + port);
+                            .UseUrls("http://*:" + port)
+                            .CaptureStartupErrors(true);
                 });
     }
 }

@@ -12,6 +12,7 @@ using DunGen.Algorithm;
 using DunGen.Plugins;
 using DunGen.Generator;
 using DunGen.Tiles;
+using System.Linq;
 
 namespace DunGen.Lib.Test
 {
@@ -90,6 +91,42 @@ namespace DunGen.Lib.Test
           continue;
         }
       }
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(System.NotImplementedException))]
+    public void RunWithoutMask()
+    {
+      Random r = new Random();
+
+      var allAlgs = AlgorithmPluginEnumerator.GetAllLoadedAlgorithms();
+      foreach (var algProto in allAlgs)
+      {
+        var runs = new List<AlgorithmRun>
+        {
+          new AlgorithmRun()
+          {
+            Alg = algProto.Clone() as IAlgorithm,
+            Context = new AlgorithmContextBase()
+            {
+              R = new AlgorithmRandom(r.Next())
+            }
+          }
+        };
+
+        var generator = new DungeonGenerator();
+        generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
+        {
+          DoReset = true,
+          EgressConnections = null,
+          Width = 25,
+          Height = 25,
+          AlgRuns = runs
+        };
+
+        var dungeon = generator.Generate();
+      }
+
     }
 
     // TODO use answer at this link to devise a reflective way to create individual tests for each algorithm in a huge dungeon
