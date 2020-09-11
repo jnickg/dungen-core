@@ -29,4 +29,4 @@ RUN apk add --no-cache curl
 COPY --from=build /out .
 COPY --from=nodebuild /src/dist /app/ClientApp/dist
 ENV ASPNETCORE_URLS=http://*:$PORT
-CMD [ "/app/dungen-site" ]
+CMD [ "/app/DunGen.Site" ]
