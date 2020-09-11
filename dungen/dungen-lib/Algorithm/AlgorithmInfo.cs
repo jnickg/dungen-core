@@ -53,6 +53,11 @@ namespace DunGen.Algorithm
       return this.Type == other.Type && 
              this.Parameters.Equals(other.Parameters);
     }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(this.Type, this.Parameters);
+    }
   }
 
   [CollectionDataContract(Name = "algorithmList", ItemName = "algorithm")]
@@ -95,6 +100,11 @@ namespace DunGen.Algorithm
     public override bool Equals(object obj)
     {
       return base.Equals(obj);
+    }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(base.GetHashCode(), this.Type, this.Parameters, this.Algorithms, this.CompositeName);
     }
   }
 

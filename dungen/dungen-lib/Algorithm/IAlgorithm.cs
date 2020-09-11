@@ -214,5 +214,10 @@ namespace DunGen.Algorithm
     {
       Callbacks.ForEach(a => a?.Invoke(context));
     }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(this.Name, this.Parameters, this.TakesParameters, this.Callbacks);
+    }
   }
 }

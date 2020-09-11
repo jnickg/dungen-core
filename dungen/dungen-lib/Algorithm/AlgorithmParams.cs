@@ -115,6 +115,11 @@ namespace DunGen.Algorithm
              // .Equals because Value is an object so == returns false
              this.Value.Equals(other.Value);
     }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(this._value, this.Property, this.ValueType, this.ParamName, this.Description, this.Value, this.Default);
+    }
   }
 
   [DataContract(Name = "algParams")]
@@ -177,6 +182,11 @@ namespace DunGen.Algorithm
       }
 
       return knownTypes;
+    }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(this.List);
     }
   }
 

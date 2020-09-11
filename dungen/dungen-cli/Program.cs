@@ -1024,9 +1024,9 @@ namespace DunGen.CLI
     {
       cmd.OnExecute(() =>
       {
-        throw new NotSupportedException("Can't yet uninstall plugins at runtime. " +
+        Console.WriteLine("Can't yet uninstall plugins at runtime. " +
           "Close the program, manually remove from Plugins folder, and re-launch.");
-        return 0;
+        return -1;
       });
     }
 
