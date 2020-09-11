@@ -3,5 +3,5 @@
   <p *ngIf="clickedEver && !randomDungeonBase64"><em>Loading...</em></p>
   <img *ngIf="randomDungeonBase64" [src]='this.randomDungeonBase64' [alt]="this.randomDungeonAlt" /> <br />
   <p *ngIf="randomDungeonBase64">A dungeon created with the <em>{{this.randomDungeonAlgorithm}}</em> algorithm</p>
-  <small><em>This is still a work in progress, so some algorithms won't show much. Keep clicking until you find an interesting one!</em></small>
+  <small><em>This is still a work in progress, just showing layout generation with some sample pre-set algorithms. Keep clicking to see more!</em></small>
 </div>

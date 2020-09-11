@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Net.Mime;
 using System.Drawing.Imaging;
+using DunGen.TerrainGen;
 
 namespace DunGen.Site.Controllers
 {
@@ -23,6 +24,88 @@ namespace DunGen.Site.Controllers
   public class RandomDungeonController : ControllerBase
   {
     private readonly ILogger<RandomDungeonController> _logger;
+
+    private static ISet<IAlgorithm> _algorithms = new HashSet<IAlgorithm>
+    {
+      new BlobRecursiveDivision()
+      {
+
+      },
+      new LinearRecursiveDivision()
+      {
+
+      },
+      new RecursiveBacktracker()
+      {
+        WallStrategy = TerrainGenAlgorithmBase.WallFormation.Tiles
+      },
+      new RecursiveBacktracker()
+      {
+        WallStrategy = TerrainGenAlgorithmBase.WallFormation.Boundaries
+      },
+      new DiffusionLimitedAggregation()
+      {
+        DensityFactor = 0.5
+      },
+      new DiffusionLimitedAggregation()
+      {
+        DensityFactor = 0.1
+      },
+      new DiffusionLimitedAggregation()
+      {
+        DensityFactor = 0.25
+      },
+      new MazeWithRooms()
+      {
+        RoomBuilder = new MonteCarloRoomCarver()
+        {
+          RoomHeightMin = 2,
+          RoomWidthMin = 2,
+          RoomWidthMax = 6,
+          RoomHeightMax = 6,
+          AvoidOpen = false
+        }
+      },
+      new MazeWithRooms()
+      {
+        MazeCarver = new RecursiveBacktracker()
+        {
+          WallStrategy = TerrainGenAlgorithmBase.WallFormation.Boundaries
+        },
+        RoomBuilder = new MonteCarloRoomCarver()
+        {
+          RoomHeightMin = 3,
+          RoomWidthMin = 3,
+          RoomWidthMax = 11,
+          RoomHeightMax = 11,
+          AvoidOpen = false,
+          TargetRoomCount = 4
+        }
+      },
+      new CompositeAlgorithm()
+      {
+        CompositeName = "CaveWithRooms",
+        Algorithms = new AlgorithmList()
+        {
+          new WallUpper(),
+          new DiffusionLimitedAggregation()
+          {
+            DensityFactor = 0.25
+          },
+          new MonteCarloRoomCarver()
+          {
+            RoomHeightMin = 3,
+            RoomWidthMin = 3,
+            RoomWidthMax = 7,
+            RoomHeightMax = 7,
+            AvoidOpen = false,
+            WallStrategy = TerrainGenAlgorithmBase.WallFormation.Tiles,
+            BorderPadding = 0,
+            TargetRoomCount = 5
+          }
+        }
+      }
+    };
 
     public RandomDungeonController(ILogger<RandomDungeonController> logger)
     {
@@ -35,8 +118,8 @@ namespace DunGen.Site.Controllers
     public IActionResult Get(int id, [FromQuery] int width = 25, [FromQuery] int height = 25)
     {
       Random r = new Random(id);
-      
-      var allAlgs = AlgorithmPluginEnumerator.GetAllLoadedAlgorithms();
+
+      var allAlgs = _algorithms;
       var alg = allAlgs.ElementAt(r.Next(allAlgs.Count()));
       var runs = new List<AlgorithmRun>
       {
@@ -73,7 +156,7 @@ namespace DunGen.Site.Controllers
         var jsonObj = new
         {
           alt = "A DunGenImage",
-          algorithm = alg.GetType().Name,
+          algorithm = alg.Name,
           imageBytes = ms.GetBuffer()
         };
 
@@ -81,7 +164,7 @@ namespace DunGen.Site.Controllers
       }
       catch (NotImplementedException)
       {
-        return NotFound(String.Format("{0} is not implemented.", alg.GetType().Name));
+        return NotFound(String.Format("{0} is not implemented.", alg.Name));
       }
       catch (Exception e)
       {
