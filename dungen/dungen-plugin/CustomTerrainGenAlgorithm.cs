@@ -4,7 +4,7 @@ using DunGen.Algorithm;
 using DunGen.TerrainGen;
 using DunGen.Tiles;
 
-namespace DunGenPlugin
+namespace DunGen.Plugin
 {
   public class CustomTerrainGenAlgorithm : TerrainGenAlgorithmBase
   {
