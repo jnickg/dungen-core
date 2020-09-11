@@ -14,7 +14,6 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Net.Mime;
 using System.Drawing.Imaging;
-using Newtonsoft.Json;
 
 namespace DunGen.Site.Controllers
 {
@@ -76,8 +75,6 @@ namespace DunGen.Site.Controllers
           algorithm = alg.GetType().Name,
           imageBytes = ms.GetBuffer()
         };
-
-        var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObj);
 
         return Ok(jsonObj);
       }
