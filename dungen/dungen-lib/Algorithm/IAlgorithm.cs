@@ -34,7 +34,7 @@ namespace DunGen.Algorithm
     void Run(IAlgorithmContext context);
     /// <summary>
     /// Attaches the given callback to this algorithm, to be called at
-    /// various points of a call to this instance's
+    /// various points of a call to this instance's <see cref="Run(IAlgorithmContext)">Run Call</see>
     /// <seealso cref="Run(IAlgorithmContext)"/>.
     /// </summary>
     /// <param name="callback">The callback to perform, which has access

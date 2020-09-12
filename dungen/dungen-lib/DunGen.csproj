@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netcoreapp2.1\dungen-lib.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\netcoreapp2.1\DunGen.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
