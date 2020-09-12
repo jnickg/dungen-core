@@ -7,7 +7,7 @@ using System.Text;
 namespace DunGen.Algorithm
 {
   [CollectionDataContract(Name = "algorithmList", ItemName = "algorithm")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class AlgorithmList : List<IAlgorithm>
   {
     public static IEnumerable<Type> GetKnownTypes()

@@ -64,7 +64,7 @@ namespace DunGen.Infestation
   /// Base implementation that all Infestation instances can inherit from
   /// </summary>
   [DataContract(Name = "infestation", IsReference = true)]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class InfestationInfo : IInfestation
   {
     /// <see cref="IInfestation.Parent"/>

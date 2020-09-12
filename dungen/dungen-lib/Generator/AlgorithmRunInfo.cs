@@ -9,7 +9,7 @@ using System.Text;
 namespace DunGen.Generator
 {
   [CollectionDataContract(Name = "runList", ItemName = "algRunInfo")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class AlgorithmRunInfoList : List<AlgorithmRunInfo>
   {
     public static IEnumerable<Type> GetKnownTypes()

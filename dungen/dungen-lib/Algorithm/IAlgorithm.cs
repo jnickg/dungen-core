@@ -48,7 +48,7 @@ namespace DunGen.Algorithm
   /// constituent parameters
   /// </summary>
   [DataContract(Name = "algorithm")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public abstract class AlgorithmBase : IAlgorithm
   {
     public virtual string Name

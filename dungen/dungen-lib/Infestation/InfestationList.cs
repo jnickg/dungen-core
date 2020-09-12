@@ -10,7 +10,7 @@ namespace DunGen.Infestation
   /// <see cref="InfestationInfo"/> objects.
   /// </summary>
   [CollectionDataContract(Name = "infestationList", ItemName = "infestation")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class InfestationList : List<InfestationInfo>
   {
     /// <see cref="Library.GetKnownTypes"/>

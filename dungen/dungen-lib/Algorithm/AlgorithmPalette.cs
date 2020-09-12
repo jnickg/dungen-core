@@ -12,7 +12,7 @@ namespace DunGen.Algorithm
   /// of Algorithms, to serve different purposes.
   /// </summary>
   [CollectionDataContract(Name = "algPalette", KeyName = "name", ValueName = "algPreset")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class AlgorithmPalette : Dictionary<string, AlgorithmPaletteItem>
   {
     public static AlgorithmPalette DefaultPalette(IEnumerable<IAlgorithm> algorithms)

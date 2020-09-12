@@ -11,7 +11,7 @@ namespace DunGen.Infestation
   /// a particular game system, and is then sub-divided by various labels.
   /// </summary>
   [DataContract(Name = "library", IsReference = true)]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class Library
   {
     /// <summary>

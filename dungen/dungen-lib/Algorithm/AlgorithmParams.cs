@@ -17,7 +17,7 @@ namespace DunGen.Algorithm
   }
 
   [DataContract(Name = "editableParam")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class EditableParameterBase : IEditableParameter
   {
     private object _value = null;
@@ -123,7 +123,7 @@ namespace DunGen.Algorithm
   }
 
   [DataContract(Name = "algParams")]
-  [KnownType("GetKnownTypes")]
+  [KnownType(nameof(GetKnownTypes))]
   public class AlgorithmParams : ICloneable
   {
     [DataMember(IsRequired = true, Name = "list")]
