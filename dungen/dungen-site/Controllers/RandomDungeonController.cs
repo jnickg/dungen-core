@@ -25,7 +25,7 @@ namespace DunGen.Site.Controllers
   {
     private readonly ILogger<RandomDungeonController> _logger;
 
-    private static ISet<IAlgorithm> _algorithms = new HashSet<IAlgorithm>
+    internal static ISet<IAlgorithm> RandomDungeonAlgorithms = new HashSet<IAlgorithm>
     {
       new BlobRecursiveDivision()
       {
@@ -119,7 +119,7 @@ namespace DunGen.Site.Controllers
     {
       Random r = new Random(id);
 
-      var allAlgs = _algorithms;
+      var allAlgs = RandomDungeonAlgorithms;
       var alg = allAlgs.ElementAt(r.Next(allAlgs.Count()));
       var runs = new List<AlgorithmRun>
       {

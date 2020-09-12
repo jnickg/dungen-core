@@ -164,7 +164,7 @@ namespace DunGen.TerrainGen
 
     protected const string EgressStrategy_Help =
       "How this algorithm should interact with egress openings, if " +
-      "there are any in its mask. Algorithms may ignore this parameter" +
+      "there are any in its mask. Algorithms may ignore this parameter " +
       "if they cannot support a particular strategy";
 
     /// <summary>

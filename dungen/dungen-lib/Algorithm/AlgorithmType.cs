@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -14,6 +15,9 @@ namespace DunGen.Algorithm
   {
     [DataMember(Name = "assyQualName", IsRequired = true)]
     public string AssemblyQualifiedName { get; set; } = string.Empty;
+
+    [DataMember(Name = "displayName")]
+    public string DisplayName => GetDisplayName(this);
 
     public SerializableType()
     { }
@@ -66,6 +70,27 @@ namespace DunGen.Algorithm
     public static bool operator !=(SerializableType a, SerializableType b)
     {
       return !(a == b);
+    }
+
+    public static string GetDisplayName(SerializableType t)
+    {
+      Type actualType = t;
+      if (actualType == null) return "Object";
+      switch (actualType.Name)
+      {
+        case "Double":
+          return "number";
+        case "Int32":
+          return "integer";
+        case "Boolean":
+          return "boolean";
+        case "Enum":
+          return "Array";
+        case "IAlgorithm":
+          return "Algorithm";
+        default:
+          return "Object";
+      }
     }
 
     public override int GetHashCode()

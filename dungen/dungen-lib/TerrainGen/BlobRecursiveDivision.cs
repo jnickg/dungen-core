@@ -3,6 +3,7 @@ using DunGen.Tiles;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 
@@ -31,6 +32,7 @@ namespace DunGen.TerrainGen
       Default = 1,
       Minimum = 1,
       Maximum = int.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int RoomSize { get; set; }
 
     [IntegerParameter(
@@ -38,6 +40,7 @@ namespace DunGen.TerrainGen
       Default = 1,
       Minimum = 1,
       Maximum = int.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int GapCount { get; set; }
 
     [DecimalParameter(
@@ -46,6 +49,7 @@ namespace DunGen.TerrainGen
       Minimum = 0.01,
       Maximum = 0.99,
       Precision = 2)]
+    [Range(0.01, 0.99)]
     public double MaxGapProportion { get; set; }
 
     private class Subregion
