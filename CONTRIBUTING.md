@@ -40,6 +40,9 @@ One common workflow, for example:
 ```
 This will create a 51x51 dungeon, add the first-listed algorithm, run that algorithm on the whole dungeon, then render the generated dungeon to an image (`testRender.bmp` if you couldn't guess), and save it to the file `testDungeon.dgm`.
 # Collaboration
+## Tools
+* [Github](https://github.com/jnickg/dungen-core/)
+* [Slack](https://join.slack.com/t/dungenworkspace/shared_invite/zt-hihawh69-HN33XJ1i0ME7orP6FSPLnw)
 ## Issues & Milestones
 We track progress using Github's [Issues](https://github.com/jnickg/dungen-core/issues) and [Milestones](https://github.com/jnickg/dungen-core/milestones) tools. If you have an issue of your own you'd like to raise, feel free to file one and we will respond promptly.
 
