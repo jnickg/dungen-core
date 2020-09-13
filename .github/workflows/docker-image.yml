@@ -1,0 +1,21 @@
+name: Docker Image Build
+
+on:
+  push:
+    paths:
+      - 'dungen/Dockerfile'
+  pull_request:
+    paths:
+      - 'dungen/Dockerfile'
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      working-directory: dungen
+      run: docker build .
