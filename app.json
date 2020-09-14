@@ -1,0 +1,16 @@
+{
+  "name": "Small Sharp Tool",
+  "description": "This app does one little thing, and does it well.",
+  "stack": "container",
+  "keywords": [
+    "productivity",
+    "HTML5",
+    "scalpel"
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  }
+}
