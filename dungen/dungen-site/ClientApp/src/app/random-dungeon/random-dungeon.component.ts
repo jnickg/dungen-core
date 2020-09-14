@@ -11,7 +11,7 @@ export class RandomDungeonComponent {
   public randomDungeonAlgorithm: string;
   public randomDungeonAlt: string;
   public randId: number;
-  public clickedEver: boolean = false;
+  public clickedEver = false;
 
   constructor(private http: HttpClient) {
   }
@@ -19,11 +19,11 @@ export class RandomDungeonComponent {
   getNewDungeon() {
     this.clickedEver = true;
     this.randId = Math.floor(Math.random() * 99998) + 1;
-    var randoDungeonUrl = 'api/randomdungeon/' + this.randId;
-    console.log("Nabbing " + randoDungeonUrl);
+    let randoDungeonUrl = 'api/randomdungeon/' + this.randId;
+    console.log('Nabbing ' + randoDungeonUrl);
     this.http.get<RandomDungeon>(randoDungeonUrl)
       .subscribe(result => this.updateDungeon(result),
-        err => console.log("Un-implemented algorithm was randomly selected, or something else went wrong. (Error: " + err.error + ")"));
+        err => console.log('Un-implemented algorithm was randomly selected, or something else went wrong. (Error: ' + err.error + ')'));
   }
 
   updateDungeon(newImage: RandomDungeon) {
