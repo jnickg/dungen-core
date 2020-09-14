@@ -15,8 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
+		..\app.json = ..\app.json
 		Dockerfile = Dockerfile
 		..\heroku.yml = ..\heroku.yml
+	EndProjectSection
+	ProjectSection(FolderGlobals) = preProject
+		C_5_4repos_4jnickg-dungen-core_4app_1json__JsonSchema = https://raw.githubusercontent.com/app-json/app.json/master/lib/schema.js
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DunGen.Site", "dungen-site\DunGen.Site.csproj", "{547572CD-5C2F-4CAE-8FA2-2595F360757E}"
