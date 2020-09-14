@@ -336,13 +336,13 @@ namespace DunGen.Tiles
         case Tile.MoveType.Wall:
           throw new ArgumentException();
         case Tile.MoveType.Open_NORTH:
-          return (!TileIsValid(x, y - 1) || (0 == (this[y - 1, x].Physics & direction.GetOpposite())));
+          return (!TileIsValid(x, y - 1) || (this[y - 1, x].Physics & direction.GetOpposite()) == 0);
         case Tile.MoveType.Open_EAST:
-          return (!TileIsValid(x + 1, y) || (0 == (this[y, x + 1].Physics & direction.GetOpposite())));
+          return (!TileIsValid(x + 1, y) || (this[y, x + 1].Physics & direction.GetOpposite()) == 0);
         case Tile.MoveType.Open_SOUTH:
-          return (!TileIsValid(x, y + 1) || (0 == (this[y + 1, x].Physics & direction.GetOpposite())));
+          return (!TileIsValid(x, y + 1) || (this[y + 1, x].Physics & direction.GetOpposite()) == 0);
         case Tile.MoveType.Open_WEST:
-          return (!TileIsValid(x - 1, y) || (0 == (this[y, x - 1].Physics & direction.GetOpposite())));
+          return (!TileIsValid(x - 1, y) || (this[y, x - 1].Physics & direction.GetOpposite()) == 0);
         case Tile.MoveType.Open_HORIZ:
           return WallExists(x, y, Tile.MoveType.Open_NORTH) &&
                  WallExists(x, y, Tile.MoveType.Open_EAST) &&

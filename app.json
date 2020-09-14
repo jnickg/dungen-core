@@ -1,6 +1,6 @@
 {
-  "name": "Small Sharp Tool",
-  "description": "This app does one little thing, and does it well.",
+  "name": "DunGen",
+  "description": "DunGen SDK and website.",
   "stack": "container",
   "keywords": [
     "productivity",
