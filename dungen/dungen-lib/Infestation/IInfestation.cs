@@ -12,7 +12,7 @@ namespace DunGen.Infestation
   public interface IInfestation
   {
     /// <summary>
-    /// 
+    /// The parent Library from which this infestation was generated.
     /// </summary>
     Library Parent { get; }
     /// <summary>

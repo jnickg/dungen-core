@@ -39,7 +39,7 @@ namespace DunGen.Rendering
       {
         return this.WallTile_Brush;
       }
-      if (0 != (physics & Tile.MoveType.Open_ALL))
+      if ((physics & Tile.MoveType.Open_ALL) != 0)
       {
         // Open the tile up, and assume the border drawing will handle
         // open-ness
@@ -79,9 +79,9 @@ namespace DunGen.Rendering
         for (int x = 0; x < tiles.Height; ++x)
         {
           int x1 = x * tileSz_px,
-              x2 = x * tileSz_px + tileSz_px,
+              x2 = (x * tileSz_px) + tileSz_px,
               y1 = y * tileSz_px,
-              y2 = y * tileSz_px + tileSz_px;
+              y2 = (y * tileSz_px) + tileSz_px;
 
           DrawBorderFor(tiles, x, y, Tile.MoveType.Open_HORIZ, g, x1, y1, x2, y2);
         }
@@ -91,9 +91,9 @@ namespace DunGen.Rendering
         for (int x = 0; x < tiles.Height; ++x)
         {
           int px1 = x * tileSz_px,
-              px2 = x * tileSz_px + tileSz_px,
+              px2 = (x * tileSz_px) + tileSz_px,
               py1 = y * tileSz_px,
-              py2 = y * tileSz_px + tileSz_px;
+              py2 = (y * tileSz_px) + tileSz_px;
 
           DrawTopLeftPointFor(tiles, x, y, px1, py1, g);
           // This is just to get the bottom-right border. Easier way? Sure. But this works too.
@@ -160,8 +160,8 @@ namespace DunGen.Rendering
     /// <param name="y2">y2 of the tile's square in graphics.</param>
     private void DrawBorderFor(DungeonTiles tiles, int x, int y, Tile.MoveType moveDir, Graphics g, int x1, int y1, int x2, int y2)
     {
-      if (null == tiles || null == g) return; // no op
-      if (false == tiles.TileIsValid(x, y)) return;
+      if (tiles == null || g == null) return; // no op
+      if (!tiles.TileIsValid(x, y)) return;
 
       int adjacentTile_x = 0,
           adjacentTile_y = 0;
@@ -198,13 +198,13 @@ namespace DunGen.Rendering
       }
 
       // 1. Check if THIS cell is even open
-      bool useWall = (0 == (tiles[y, x].Physics & moveDir));
+      bool useWall = ((tiles[y, x].Physics & moveDir) == 0);
       // 2. Check if adjacent cell exists; if not, use a wall border
-      useWall = (useWall || false == tiles.TileIsValid(adjacentTile_x, adjacentTile_y));
+      useWall = (useWall || !tiles.TileIsValid(adjacentTile_x, adjacentTile_y));
       // 3. If adjacent cell exists, check if its corresponding wall is opened too; if not, use a wall border
-      useWall = (useWall || (0 == (tiles[adjacentTile_y, adjacentTile_x].Physics & moveDir.GetOpposite())));
+      useWall = (useWall || (tiles[adjacentTile_y, adjacentTile_x].Physics & moveDir.GetOpposite()) == 0);
 
-      if (null == this.WallBorder_Pen || null == this.OpenBorder_Pen)
+      if (this.WallBorder_Pen == null || this.OpenBorder_Pen == null)
       {
         throw new Exception("DungeonTileRenderer is in an invalid state: set WallBorder_Pen and OpenBorder_Pen");
       }
@@ -229,7 +229,6 @@ namespace DunGen.Rendering
         default:
           throw new ArgumentException("Unsupported moveDir to draw border");
       }
-      
     }
 
     public Image Render(Dungeon d)
@@ -240,8 +239,8 @@ namespace DunGen.Rendering
     public Image Render(DungeonTiles tiles)
     {
       int tileSz_px = this.TileSize_Pixels;
-      int totalWidth = tiles.Width * tileSz_px + 1;
-      int totalHeight = tiles.Height * tileSz_px + 1;
+      int totalWidth = (tiles.Width * tileSz_px) + 1;
+      int totalHeight = (tiles.Height * tileSz_px) + 1;
 
       Image img = new Bitmap(totalWidth, totalHeight);
       using (Graphics g = Graphics.FromImage(img))
