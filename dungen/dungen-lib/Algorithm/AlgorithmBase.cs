@@ -79,6 +79,7 @@ namespace DunGen.Algorithm
       if (context.Mask == null) context.Mask = context.D.Tiles.DefaultMask;
 
       _runInternal(context);
+      this.RunCallbacks(context);
     }
 
     /// <summary>

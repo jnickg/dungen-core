@@ -21,6 +21,7 @@ namespace DunGen.TerrainGen
     protected override void _runAlgorithm(IAlgorithmContext context)
     {
       context.D.Tiles.SetAllToo(Tile.MoveType.Open_HORIZ, context.Mask);
+      this.RunCallbacks(context);
     }
   }
 }

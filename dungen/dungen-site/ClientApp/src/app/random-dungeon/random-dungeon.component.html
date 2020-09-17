@@ -1,7 +1,7 @@
 <div>
   <input type="button" value="Get {{clickedEver ? 'Another' : 'A'}} Dungeon" (click)="getNewDungeon()" /> <br />
   <p *ngIf="clickedEver && !randomDungeonBase64"><em>Loading...</em></p>
-  <img *ngIf="randomDungeonBase64" [src]='this.randomDungeonBase64' [alt]="this.randomDungeonAlt" /> <br />
+  <img *ngIf="randomDungeonBase64" [src]='this.randomDungeonGifBase64' [alt]="this.randomDungeonAlt" /> <br />
   <p *ngIf="randomDungeonBase64">A dungeon created with the <em>{{this.randomDungeonAlgorithm}}</em> algorithm</p>
   <small><em>This is still a work in progress, just showing layout generation with some sample pre-set algorithms. Keep clicking to see more!</em></small>
 </div>
