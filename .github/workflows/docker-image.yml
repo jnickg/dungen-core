@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'dungen/Dockerfile'
+    branches: [ master ]
   pull_request:
     paths:
       - 'dungen/Dockerfile'
+    branches: [ master ]
 
 jobs:
 
