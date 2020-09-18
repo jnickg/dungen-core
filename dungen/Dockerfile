@@ -17,48 +17,44 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /src
 COPY . .
 # NuGet restore as a distinct step
-RUN dotnet restore -f -r linux-musl-x64
+RUN dotnet restore -f -r linux-musl-x64 -v normal
 # Build the actual app and its dependencies
-RUN dotnet publish --no-restore -c Release -r linux-musl-x64 -o /out
+RUN dotnet publish --no-restore -c Release -r linux-musl-x64 -o /out -v normal
 
 ##
 ##
-## Copy artifacts and complete deployment
+## Prepare runtime container
 ##
 ##
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS runtime
 WORKDIR /app
-
 #
-# Install some general tools
+# Install Requisite Programs & Libraries
 #
-RUN apk add --no-cache bash
-
-#
+RUN apt-get update && apt-get install -y \
+# Why the fuck isn't this on the image
+    bash \
 # Install Heroku requisites
-#
-RUN apk add --no-cache curl
-
-#
+    curl \
 # Install .NET Core requisites
-#
 # System.Drawing requires libgdi to render images to Bitmap
-RUN apk add libgdiplus --update-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ --allow-untrusted
-
-#
+    libgdiplus \
 # Install NuGet package requisites
-#
-# Magick.NET requires glibc to function on Linux, which Alpine doesn't include
-RUN apk add --no-cache libc6-compat
-RUN apk add --no-cache musl-dev
+# Magick.NET glibc6 to render GIF images
+    libc6 \
+    musl-dev\
+# Minimize squandered space
+ && rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib/ld-linux-x86-64.so.2
+#RUN ln -s /bin/ldd ld-musl-x86_64.so
+#RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib/ld-linux-x86-64.so.2
+RUN ln -s /usr/lib/x86_64-linux-musl/libc.so /lib/libc.musl-x86_64.so.1
 #
 # Copy artifacts into published runtime fs
 #
 COPY --from=build /out .
 COPY --from=nodebuild /src/dist /app/ClientApp/dist
-ENV LD_DEBUG=bindings,files,libs
 ENV ASPNETCORE_URLS=http://*:$PORT
+ENV LD_DEBUG=bindings,files,libs
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
 CMD [ "exec", "/app/DunGen.Site" ]
