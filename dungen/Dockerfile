@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y \
 # Magick.NET glibc6 to render GIF images
     libc6 \
     musl-dev\
+    libstdc++6 \
+    gcc \
 # Minimize squandered space
  && rm -rf /var/lib/apt/lists/*
 
