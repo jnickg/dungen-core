@@ -32,7 +32,6 @@ WORKDIR /app
 # Install Requisite Programs & Libraries
 #
 RUN apt-get update && apt-get install -y \
-# Why the fuck isn't this on the image
     bash \
 # Install Heroku requisites
     curl \
@@ -40,18 +39,9 @@ RUN apt-get update && apt-get install -y \
 # System.Drawing requires libgdi to render images to Bitmap
     libgdiplus \
 # Install NuGet package requisites
-# Magick.NET glibc6 to render GIF images
-    #musl-dev\
-    #libc6 \
-    #libstdc++6 \
-    #g++ \
-    #gcc \
 # Minimize squandered space
  && rm -rf /var/lib/apt/lists/*
 
-#RUN ln -s /bin/ldd ld-musl-x86_64.so
-#RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib/ld-linux-x86-64.so.2
-#RUN ln -s /usr/lib/x86_64-linux-musl/libc.so /lib/libc.musl-x86_64.so.1
 #
 # Copy artifacts into published runtime fs
 #

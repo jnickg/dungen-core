@@ -16,6 +16,7 @@ using System.Net.Mime;
 using System.Drawing.Imaging;
 using DunGen.TerrainGen;
 using ImageMagick;
+using System.Text;
 
 namespace DunGen.Site.Controllers
 {
@@ -149,9 +150,13 @@ namespace DunGen.Site.Controllers
       var generator = new DungeonGenerator();
       var stepImages = new List<Image>();
       var collection = new MagickImageCollection();
+      var counter = 0;
 
       Action<IAlgorithmContext> RenderAction = new Action<IAlgorithmContext>((context) =>
       {
+        if (counter % 5 != 0) return;
+        counter++;
+
         var d = context.D;
         var img = renderer.Render(d);
 
@@ -213,7 +218,16 @@ namespace DunGen.Site.Controllers
       }
       catch (Exception e)
       {
-        return NotFound(String.Format("Something went wrong:\n{0}", e.Message));
+        var message = new StringBuilder();
+        message.AppendLine("Something went wrong. Exception details:");
+        while (e != null)
+        {
+          message.AppendFormat("\"{0}\"\n", e.Message);
+          message.AppendLine(e.StackTrace);
+          message.AppendLine(e.InnerException != null ? "Inner Exception:" : "");
+          e = e.InnerException;
+        }
+        return NotFound(message.ToString());
       }
     }
   }
