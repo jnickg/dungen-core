@@ -30,6 +30,11 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine AS runtime
 WORKDIR /app
 
 #
+# Install some general tools
+#
+RUN apk add --no-cache bash
+
+#
 # Install Heroku requisites
 #
 RUN apk add --no-cache curl
@@ -45,11 +50,15 @@ RUN apk add libgdiplus --update-cache --repository=http://dl-cdn.alpinelinux.org
 #
 # Magick.NET requires glibc to function on Linux, which Alpine doesn't include
 RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache musl-dev
 
+RUN ln -s /lib64/ld-linux-x86-64.so.2 /lib/ld-linux-x86-64.so.2
 #
 # Copy artifacts into published runtime fs
 #
 COPY --from=build /out .
 COPY --from=nodebuild /src/dist /app/ClientApp/dist
+ENV LD_DEBUG=bindings,files,libs
 ENV ASPNETCORE_URLS=http://*:$PORT
-CMD [ "/app/DunGen.Site" ]
+ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
+CMD [ "exec", "/app/DunGen.Site" ]
