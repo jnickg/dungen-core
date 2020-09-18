@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y \
     curl \
 # Install .NET Core requisites
 # System.Drawing requires libgdi to render images to Bitmap
-    #libgdiplus \
+    libgdiplus \
 # Install NuGet package requisites
 # Magick.NET glibc6 to render GIF images
     #musl-dev\
