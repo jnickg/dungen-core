@@ -124,6 +124,18 @@ namespace DunGen.Site.Controllers
       _logger = logger;
     }
 
+    private void AddImageToCollection(Image img, MagickImageCollection collection, int delay_hundreths)
+    {
+      using (var ms = new MemoryStream())
+      {
+        img.Save(ms, ImageFormat.Bmp);
+        ms.Seek(0, SeekOrigin.Begin);
+        var magick = new MagickImage(ms);
+        magick.AnimationDelay = delay_hundreths;
+        collection.Add(magick);
+      }
+    }
+
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -159,14 +171,7 @@ namespace DunGen.Site.Controllers
         var d = context.D;
         var img = renderer.Render(d);
 
-        using (var ms = new MemoryStream())
-        {
-          img.Save(ms, ImageFormat.Bmp);
-          ms.Seek(0, SeekOrigin.Begin);
-          var magick = new MagickImage(ms);
-          magick.AnimationDelay = 5;
-          collection.Add(magick);
-        }
+        AddImageToCollection(img, collection, 5);
       });
 
       generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
@@ -184,10 +189,11 @@ namespace DunGen.Site.Controllers
       try
       {
         var dungeon = generator.Generate();
+        var lastImage = renderer.Render(dungeon);
+        AddImageToCollection(lastImage, collection, 500);
 
         var gif_ms = new MemoryStream();
         collection.First().AnimationIterations = 0;
-        collection.Last().AnimationDelay = 500;
         var magickSettings = new QuantizeSettings();
         magickSettings.Colors = 256;
         collection.Quantize(magickSettings);
@@ -195,10 +201,8 @@ namespace DunGen.Site.Controllers
         collection.Write(gif_ms, MagickFormat.Gif);
         gif_ms.Seek(0, SeekOrigin.Begin);
 
-        var image = renderer.Render(dungeon);
-
         var ms = new MemoryStream();
-        image.Save(ms, ImageFormat.Png);
+        lastImage.Save(ms, ImageFormat.Png);
         ms.Seek(0, SeekOrigin.Begin);
 
         var jsonObj = new
