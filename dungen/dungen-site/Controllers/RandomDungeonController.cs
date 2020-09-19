@@ -154,8 +154,7 @@ namespace DunGen.Site.Controllers
 
       Action<IAlgorithmContext> RenderAction = new Action<IAlgorithmContext>((context) =>
       {
-        if (counter % 5 != 0) return;
-        counter++;
+        if (counter++ % 5 != 0) return;
 
         var d = context.D;
         var img = renderer.Render(d);
