@@ -48,6 +48,6 @@ RUN apt-get update && apt-get install -y \
 COPY --from=build /out .
 COPY --from=nodebuild /src/dist /app/ClientApp/dist
 ENV ASPNETCORE_URLS=http://*:$PORT
-ENV LD_DEBUG=bindings,files,libs
+#ENV LD_DEBUG=bindings,files,libs
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
 CMD [ "exec", "/app/DunGen.Site" ]

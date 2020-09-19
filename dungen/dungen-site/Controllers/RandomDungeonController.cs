@@ -164,7 +164,7 @@ namespace DunGen.Site.Controllers
         {
           img.Save(ms, ImageFormat.Bmp);
           ms.Seek(0, SeekOrigin.Begin);
-          var magick = new MagickImage(ms.GetBuffer());
+          var magick = new MagickImage(ms);
           magick.AnimationDelay = 5;
           collection.Add(magick);
         }
