@@ -37,9 +37,17 @@ namespace DunGen.Algorithm
 
     protected override void _runInternal(IAlgorithmContext context)
     {
+      foreach (var cb in this.Callbacks)
+      {
+        foreach (var alg in Algorithms)
+        {
+          alg.AttachCallback(cb);
+        }
+      }
       foreach (IAlgorithm alg in Algorithms)
       {
         alg.Run(context);
+        this.RunCallbacks(context);
       }
     }
 

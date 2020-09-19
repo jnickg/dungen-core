@@ -61,13 +61,13 @@ namespace DunGen.TerrainGen
       List<bool[,]> masks = context.Mask.SplitByAdjacency();
       foreach (var m in masks)
       {
-        this.Generate_Priv(context.D.Tiles, m, context.R);
+        this.Generate_Priv(context.D.Tiles, m, context.R, context);
         // Add the generated tiles to a group
         context.D.CreateGroup(m, TileCategory.Room);
       }
     }
 
-    private void Generate_Priv(DungeonTiles d, bool[,] mask, Random r)
+    private void Generate_Priv(DungeonTiles d, bool[,] mask, Random r, IAlgorithmContext context)
     {
       // if (ExistingDataStrategy != OpenTilesStrategy.Overwrite) throw new NotSupportedException("DLA can only overwrite existing data");
       // if (WallStyle != WallFormationStyle.Tiles) throw new NotSupportedException("DLA can only use entire tiles for walls.");
@@ -108,8 +108,9 @@ namespace DunGen.TerrainGen
       if (mask[com[0], com[1]])
       {
         // this location is valid, so we're all good
-        //d[com[0], com[1]].Physics = Tile.MoveType.Open_HORIZ;
+        d[com[1], com[0]].Physics = Tile.MoveType.Open_HORIZ;
         map[com[0], com[1]] = true;
+        this.RunCallbacks(context);
       }
       else
       {
@@ -124,8 +125,9 @@ namespace DunGen.TerrainGen
             {
               if (count == st)
               {
-                //d[i, j].Physics = Tile.MoveType.Open_HORIZ;
+                d[j, i].Physics = Tile.MoveType.Open_HORIZ;
                 map[i, j] = true;
+                this.RunCallbacks(context);
                 i = mask.GetLength(0); // setting this so it breaks out of i loop as well
                 break;
               }
@@ -176,6 +178,8 @@ namespace DunGen.TerrainGen
           }
         }
         map[tx, ty] = true;
+        d[ty, tx].Physics = Tile.MoveType.Open_HORIZ;
+        this.RunCallbacks(context);
       }
 
       d.SetAllToo(Tile.MoveType.Open_HORIZ, map);

@@ -37,10 +37,19 @@ namespace DunGen.TerrainGen
     protected override void _runAlgorithm(IAlgorithmContext context)
     {
       context.D.Tiles.SetAllToo(Tile.MoveType.Wall, context.Mask);
+      foreach (var cb in this.Callbacks)
+      {
+        RoomBuilder?.AttachCallback(cb);
+        MazeCarver?.AttachCallback(cb);
+        DeadEndFiller?.AttachCallback(cb);
+      }
 
       RoomBuilder?.Run(context);
+      this.RunCallbacks(context);
       MazeCarver?.Run(context);
+      this.RunCallbacks(context);
       DeadEndFiller?.Run(context);
+      this.RunCallbacks(context);
     }
   }
 }

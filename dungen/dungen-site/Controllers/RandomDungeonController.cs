@@ -15,6 +15,8 @@ using System.IO;
 using System.Net.Mime;
 using System.Drawing.Imaging;
 using DunGen.TerrainGen;
+using ImageMagick;
+using System.Text;
 
 namespace DunGen.Site.Controllers
 {
@@ -30,6 +32,16 @@ namespace DunGen.Site.Controllers
       new BlobRecursiveDivision()
       {
 
+      },
+      new BlobRecursiveDivision()
+      {
+        RoomSize = 6
+      },
+      new BlobRecursiveDivision()
+      {
+        RoomSize = 4,
+        MaxGapProportion = .1,
+        GapCount = 3
       },
       new LinearRecursiveDivision()
       {
@@ -133,20 +145,56 @@ namespace DunGen.Site.Controllers
         }
       };
 
+      var renderer = new DungeonTileRenderer();
+      renderer.ShadeGroups = false;
       var generator = new DungeonGenerator();
+      var stepImages = new List<Image>();
+      var collection = new MagickImageCollection();
+      var counter = 0;
+
+      Action<IAlgorithmContext> RenderAction = new Action<IAlgorithmContext>((context) =>
+      {
+        if (counter++ % 5 != 0) return;
+
+        var d = context.D;
+        var img = renderer.Render(d);
+
+        using (var ms = new MemoryStream())
+        {
+          img.Save(ms, ImageFormat.Bmp);
+          ms.Seek(0, SeekOrigin.Begin);
+          var magick = new MagickImage(ms);
+          magick.AnimationDelay = 5;
+          collection.Add(magick);
+        }
+      });
+
       generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
       {
         DoReset = true,
         EgressConnections = null,
         Width = width,
         Height = height,
-        AlgRuns = runs
+        AlgRuns = runs,
+        Callbacks = {
+          RenderAction
+        }
       };
 
       try
       {
         var dungeon = generator.Generate();
-        var renderer = new DungeonTileRenderer();
+
+        var gif_ms = new MemoryStream();
+        collection.First().AnimationIterations = 0;
+        collection.Last().AnimationDelay = 500;
+        var magickSettings = new QuantizeSettings();
+        magickSettings.Colors = 256;
+        collection.Quantize(magickSettings);
+        collection.Optimize();
+        collection.Write(gif_ms, MagickFormat.Gif);
+        gif_ms.Seek(0, SeekOrigin.Begin);
+
         var image = renderer.Render(dungeon);
 
         var ms = new MemoryStream();
@@ -157,7 +205,8 @@ namespace DunGen.Site.Controllers
         {
           alt = "A DunGenImage",
           algorithm = alg.Name,
-          imageBytes = ms.GetBuffer()
+          imageBytes = ms.GetBuffer(),
+          gifBytes = gif_ms.GetBuffer()
         };
 
         return Ok(jsonObj);
@@ -168,7 +217,16 @@ namespace DunGen.Site.Controllers
       }
       catch (Exception e)
       {
-        return NotFound(String.Format("Something went wrong:\n{0}", e.Message));
+        var message = new StringBuilder();
+        message.AppendLine("Something went wrong. Exception details:");
+        while (e != null)
+        {
+          message.AppendFormat("\"{0}\"\n", e.Message);
+          message.AppendLine(e.StackTrace);
+          message.AppendLine(e.InnerException != null ? "Inner Exception:" : "");
+          e = e.InnerException;
+        }
+        return NotFound(message.ToString());
       }
     }
   }

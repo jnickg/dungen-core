@@ -2,6 +2,7 @@
 > _The .NET Core implementation of DunGen_
 
 DunGen is framework powering the world's best random dungeon generator. Designed to be both easy-to-use, and highly customizable, and portable to any game system (both tabletop and desktop), it's the last dungeon generator you'll ever need.
+
 ## App Status
 _NOTE: This is currently a work in progress. See our test site [here](https://dungen-core.herokuapp.com/)_
 
@@ -18,6 +19,10 @@ The DunGen framework consists of multiple components:
 * All kinds of infestation algorithms, which fill your dungeon with any of the denizens, traps, and phat loot that you can find in your Library.
 * Powerful serialization, including the ability to dynamically reproduce an entire dungeon through its _algorithm runs_. This also means you can load a dungeon's _runs_, modify their parameters, and make a slightly _different_ dungeon (or the same one, with a different random seed).
 * An ORM layer to interface with any major relational database (MySQL, Postgres, etc.), allowing you to create and share your own systems.
+## Sample Algorithms (_Maze_ type)
+| Blob Recursive Division | Recursive Backtracker |
+|:-:|:-:|
+| ![BlobRecursiveDivision](doc/images/blob_recursive_division.gif) | ![RecursiveBacktracker](doc/images/recursive_backtracker.gif) |
 
 # Building, Developing, and Contributing
 > _See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information on how to build, develop, and act as part of the team_

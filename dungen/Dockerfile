@@ -1,4 +1,5 @@
 ##
+##
 ## NPM build and restore
 ##
 FROM node:12 AS nodebuild
@@ -8,27 +9,45 @@ RUN npm install --progress=true
 RUN npm run build
 
 ##
+##
 ## Build the dungen-site app
+##
 ##
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /src
 COPY . .
 # NuGet restore as a distinct step
-RUN dotnet restore -f -r linux-musl-x64
+RUN dotnet restore -f -r linux-x64 -v normal
 # Build the actual app and its dependencies
-RUN dotnet publish --no-restore -c Release -r linux-musl-x64 -o /out
+RUN dotnet publish --no-restore -c Release -r linux-x64 -o /out -v normal
 
 ##
-## Copy artifacts and complete deployment
 ##
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine AS runtime
+## Prepare runtime container
+##
+##
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS runtime
 WORKDIR /app
+#
+# Install Requisite Programs & Libraries
+#
+RUN apt-get update && apt-get install -y \
+    bash \
 # Install Heroku requisites
-RUN apk add --no-cache curl
+    curl \
 # Install .NET Core requisites
-RUN apk add libgdiplus --update-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ --allow-untrusted # System.Drawing
+# System.Drawing requires libgdi to render images to Bitmap
+    libgdiplus \
+# Install NuGet package requisites
+# Minimize squandered space
+ && rm -rf /var/lib/apt/lists/*
+
+#
 # Copy artifacts into published runtime fs
+#
 COPY --from=build /out .
 COPY --from=nodebuild /src/dist /app/ClientApp/dist
 ENV ASPNETCORE_URLS=http://*:$PORT
-CMD [ "/app/DunGen.Site" ]
+#ENV LD_DEBUG=bindings,files,libs
+ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
+CMD [ "exec", "/app/DunGen.Site" ]

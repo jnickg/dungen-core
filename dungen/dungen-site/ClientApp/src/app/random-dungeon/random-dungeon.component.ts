@@ -8,6 +8,7 @@ import { RandomDungeon } from './RandomDungeon';
 })
 export class RandomDungeonComponent {
   public randomDungeonBase64: string;
+  public randomDungeonGifBase64: string;
   public randomDungeonAlgorithm: string;
   public randomDungeonAlt: string;
   public randId: number;
@@ -30,6 +31,7 @@ export class RandomDungeonComponent {
     this.randomDungeonAlgorithm = newImage.algorithm;
     this.randomDungeonAlt = newImage.alt;
     this.randomDungeonBase64 = 'data:image/png;base64,' + newImage.imageBytes;
+    this.randomDungeonGifBase64 = 'data:image/gif;base64,' + newImage.gifBytes;
   }
 }
 
