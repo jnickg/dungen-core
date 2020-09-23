@@ -146,9 +146,9 @@ namespace DunGen.Generator
       return workingDungeon;
     }
     #endregion
-    
+
     #region Members
-    public DungeonGeneratorOptions Options { get; set; }
+    public DungeonGeneratorOptions Options { get; set; } = new DungeonGeneratorOptions();
 
     public Dungeon WorkingDungeon { get; set; }
 

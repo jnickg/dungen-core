@@ -39,13 +39,19 @@ namespace DunGen.Site.Controllers
       },
       new BlobRecursiveDivision()
       {
-        RoomSize = 4,
+        RoomSize = 16,
+        RoomSizeVariability = 20,
         MaxGapProportion = .1,
         GapCount = 3
       },
       new LinearRecursiveDivision()
       {
 
+      },
+      new LinearRecursiveDivision()
+      {
+        RoomSize = 16,
+        RoomSizeVariability = 30
       },
       new RecursiveBacktracker()
       {

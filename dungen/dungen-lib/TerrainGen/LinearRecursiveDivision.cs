@@ -21,6 +21,11 @@ namespace DunGen.TerrainGen
       "The size at which subregions should no longer be divided. Set to " +
       "\'1\' to create only corridors. This is an Area measurement.";
 
+    private const string _RoomSizeVariabilityDescription =
+      "The variability in the size at which subregions should no longer be divided." +
+      "Set to \'0\' to uniform-sized rooms. This is an Area measurement. If RoomSize - " +
+      "RoomSizeVariability is less than zero, the smallest room possible will be 1";
+
     private const string _VaribilityDescription =
       "A 0 to 1.0 percentage of variability in where subdivisions are made, " +
       "relative to the center of the region being split, where 1.0 means 100% " +
@@ -48,6 +53,13 @@ namespace DunGen.TerrainGen
       Minimum = 1,
       Maximum = int.MaxValue)]
     public int RoomSize { get; set; }
+
+    [IntegerParameter(
+      Description = _RoomSizeVariabilityDescription,
+      Default = 0,
+      Minimum = 0,
+      Maximum = int.MaxValue)]
+    public int RoomSizeVariability { get; set; }
 
     [DecimalParameter(
       Description = _VaribilityDescription,
@@ -150,8 +162,11 @@ namespace DunGen.TerrainGen
       {
         Rectangle currentRegion = subregions.Pop();
 
+        int roomSize = this.RoomSize - (this.RoomSizeVariability / 2) + r.Next(this.RoomSizeVariability);
+        roomSize = roomSize < 1 ? 1 : roomSize;
+
         if (currentRegion.Width == 1 || currentRegion.Height == 1) continue;
-        if (currentRegion.Width * currentRegion.Height <= this.RoomSize)
+        if (currentRegion.Width * currentRegion.Height <= roomSize)
         {
           d.Parent.CreateGroup(currentRegion, TileCategory.Room);
           continue;

@@ -18,6 +18,11 @@ namespace DunGen.TerrainGen
       "The size at which subregions should no longer be divided. Set to " +
       "\'1\' to create only corridors. This is an Area measurement.";
 
+    private const string _RoomSizeVariabilityDescription =
+      "The variability in the size at which subregions should no longer be divided." +
+      "Set to \'0\' to uniform-sized rooms. This is an Area measurement. If RoomSize - " +
+      "RoomSizeVariability is less than zero, the smallest room possible will be 1";
+
     private const string _GapCountDescription =
       "How many gaps to leave in new boundaries. Algorithm uses the lesser of " +
       "this value and the the total length of the wall times MaxGapProportion";
@@ -32,6 +37,13 @@ namespace DunGen.TerrainGen
       Minimum = 1,
       Maximum = int.MaxValue)]
     public int RoomSize { get; set; }
+
+    [IntegerParameter(
+      Description = _RoomSizeVariabilityDescription,
+      Default = 0,
+      Minimum = 0,
+      Maximum = int.MaxValue)]
+    public int RoomSizeVariability { get; set; }
 
     [IntegerParameter(
       Description = _GapCountDescription,
@@ -86,9 +98,12 @@ namespace DunGen.TerrainGen
       {
         Subregion parentRegion = subregions.Pop();
 
-        if (parentRegion.Tiles.Count <= RoomSize)
+        int roomSize = this.RoomSize - (this.RoomSizeVariability / 2) + context.R.Next(this.RoomSizeVariability);
+        roomSize = roomSize < 1 ? 1 : roomSize;
+
+        if (parentRegion.Tiles.Count <= roomSize)
         {
-          if (RoomSize > 1)
+          if (roomSize > 1)
           {
             if (this.GroupRooms)
             {
