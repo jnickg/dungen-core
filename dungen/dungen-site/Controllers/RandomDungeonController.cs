@@ -53,6 +53,12 @@ namespace DunGen.Site.Controllers
         RoomSize = 16,
         RoomSizeVariability = 30
       },
+      new LinearRecursiveDivision()
+      {
+        RoomSize = 10,
+        RoomSizeVariability = 10,
+        Variability = 0.4
+      },
       new RecursiveBacktracker()
       {
         WallStrategy = TerrainGenAlgorithmBase.WallFormation.Tiles
