@@ -177,8 +177,8 @@ namespace DunGen.TerrainGen
         // Origin of new wall - TODO is there more efficient math for this?
         int wx_offset_base = (int)((1.0 - Variability) / 2.0 * currentRegion.Width);
         int wy_offset_base = (int)((1.0 - Variability) / 2.0 * currentRegion.Height);
-        int wx_offset_rand = ((int)Math.Ceiling(Variability * r.NextDouble() * currentRegion.Width)) - 1;
-        int wy_offset_rand = ((int)Math.Ceiling(Variability * r.NextDouble() * currentRegion.Height)) - 1;
+        int wx_offset_rand = ((int)Math.Floor(Variability * r.NextDouble() * (currentRegion.Width - 1)));
+        int wy_offset_rand = ((int)Math.Floor(Variability * r.NextDouble() * (currentRegion.Height - 1)));
         int wx_offset = wx_offset_base + wx_offset_rand;
         int wy_offset = wy_offset_base + wy_offset_rand;
         int wx = currentRegion.X + (doHoriz ? 0 : wx_offset);

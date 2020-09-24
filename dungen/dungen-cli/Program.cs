@@ -486,6 +486,13 @@ namespace DunGen.CLI
       var clearOption = cmd.Option("-c|--clear",
         "Clears the list of Generator runs after executing",
         CommandOptionType.NoValue);
+      var saveOption = cmd.Option("-s|--save",
+        "Saves a rendering of the map at each step of the algorithm",
+        CommandOptionType.NoValue);
+      var randomSeed = cmd.Option("--seed",
+        "Numerical random seed. If provided, any random seeds in the current " +
+        "runs will be clobbered",
+        CommandOptionType.SingleValue);
 
       cmd.OnExecute(() =>
       {
@@ -494,6 +501,31 @@ namespace DunGen.CLI
           Console.WriteLine("Error: no dungeon loaded.");
           return 0;
         }
+
+        AlgorithmRandom r = null;
+        int seed = 0;
+        if (randomSeed.HasValue() && int.TryParse(randomSeed.Value(), out seed))
+        {
+          r = new AlgorithmRandom(seed);
+          foreach (var run in _runs)
+          {
+            run.Context = new AlgorithmContextBase()
+            {
+              R = r
+            };
+          }
+        }
+
+        var renderer = new DungeonTileRenderer();
+        var counter = 0;
+        Action<IAlgorithmContext> RenderAction = new Action<IAlgorithmContext>((context) =>
+        {
+          var d = context.D;
+          var img = renderer.Render(d);
+
+          img.Save(String.Format("generator_step_{0}.bmp", counter++), ImageFormat.Bmp);
+        });
+
         DungeonGenerator generator = new DungeonGenerator();
         generator.WorkingDungeon = loadedDungeon;
         generator.Options = new DungeonGenerator.DungeonGeneratorOptions()
@@ -504,6 +536,12 @@ namespace DunGen.CLI
           Width = loadedDungeon.Tiles.Width,
           Height = loadedDungeon.Tiles.Height,
         };
+        if (saveOption.HasValue())
+        {
+          generator.Options.Callbacks = new List<Action<IAlgorithmContext>>();
+          generator.Options.Callbacks.Add(RenderAction);
+        }
+
         Console.WriteLine("Running {0} algorithms on dungeon...", generator.Options.AlgRuns.Count);
         loadedDungeon = generator.Generate();
         loadedDungeon_fileName = "UNSAVED";
