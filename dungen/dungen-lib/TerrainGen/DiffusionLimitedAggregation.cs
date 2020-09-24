@@ -181,8 +181,6 @@ namespace DunGen.TerrainGen
         d[ty, tx].Physics = Tile.MoveType.Open_HORIZ;
         this.RunCallbacks(context);
       }
-
-      d.SetAllToo(Tile.MoveType.Open_HORIZ, map);
     }
 
     private bool hasNoTrueNeighbors(int tx, int ty, bool[,] map, bool[,] mask)
