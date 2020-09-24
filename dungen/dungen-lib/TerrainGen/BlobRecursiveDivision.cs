@@ -14,6 +14,13 @@ namespace DunGen.TerrainGen
 
     public override TerrainGenStyle Style => TerrainGenStyle.Cave;
 
+    [SelectionParameter(
+      Description = WallStrategy_Help,
+      SelectionType = typeof(WallFormation),
+      Default = WallFormation.Tiles,
+      Supported = false)]
+    public override WallFormation WallStrategy { get => base.WallStrategy; set => base.WallStrategy = value; }
+
     private const string _RoomSizeDescription =
       "The size at which subregions should no longer be divided. Set to " +
       "\'1\' to create only corridors. This is an Area measurement.";

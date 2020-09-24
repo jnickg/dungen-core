@@ -13,6 +13,13 @@ namespace DunGen.TerrainGen
 
     public override TerrainGenStyle Style => GetCurrentStyle();
 
+    [SelectionParameter(
+      Description = WallStrategy_Help,
+      SelectionType = typeof(WallFormation),
+      Default = WallFormation.Tiles,
+      Supported = false)]
+    public override WallFormation WallStrategy { get => base.WallStrategy; set => base.WallStrategy = value; }
+
     private const string _BuildStrategyDescription =
       "How this algorithm should interact with existing data in tiles, if " +
       "there are any in its mask";

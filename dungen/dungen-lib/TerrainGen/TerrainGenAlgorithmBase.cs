@@ -132,9 +132,12 @@ namespace DunGen.TerrainGen
     protected abstract void _runAlgorithm(IAlgorithmContext context);
 
     /// <see cref="AlgorithmBase._runInternal(IAlgorithmContext)"/>
-    protected override void _runInternal(IAlgorithmContext context)
+    sealed protected override void _runInternal(IAlgorithmContext context)
     {
-      // TODO any terrain-gen specific context checking
+      if (this.Behavior == TerrainModBehavior.Clobber)
+      {
+        context.D.Tiles.SetAllToo(Tiles.Tile.MoveType.Wall, context.Mask);
+      }
 
       _runAlgorithm(context);
     }
