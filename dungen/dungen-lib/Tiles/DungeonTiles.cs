@@ -13,7 +13,7 @@ namespace DunGen.Tiles
   /// categorized and grouped
   /// </summary>
   [DataContract(Name = "layout", IsReference = true)]
-  public class DungeonTiles
+  public class DungeonTiles : ICloneable
   {
     #region Statics
     public static readonly int GroupId_AllTiles = 0;
@@ -361,6 +361,16 @@ namespace DunGen.Tiles
         default:
           throw new NotImplementedException();
       }
+    }
+
+    public object Clone()
+    {
+      return new DungeonTiles()
+      {
+        Tiles = this.Tiles.Clone() as Tile[,],
+        Parent = this.Parent,
+        IsHex = this.IsHex
+      };
     }
     #endregion
   }

@@ -116,25 +116,17 @@ namespace DunGen.TerrainGen
       }
     }
 
-    private enum Direction
-    {
-      N = 0,
-      E,
-      S,
-      W
-    }
-
     private Tile.MoveType GetMoveFor(Direction d)
     {
       switch (d)
       {
-        case Direction.N:
+        case Direction.North:
           return Tile.MoveType.Open_NORTH;
-        case Direction.E:
+        case Direction.East:
           return Tile.MoveType.Open_EAST;
-        case Direction.S:
+        case Direction.South:
           return Tile.MoveType.Open_SOUTH;
-        case Direction.W:
+        case Direction.West:
           return Tile.MoveType.Open_WEST;
         default:
           throw new ArgumentException();
@@ -151,10 +143,10 @@ namespace DunGen.TerrainGen
         ThisPoint = whichPoint;
         UntriedDirections = new List<Direction>()
         {
-          Direction.N,
-          Direction.E,
-          Direction.S,
-          Direction.W
+          Direction.North,
+          Direction.East,
+          Direction.South,
+          Direction.West
         };
       }
 
@@ -169,7 +161,7 @@ namespace DunGen.TerrainGen
     {
       if (null == explored || null == overallMask) return;
       Stack<PointTracking> points = new Stack<PointTracking>();
-      Direction lastDirection = Direction.N;
+      Direction lastDirection = Direction.North;
 
       points.Push(new PointTracking(new Point(startX, startY)));
       while (points.Count > 0)
@@ -217,19 +209,19 @@ namespace DunGen.TerrainGen
         int x2, y2; // Adjacent coordinate
         switch (dir)
         {
-          case Direction.N: // up
+          case Direction.North: // up
             x2 = currentPoint.X;
             y2 = currentPoint.Y - 1;
             break;
-          case Direction.E: // right
+          case Direction.East: // right
             x2 = currentPoint.X + 1;
             y2 = currentPoint.Y;
             break;
-          case Direction.S: // down
+          case Direction.South: // down
             x2 = currentPoint.X;
             y2 = currentPoint.Y + 1;
             break;
-          case Direction.W: // left
+          case Direction.West: // left
             x2 = currentPoint.X - 1;
             y2 = currentPoint.Y;
             break;
@@ -294,7 +286,7 @@ namespace DunGen.TerrainGen
     {
       if (null == explored || null == overallMask) return;
       Stack<PointTracking> points = new Stack<PointTracking>();
-      Direction lastDirection = Direction.N;
+      Direction lastDirection = Direction.North;
 
       points.Push(new PointTracking(new Point(startX, startY)));
       while (points.Count > 0)
@@ -345,25 +337,25 @@ namespace DunGen.TerrainGen
         int x2, y2, x3, y3; // Adjacent and next coordinate
         switch (dir)
         {
-          case Direction.N: // up
+          case Direction.North: // up
             x2 = currentPoint.X;
             y2 = currentPoint.Y - 1;
             x3 = currentPoint.X;
             y3 = currentPoint.Y - 2;
             break;
-          case Direction.E: // right
+          case Direction.East: // right
             x2 = currentPoint.X + 1;
             y2 = currentPoint.Y;
             x3 = currentPoint.X + 2;
             y3 = currentPoint.Y;
             break;
-          case Direction.S: // down
+          case Direction.South: // down
             x2 = currentPoint.X;
             y2 = currentPoint.Y + 1;
             x3 = currentPoint.X;
             y3 = currentPoint.Y + 2;
             break;
-          case Direction.W: // left
+          case Direction.West: // left
             x2 = currentPoint.X - 1;
             y2 = currentPoint.Y;
             x3 = currentPoint.X - 2;

@@ -11,7 +11,7 @@ namespace DunGen.Tiles
   /// A DunGen Tile. This object stores basic data regarding movement physics.
   /// </summary>
   [DataContract(Name = "tileData", IsReference = true)]
-  public class Tile
+  public class Tile : ICloneable
   {
     #region Nested Types
 
@@ -103,6 +103,15 @@ namespace DunGen.Tiles
     {
       this.Id = System.Threading.Interlocked.Increment(ref TileId);
       this.Physics = MoveType.Wall;
+    }
+
+    public object Clone()
+    {
+      return new Tile()
+      {
+        Physics = this.Physics,
+        Parent = this.Parent
+      };
     }
 
     #endregion

@@ -49,6 +49,19 @@ namespace DunGen.TerrainGen
       Ignore,
       Overwrite
     }
+
+    /// <summary>
+    /// Directional selector, for any Parameters that require it.
+    /// For example, the orientation of an algorithm, if it has
+    /// oriented properties, such as "starting point," or "weight."
+    /// </summary>
+    public enum Direction
+    {
+      North,
+      East,
+      South,
+      West
+    }
     #endregion
 
     #region Non-Parameter Properties
